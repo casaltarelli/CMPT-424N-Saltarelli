@@ -13,6 +13,7 @@ module TSOS {
     export class Shell {
         // Properties
         public promptStr = ">";
+        public nameStr = "User";
         public commandList = [];
         public curses = "[fuvg],[cvff],[shpx],[phag],[pbpxfhpxre],[zbgureshpxre],[gvgf]";
         public apologies = "[sorry]";
@@ -73,11 +74,40 @@ module TSOS {
                                   "<string> - Sets the prompt.");
             this.commandList[this.commandList.length] = sc;
 
+            // date
+            sc = new ShellCommand(this.shellDate,
+                                   "date",
+                                   "- Displays the current date.");
+            this.commandList[this.commandList.length] = sc;
+
+            // whereAmI
+            sc = new ShellCommand(this.shellWhereAmI,
+                                    "whereami",
+                                    "- Displays your current location.");
+            this.commandList[this.commandList.length] = sc;
+
+            // setname <string>
+            sc = new ShellCommand(this.shellSetName,
+                                    "setname",
+                                    "- Sets username.");
+            this.commandList[this.commandList.length] = sc;
+
+            // name 
+            sc = new ShellCommand(this.shellName,
+                                    "name",
+                                    "- Displays username");
+            this.commandList[this.commandList.length] = sc
+
             // ps  - list the running processes and their IDs
             // kill <id> - kills the specified process id.
 
-            // Display the initial prompt.
+            // Display the initial  prompt.
+            this.putName();
             this.putPrompt();
+        }
+
+        public putName() {
+            _StdOut.putText(this.nameStr);
         }
 
         public putPrompt() {
@@ -126,15 +156,19 @@ module TSOS {
 
         // Note: args is an optional parameter, ergo the ? which allows TypeScript to understand that.
         public execute(fn, args?) {
-            // We just got a command, so advance the line...
+            // We just got a command, so advance the line
             _StdOut.advanceLine();
+
             // ... call the command function passing in the args with some über-cool functional programming ...
             fn(args);
+
             // Check to see if we need to advance the line again
             if (_StdOut.currentXPosition > 0) {
                 _StdOut.advanceLine();
             }
-            // ... and finally write the prompt again.
+            
+            // ... and finally write the name + prompt again.
+            this.putName();
             this.putPrompt();
         }
 
@@ -230,13 +264,19 @@ module TSOS {
         public shellMan(args: string[]) {
             if (args.length > 0) {
                 var topic = args[0];
-                switch (topic) {
-                    case "help":
-                        _StdOut.putText("Help displays a list of (hopefully) valid commands.");
-                        break;
-                    // TODO: Make descriptive MANual page entries for the the rest of the shell commands here.
-                    default:
-                        _StdOut.putText("No manual entry for " + args[0] + ".");
+                var found: boolean = false;
+
+                // Look for Arg in Shell Command List
+                for (var i in _OsShell.commandList) {
+                    if (_OsShell.commandList[i].command == topic) {
+                        found = true;
+                        _StdOut.putText("  " + _OsShell.commandList[i].command + " " + _OsShell.commandList[i].description);    
+                    }
+                }
+                 
+                // Output Undefined if not found
+                if (!found) {
+                    _StdOut.putText("No manual entry for " + args[0] + ".");
                 }
             } else {
                 _StdOut.putText("Usage: man <topic>  Please supply a topic.");
@@ -282,6 +322,31 @@ module TSOS {
             } else {
                 _StdOut.putText("Usage: prompt <string>  Please supply a string.");
             }
+        }
+
+        public shellDate(args: string[]) {
+            // Declare Date Object + Output
+            var d = new Date(); 
+            _StdOut.putText("Today's Date: " + d);
+        }
+
+        public shellWhereAmI(args: string[]) {
+            // Display Users Location
+            _StdOut.putText("5th & Chestnut");
+        }
+
+        public shellSetName(args: string[]) {
+            // Decla
+            if (args.length > 0) {
+                _OsShell.nameStr = args[0];
+            } else {
+                _StdOut.putText("Usage: name <string>  Please give a name.");
+            }
+        }
+
+        public shellName(args: string[]) {
+            // Display Users set username
+            _StdOut.putText(_OsShell.nameStr);
         }
 
     }
