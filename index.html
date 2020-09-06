@@ -5,7 +5,7 @@
    <meta name="author"             content="Alan G. Labouseur" />
    <link rel="stylesheet" href="tsos.css" type="text/css" media="screen" />
    <title>
-      TSOS - a browser-based virtual Operating System in TypeScript
+      CSOS - a browser-based virtual Operating System in TypeScript
    </title>
 
    <!-- Globals CONSTANTS and _Variables. Must included be first. -->
@@ -68,6 +68,12 @@
    </div>
 
    <div id="divConsole" style="margin:4px; width:500px; height:500px; float:left;">
+      <div class="consoleTaskBar">
+         <ul id="taskbar" style="text-align: center;">
+            <li id="dateText" style="float: left;"></li>
+            <li id="statusMsg" style="float: right; margin-right: 50px;"></li>
+          </ul>
+      </div>
       <canvas id="display"
               width="500px"
               height="500px"

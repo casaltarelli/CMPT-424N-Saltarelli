@@ -10,7 +10,7 @@
 //
 // Global CONSTANTS (TypeScript 1.5 introduced const. Very cool.)
 //
-var APP_NAME = "SALTOS";
+var APP_NAME = "CSOS";
 var APP_VERSION = "0.1";
 var CPU_CLOCK_INTERVAL = 100; // This is in ms (milliseconds) so 1000 = 1 second.
 var TIMER_IRQ = 0; // Pages 23 (timer), 9 (interrupts), and 561 (interrupt priority).
@@ -50,4 +50,21 @@ var Glados = null; // This is the function Glados() in glados-ip*.js http://alan
 var _GLaDOS = null; // If the above is linked in, this is the instantiated instance of Glados.
 var onDocumentLoad = function () {
     TSOS.Control.hostInit();
+    updateClock();
 };
+function updateClock() {
+    // Date + HTML Element
+    var dateElement = document.getElementById("dateText");
+    var dateObject = new Date();
+    // Format Date
+    var day = dateObject.getDate();
+    var month = dateObject.getMonth();
+    var year = dateObject.getFullYear();
+    var date = month + "-" + day + "-" + year;
+    // Format Time
+    var time = dateObject.getHours() + ':' + dateObject.getMinutes() + ':' + dateObject.getSeconds();
+    // Update Element
+    dateElement.innerHTML = [date, time].join(' / ');
+    // Update Every 1000ms
+    setTimeout(updateClock, 1000);
+}

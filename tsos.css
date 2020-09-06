@@ -46,3 +46,18 @@ h3 {
   font-size: 8pt;
   text-align: center;
 }
+
+.consoleTaskBar {
+  width: 500px; 
+  height: 45px; 
+  
+  background-color: #C9C5B0; 
+  border: 2px solid red;
+  float: left;
+}
+
+#taskbar li {
+  display: inline;
+}
+
+

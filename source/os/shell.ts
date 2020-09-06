@@ -14,6 +14,7 @@ module TSOS {
         // Properties
         public promptStr = ">";
         public nameStr = "User";
+        public statusStr = "";
         public commandList = [];
         public curses = "[fuvg],[cvff],[shpx],[phag],[pbpxfhpxre],[zbgureshpxre],[gvgf]";
         public apologies = "[sorry]";
@@ -96,7 +97,13 @@ module TSOS {
             sc = new ShellCommand(this.shellName,
                                     "name",
                                     "- Displays username");
-            this.commandList[this.commandList.length] = sc
+            this.commandList[this.commandList.length] = sc;
+
+            // status <string>
+            sc = new ShellCommand(this.shellStatus,
+                                    "status",
+                                    "- Updates User Status");
+            this.commandList[this.commandList.length] = sc;
 
             // ps  - list the running processes and their IDs
             // kill <id> - kills the specified process id.
@@ -336,7 +343,7 @@ module TSOS {
         }
 
         public shellSetName(args: string[]) {
-            // Decla
+            // Update Username
             if (args.length > 0) {
                 _OsShell.nameStr = args[0];
             } else {
@@ -347,6 +354,32 @@ module TSOS {
         public shellName(args: string[]) {
             // Display Users set username
             _StdOut.putText(_OsShell.nameStr);
+        }
+
+        public shellStatus(args: string[]) {
+            // Update User Status
+            if (args.length > 0) {
+                // Reset Status
+                _OsShell.statusStr = "";
+
+                // Iterate over Status Args
+                var i = 0;
+
+                while (args[i] != null) {
+                    _OsShell.statusStr = _OsShell.statusStr + args[i] + " ";
+                    i++;
+                }
+
+                // Format Status
+                _OsShell.statusStr = "Status: " + _OsShell.statusStr;
+
+                //Update Element
+                var statusText = document.getElementById("statusMsg");
+                statusText.innerHTML = _OsShell.statusStr;
+
+            } else {
+                _StdOut.putText("Usage: status <string> Please provide a status");
+            }
         }
 
     }

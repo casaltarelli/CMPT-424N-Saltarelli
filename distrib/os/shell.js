@@ -14,6 +14,7 @@ var TSOS;
             // Properties
             this.promptStr = ">";
             this.nameStr = "User";
+            this.statusStr = "";
             this.commandList = [];
             this.curses = "[fuvg],[cvff],[shpx],[phag],[pbpxfhpxre],[zbgureshpxre],[gvgf]";
             this.apologies = "[sorry]";
@@ -57,6 +58,9 @@ var TSOS;
             this.commandList[this.commandList.length] = sc;
             // name 
             sc = new TSOS.ShellCommand(this.shellName, "name", "- Displays username");
+            this.commandList[this.commandList.length] = sc;
+            // status <string>
+            sc = new TSOS.ShellCommand(this.shellStatus, "status", "- Updates User Status");
             this.commandList[this.commandList.length] = sc;
             // ps  - list the running processes and their IDs
             // kill <id> - kills the specified process id.
@@ -276,7 +280,7 @@ var TSOS;
             _StdOut.putText("5th & Chestnut");
         };
         Shell.prototype.shellSetName = function (args) {
-            // Decla
+            // Update Username
             if (args.length > 0) {
                 _OsShell.nameStr = args[0];
             }
@@ -287,6 +291,26 @@ var TSOS;
         Shell.prototype.shellName = function (args) {
             // Display Users set username
             _StdOut.putText(_OsShell.nameStr);
+        };
+        Shell.prototype.shellStatus = function (args) {
+            // Update Status
+            if (args.length > 0) {
+                // Reset Status
+                _OsShell.statusStr = "";
+                // Iterate over Status Args
+                var i = 0;
+                while (args[i] != null) {
+                    _OsShell.statusStr = _OsShell.statusStr + args[i] + " ";
+                    i++;
+                }
+                _OsShell.statusStr = "Status: " + _OsShell.statusStr;
+                //Update Element
+                var statusText = document.getElementById("statusMsg");
+                statusText.innerHTML = _OsShell.statusStr;
+            }
+            else {
+                _StdOut.putText("Usage: status <string> Please provide a status");
+            }
         };
         return Shell;
     }());
