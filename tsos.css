@@ -6,6 +6,7 @@ body {
   font-size: 12pt;
   font-weight: normal;
   font-style: normal;
+  overflow: hidden;
 }
 
 h1 {
@@ -32,7 +33,6 @@ h3 {
 
 #display {
   background-color:#DFDBC3;
-  border: 2px solid red;
   cursor: default;
 }
 
@@ -53,11 +53,22 @@ h3 {
   
   background-color: #C9C5B0; 
   border: 2px solid red;
+  border-bottom: none;
+
   float: left;
 }
 
 #taskbar li {
   display: inline;
+}
+
+.canvasWrapper {
+  height: 500px;
+  width: 500px;
+  overflow: auto;
+
+  border: 2px solid red;
+  background-color:#DFDBC3;
 }
 
 

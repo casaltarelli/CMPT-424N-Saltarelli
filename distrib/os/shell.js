@@ -293,7 +293,7 @@ var TSOS;
             _StdOut.putText(_OsShell.nameStr);
         };
         Shell.prototype.shellStatus = function (args) {
-            // Update Status
+            // Update User Status
             if (args.length > 0) {
                 // Reset Status
                 _OsShell.statusStr = "";
@@ -303,6 +303,7 @@ var TSOS;
                     _OsShell.statusStr = _OsShell.statusStr + args[i] + " ";
                     i++;
                 }
+                // Format Status
                 _OsShell.statusStr = "Status: " + _OsShell.statusStr;
                 //Update Element
                 var statusText = document.getElementById("statusMsg");

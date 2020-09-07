@@ -42,6 +42,11 @@ var TSOS;
                     // ... and reset our buffer.
                     this.buffer = "";
                 }
+                else if (chr === String.fromCharCode(8)) { // Backspace key
+                    // Remove Previous Character from Screen
+                    console.log("Backspace Key Registered");
+                    this.removeText(chr);
+                }
                 else {
                     // This is a "normal" character, so ...
                     // ... draw it on the screen...
@@ -60,6 +65,7 @@ var TSOS;
                 do the same thing, thereby encouraging confusion and decreasing readability, I
                 decided to write one function and use the term "text" to connote string or char.
             */
+            console.log("Text being handled: " + text);
             if (text !== "") {
                 // Draw the text at the current X and Y coordinates.
                 _DrawingContext.drawText(this.currentFont, this.currentFontSize, this.currentXPosition, this.currentYPosition, text);
@@ -67,6 +73,11 @@ var TSOS;
                 var offset = _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
                 this.currentXPosition = this.currentXPosition + offset;
             }
+        };
+        Console.prototype.removeText = function (text) {
+            console.log("BACKSPACE PRESSED");
+            var offset = _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
+            _DrawingContext.clearRect(this.currentXPosition - offset, this.currentYPosition, TSOS.CanvasTextFunctions.letter(text).width, _DefaultFontSize + _DrawingContext.fontDescent(this.currentFont, this.currentFontSize));
         };
         Console.prototype.advanceLine = function () {
             this.currentXPosition = 0;
@@ -79,6 +90,15 @@ var TSOS;
                 _DrawingContext.fontDescent(this.currentFont, this.currentFontSize) +
                 _FontHeightMargin;
             // TODO: Handle scrolling. (iProject 1)
+            console.log(this.currentYPosition);
+            if (this.currentYPosition > 490) {
+                // Save Current Canvas
+                // Reset line
+                // Redraw canvas
+                this.currentYPosition = _DefaultFontSize;
+                console.log("MARKER HIT");
+                _DrawingContext.clearRect(0, 0, _Canvas.width, _Canvas.height);
+            }
         };
         return Console;
     }());

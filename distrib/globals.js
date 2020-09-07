@@ -51,6 +51,7 @@ var _GLaDOS = null; // If the above is linked in, this is the instantiated insta
 var onDocumentLoad = function () {
     TSOS.Control.hostInit();
     updateClock();
+    updateCanvas();
 };
 function updateClock() {
     // Date + HTML Element
@@ -67,4 +68,9 @@ function updateClock() {
     dateElement.innerHTML = [date, time].join(' / ');
     // Update Every 1000ms
     setTimeout(updateClock, 1000);
+}
+function updateCanvas() {
+    var canvasElement = document.getElementById("display");
+    var canvasContext = canvasElement.getContext('2d');
+    // Scroll Context at Break Point
 }

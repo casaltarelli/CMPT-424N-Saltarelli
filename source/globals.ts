@@ -68,6 +68,7 @@ var _GLaDOS: any = null; // If the above is linked in, this is the instantiated 
 var onDocumentLoad = function() {
    TSOS.Control.hostInit();
    updateClock(); 
+   updateCanvas();
 };
 
 function updateClock() {
@@ -90,6 +91,13 @@ function updateClock() {
 
    // Update Every 1000ms
    setTimeout(updateClock, 1000);
+}
+
+function updateCanvas() {
+   var canvasElement = <HTMLCanvasElement> document.getElementById("display");
+   var canvasContext = canvasElement.getContext( '2d' );
+   
+   // Scroll Context at Break Point
 }
 
 
