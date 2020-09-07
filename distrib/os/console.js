@@ -7,7 +7,7 @@
 var TSOS;
 (function (TSOS) {
     var Console = /** @class */ (function () {
-        function Console(currentFont, currentFontSize, currentXPosition, currentYPosition, buffer, tabList, tabIndex, tabRegex) {
+        function Console(currentFont, currentFontSize, currentXPosition, currentYPosition, buffer, tabList, tabIndex, tabRegex, commandHistory, commandIndex) {
             if (currentFont === void 0) { currentFont = _DefaultFontFamily; }
             if (currentFontSize === void 0) { currentFontSize = _DefaultFontSize; }
             if (currentXPosition === void 0) { currentXPosition = 0; }
@@ -16,6 +16,8 @@ var TSOS;
             if (tabList === void 0) { tabList = []; }
             if (tabIndex === void 0) { tabIndex = 0; }
             if (tabRegex === void 0) { tabRegex = null; }
+            if (commandHistory === void 0) { commandHistory = []; }
+            if (commandIndex === void 0) { commandIndex = 0; }
             this.currentFont = currentFont;
             this.currentFontSize = currentFontSize;
             this.currentXPosition = currentXPosition;
@@ -24,6 +26,8 @@ var TSOS;
             this.tabList = tabList;
             this.tabIndex = tabIndex;
             this.tabRegex = tabRegex;
+            this.commandHistory = commandHistory;
+            this.commandIndex = commandIndex;
         }
         Console.prototype.init = function () {
             this.clearScreen();
@@ -45,6 +49,12 @@ var TSOS;
                     // The enter key marks the end of a console command, so ...
                     // ... tell the shell ...
                     _OsShell.handleInput(this.buffer);
+                    // Update Command History + Index
+                    this.commandHistory.push(this.buffer);
+                    this.commandIndex = this.commandHistory.length;
+                    // Reset Tab List
+                    this.tabList = [];
+                    this.tabIndex = 0;
                     // ... and reset our buffer.
                     this.buffer = "";
                 }
@@ -87,6 +97,33 @@ var TSOS;
                             this.putText(this.tabList[this.tabIndex]);
                             this.buffer = this.tabList[this.tabIndex];
                         }
+                    }
+                }
+                else if (chr == "up_arrow") {
+                    // Check if Command History has Next
+                    if (this.commandIndex < this.commandHistory.length) {
+                        this.clearLine();
+                        // Go to Next Command
+                        this.commandIndex++;
+                        // Update Canvas + Buffer
+                        this.putText(this.commandHistory[this.commandIndex]);
+                        this.buffer = this.commandHistory[this.commandIndex];
+                    }
+                    else {
+                        // Exit Command History + Clear Line
+                        this.commandIndex = this.commandHistory.length;
+                        this.clearLine();
+                    }
+                }
+                else if (chr == "down_arrow") {
+                    // Check if Command History is Empty
+                    if (this.commandHistory.length != 0) {
+                        this.clearLine();
+                        // Go to Previous Command
+                        this.commandIndex--;
+                        // Update Canvas + Buffer
+                        this.putText(this.commandHistory[this.commandIndex]);
+                        this.buffer = this.commandHistory[this.commandIndex];
                     }
                 }
                 else {

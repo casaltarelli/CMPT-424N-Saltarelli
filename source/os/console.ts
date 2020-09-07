@@ -16,7 +16,9 @@ module TSOS {
                     public buffer = "",
                     public tabList = [],
                     public tabIndex = 0,
-                    public tabRegex = null) {
+                    public tabRegex = null,
+                    public commandHistory = [],
+                    public commandIndex = 0) {
         }
 
         public init(): void {
@@ -42,6 +44,15 @@ module TSOS {
                     // The enter key marks the end of a console command, so ...
                     // ... tell the shell ...
                     _OsShell.handleInput(this.buffer);
+
+                    // Update Command History + Index
+                    this.commandHistory.push(this.buffer);
+                    this.commandIndex = this.commandHistory.length;
+
+                    // Reset Tab List
+                    this.tabList = [];
+                    this.tabIndex = 0;
+
                     // ... and reset our buffer.
                     this.buffer = "";
                     
@@ -92,6 +103,36 @@ module TSOS {
                             this.buffer = this.tabList[this.tabIndex];
                         }
                     }
+                } else if (chr == "up_arrow") {
+                    // Check if Command History has Next
+                    if (this.commandIndex < this.commandHistory.length) {
+                        this.clearLine();
+
+                        // Go to Next Command
+                        this.commandIndex++;
+
+                        // Update Canvas + Buffer
+                        this.putText(this.commandHistory[this.commandIndex]);
+                        this.buffer = this.commandHistory[this.commandIndex];
+                    } else {
+                        // Exit Command History + Clear Line
+                        this.commandIndex = this.commandHistory.length;
+                        this.clearLine();
+                    }
+
+                } else if (chr == "down_arrow") {
+                    // Check if Command History is Empty
+                    if (this.commandHistory.length != 0) {
+                        this.clearLine();
+
+                        // Go to Previous Command
+                        this.commandIndex--;
+
+                        // Update Canvas + Buffer
+                        this.putText(this.commandHistory[this.commandIndex]);
+                        this.buffer = this.commandHistory[this.commandIndex];
+                    }
+
                 } else {
                     // This is a "normal" character, so ...
                     // ... draw it on the screen...
