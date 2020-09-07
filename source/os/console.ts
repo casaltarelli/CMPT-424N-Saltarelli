@@ -60,7 +60,10 @@ module TSOS {
                 } else if (chr === String.fromCharCode(8)) { // Backspace key
                     // Check Buffer for Chars
                     if (this.buffer) {
+                        // Delete Char from Canvas
                         this.removeText(this.buffer.charAt(this.buffer.length - 1), this.buffer.length - 1);
+
+                        // Update Buffer
                         this.buffer = this.buffer.slice(0, -1);
                     }
 
@@ -162,6 +165,14 @@ module TSOS {
                 // Move the current X position.
                 var offset = _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
                 this.currentXPosition = this.currentXPosition + offset;
+
+                // Check XPosition is not at End of Canvas
+                if (this.currentXPosition >= (_Canvas.width - _DefaultFontSize)) {
+                    this.advanceLine();
+                }
+                
+
+
             }
         }
 
@@ -204,7 +215,6 @@ module TSOS {
                                      _FontHeightMargin;
 
             // TODO: Handle scrolling. (iProject 1)
-            console.log(this.currentYPosition);
             if (this.currentYPosition > 490) {
                 // Save Current Canvas
                 // Reset line
@@ -223,9 +233,7 @@ module TSOS {
             this.currentXPosition += _DrawingContext.measureText(this.currentFont, this.currentFontSize, _OsShell.promptStr + _OsShell.nameStr);
             
             // Y Position
-            let differenceYPosition = _DefaultFontSize +
-                _DrawingContext.fontDescent(this.currentFont, this.currentFontSize) +
-                _FontHeightMargin;
+            let differenceYPosition = _DefaultFontSize + _DrawingContext.fontDescent(this.currentFont, this.currentFontSize) + _FontHeightMargin;
             this.currentYPosition -= differenceYPosition;
         }
     }

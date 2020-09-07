@@ -105,6 +105,18 @@ module TSOS {
                                     "- <string> Updates User Status");
             this.commandList[this.commandList.length] = sc;
 
+            // death
+            sc = new ShellCommand(this.shellDeath,
+                                    "death",
+                                    "- death Displays BSOD Message for OS errors");
+            this.commandList[this.commandList.length] = sc;
+
+            // load
+            sc = new ShellCommand(this.shellLoad,
+                                    "load",
+                                    "- load Validates User Code");
+            this.commandList[this.commandList.length] = sc;
+
             // ps  - list the running processes and their IDs
             // kill <id> - kills the specified process id.
 
@@ -382,5 +394,35 @@ module TSOS {
             }
         }
 
+        public shellDeath(args: string[]) {
+            // Display BSOD
+            var canvas = document.getElementById("display");
+            canvas.style.backgroundColor = "blue";
+
+            // Clear Canvas
+            _StdOut.clearScreen();     
+            _StdOut.resetXY();
+
+            _StdOut.putText("FATAL ERROR: Shutting down...");
+            _Kernel.krnTrapError("Kernal death");
+            _Kernel.krnShutdown();
+        }
+
+        public shellLoad(args: string[]) {
+            // Get Textarea Content
+            var userInput = (<HTMLInputElement>document.getElementById("taProgramInput")).value;
+
+            // Remove White Space
+            userInput = userInput.replace(/\s/g, "");
+
+            // Validate Input via RegEx + Output to Canvas
+            let regex = /^[A-Fa-f0-9]+$/;
+
+            if (regex.test(userInput)) {
+                _StdOut.putText("Hex Code is Valid.")
+            } else {
+                _StdOut.putText("Hex Code could not be validated. Please try again.");
+            }
+        }
     }
 }
