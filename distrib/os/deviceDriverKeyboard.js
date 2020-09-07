@@ -43,7 +43,6 @@ var TSOS;
             var keyCode = params[0];
             var isShifted = params[1];
             _Kernel.krnTrace("Key code:" + keyCode + " shifted:" + isShifted);
-            console.log("KeyCode: " + keyCode);
             var chr = "";
             // Check to see if we even want to deal with the key that was pressed.
             if ((keyCode >= 65) && (keyCode <= 90)) { // Letter
@@ -56,12 +55,9 @@ var TSOS;
             else if (keyCode >= 186) {
                 this.krnKbdDispatchSpecial(params);
             }
-            else if ((keyCode == 32) || (keyCode == 13)) { // Space + Enter
+            else if ((keyCode == 32) || (keyCode == 13) || (keyCode == 8)) { // Space + Enter
                 chr = String.fromCharCode(keyCode);
                 _KernelInputQueue.enqueue(chr);
-            }
-            else if (keyCode == 8) { // Backspace
-                _KernelInputQueue.dequeue();
             }
         };
         DeviceDriverKeyboard.prototype.krnKbdDispatchLetter = function (params) {

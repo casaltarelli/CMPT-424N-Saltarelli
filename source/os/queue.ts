@@ -31,6 +31,8 @@ module TSOS {
             if (this.q.length > 0) {
                 retVal = this.q.shift();
             }
+            console.log("queue: " + this.toString());
+
             return retVal;
         }
 

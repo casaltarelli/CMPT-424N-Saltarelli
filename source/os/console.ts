@@ -41,19 +41,28 @@ module TSOS {
                     _OsShell.handleInput(this.buffer);
                     // ... and reset our buffer.
                     this.buffer = "";
+                    
+
                 } else if (chr === String.fromCharCode(8)) { // Backspace key
-                    // Remove Previous Character from Screen
-                    console.log("Backspace Key Registered");
-                    this.removeText(chr);
-                } 
-                
-                else {
+                    // Check Buffer for Chars
+                    if (this.buffer) {
+                        this.removeText(this.buffer.charAt(this.buffer.length - 1), this.buffer.length - 1);
+                        this.buffer = this.buffer.slice(0, -1);
+                    }
+
+                    // Reset the tab index and list
+                    // this.tabIndex = 0;
+                    // this.tabList = [];
+
+                } else {
                     // This is a "normal" character, so ...
                     // ... draw it on the screen...
                     this.putText(chr);
                     // ... and add it to our buffer.
                     this.buffer += chr;
                 }
+
+                
                 // TODO: Add a case for Ctrl-C that would allow the user to break the current program.
             }
         }
@@ -67,22 +76,32 @@ module TSOS {
                 decided to write one function and use the term "text" to connote string or char.
             */
 
-            console.log("Text being handled: " + text);
             if (text !== "") {
                 // Draw the text at the current X and Y coordinates.
                 _DrawingContext.drawText(this.currentFont, this.currentFontSize, this.currentXPosition, this.currentYPosition, text);
+                
                 // Move the current X position.
                 var offset = _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
                 this.currentXPosition = this.currentXPosition + offset;
             }
         }
 
-        public removeText(text): void {
-            console.log("BACKSPACE PRESSED");
+        public removeText(text, bufferLength) {
+            // Check if text is wrapped
+            if (bufferLength > 0 && this.currentXPosition <= 0) {
+                this.getLineWidth();
+            }
 
-            // HAVE TO DRAW ON CANVAS canvas.stroke();
-            var offset = _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
-            _DrawingContext.clearRect(this.currentXPosition - offset, this.currentYPosition, CanvasTextFunctions.letter(text).width, _DefaultFontSize + _DrawingContext.fontDescent(this.currentFont, this.currentFontSize));
+            // Calculate Rectangle Size
+            var xOffset = this.currentXPosition - _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
+            var yOffset = this.currentYPosition - _DefaultFontSize;
+
+            // Erase Character 
+            _DrawingContext.clearRect(xOffset, yOffset, this.currentXPosition, this.currentYPosition + _DrawingContext.fontDescent(this.currentFont, this.currentFontSize));
+
+            // Update Current XPosition
+            this.currentXPosition = this.currentXPosition - _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
+
         }
 
         public advanceLine(): void {
@@ -106,6 +125,20 @@ module TSOS {
                 console.log("MARKER HIT");
                 _DrawingContext.clearRect(0, 0, _Canvas.width, _Canvas.height);
             }
+        }
+
+        public getLineWidth() {
+            // Calculate Updateded Line Length
+
+            // X Position
+            this.currentXPosition = _DrawingContext.measureText(this.currentFont, this.currentFontSize, this.buffer);
+            this.currentXPosition += _DrawingContext.measureText(this.currentFont, this.currentFontSize, _OsShell.promptStr + _OsShell.nameStr);
+            
+            // Y Position
+            let differenceYPosition = _DefaultFontSize +
+                _DrawingContext.fontDescent(this.currentFont, this.currentFontSize) +
+                _FontHeightMargin;
+            this.currentYPosition -= differenceYPosition;
         }
     }
  }

@@ -43,9 +43,14 @@ var TSOS;
                     this.buffer = "";
                 }
                 else if (chr === String.fromCharCode(8)) { // Backspace key
-                    // Remove Previous Character from Screen
-                    console.log("Backspace Key Registered");
-                    this.removeText(chr);
+                    // Check Buffer for Chars
+                    if (this.buffer) {
+                        this.removeText(this.buffer.charAt(this.buffer.length - 1), this.buffer.length - 1);
+                        this.buffer = this.buffer.slice(0, -1);
+                    }
+                    // Reset the tab index and list
+                    // this.tabIndex = 0;
+                    // this.tabList = [];
                 }
                 else {
                     // This is a "normal" character, so ...
@@ -65,7 +70,6 @@ var TSOS;
                 do the same thing, thereby encouraging confusion and decreasing readability, I
                 decided to write one function and use the term "text" to connote string or char.
             */
-            console.log("Text being handled: " + text);
             if (text !== "") {
                 // Draw the text at the current X and Y coordinates.
                 _DrawingContext.drawText(this.currentFont, this.currentFontSize, this.currentXPosition, this.currentYPosition, text);
@@ -74,11 +78,19 @@ var TSOS;
                 this.currentXPosition = this.currentXPosition + offset;
             }
         };
-        Console.prototype.removeText = function (text) {
-            console.log("BACKSPACE PRESSED");
-            // HAVE TO DRAW ON CANVAS canvas.stroke();
-            var offset = _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
-            _DrawingContext.clearRect(this.currentXPosition - offset, this.currentYPosition, TSOS.CanvasTextFunctions.letter(text).width, _DefaultFontSize + _DrawingContext.fontDescent(this.currentFont, this.currentFontSize));
+        Console.prototype.removeText = function (text, bufferLength) {
+            console.log("Buffer: " + this.buffer.toString());
+            // Check if text is wrapped
+            if (bufferLength > 0 && this.currentXPosition <= 0) {
+                this.getLineWidth();
+            }
+            // Calculate Rectangle Size
+            var xOffset = this.currentXPosition - _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
+            var yOffset = this.currentYPosition - _DefaultFontSize;
+            // Erase Character 
+            _DrawingContext.clearRect(xOffset, yOffset, this.currentXPosition, this.currentYPosition + _DrawingContext.fontDescent(this.currentFont, this.currentFontSize));
+            // Update Current XPosition
+            this.currentXPosition = this.currentXPosition - _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
         };
         Console.prototype.advanceLine = function () {
             this.currentXPosition = 0;
@@ -100,6 +112,17 @@ var TSOS;
                 console.log("MARKER HIT");
                 _DrawingContext.clearRect(0, 0, _Canvas.width, _Canvas.height);
             }
+        };
+        Console.prototype.getLineWidth = function () {
+            // Calculate Updateded Line Length
+            // X Position
+            this.currentXPosition = _DrawingContext.measureText(this.currentFont, this.currentFontSize, this.buffer);
+            this.currentXPosition += _DrawingContext.measureText(this.currentFont, this.currentFontSize, _OsShell.promptStr + _OsShell.nameStr);
+            // Y Position
+            var tempY = _DefaultFontSize +
+                _DrawingContext.fontDescent(this.currentFont, this.currentFontSize) +
+                _FontHeightMargin;
+            this.currentYPosition -= tempY;
         };
         return Console;
     }());

@@ -33,11 +33,11 @@ module TSOS {
             var isShifted = params[1];
 
             _Kernel.krnTrace("Key code:" + keyCode + " shifted:" + isShifted);
-            console.log("KeyCode: " + keyCode);
+            
             var chr = "";
 
             // Check to see if we even want to deal with the key that was pressed.
-            if ((keyCode >= 65) && (keyCode <= 90)) {                       // Letter
+            if ((keyCode >= 65) && (keyCode <= 90)) {                           // Letter
                 this.krnKbdDispatchLetter(params);
                 // TODO: Check for caps-lock and handle as shifted if so.
 
@@ -46,12 +46,12 @@ module TSOS {
                 
             } else if (keyCode >= 186) {
                 this.krnKbdDispatchSpecial(params);
-            } else if ((keyCode == 32) || (keyCode == 13)) {                    // Space + Enter
+
+            } else if ((keyCode == 32) || (keyCode == 13) 
+                || (keyCode == 8) || (keyCode == 9)) {  // Space + Enter + Backspace + Tab
                 chr = String.fromCharCode(keyCode);
                 _KernelInputQueue.enqueue(chr);
-            } else if (keyCode == 8) {                                          // Backspace
-                _KernelInputQueue.dequeue();
-            }
+            } 
         }
 
         public krnKbdDispatchLetter(params) {

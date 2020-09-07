@@ -81,6 +81,9 @@ var TSOS;
             ctx.restore();
             return total;
         };
+        CanvasTextFunctions.erase = function (ctx, x, y, w, h) {
+            ctx.clearRect(x, y, w, h);
+        };
         CanvasTextFunctions.enable = function (ctx) {
             ctx.drawText = function (font, size, x, y, text) { return CanvasTextFunctions.draw(ctx, font, size, x, y, text); };
             ctx.measureText = function (font, size, text) { return CanvasTextFunctions.measure(font, size, text); };
