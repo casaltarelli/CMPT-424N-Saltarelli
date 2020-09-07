@@ -76,6 +76,7 @@ var TSOS;
         };
         Console.prototype.removeText = function (text) {
             console.log("BACKSPACE PRESSED");
+            // HAVE TO DRAW ON CANVAS canvas.stroke();
             var offset = _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
             _DrawingContext.clearRect(this.currentXPosition - offset, this.currentYPosition, TSOS.CanvasTextFunctions.letter(text).width, _DefaultFontSize + _DrawingContext.fontDescent(this.currentFont, this.currentFontSize));
         };

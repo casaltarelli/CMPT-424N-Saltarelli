@@ -24,8 +24,6 @@ module TSOS {
         public enqueue(element) {
             this.q.push(element);
 
-            
-            //console.log(this.q.toString());
         }
 
         public dequeue() {

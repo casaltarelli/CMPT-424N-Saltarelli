@@ -22,7 +22,6 @@ var TSOS;
         };
         Queue.prototype.enqueue = function (element) {
             this.q.push(element);
-            //console.log(this.q.toString());
         };
         Queue.prototype.dequeue = function () {
             var retVal = null;

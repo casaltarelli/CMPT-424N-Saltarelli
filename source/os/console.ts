@@ -79,9 +79,10 @@ module TSOS {
 
         public removeText(text): void {
             console.log("BACKSPACE PRESSED");
+
+            // HAVE TO DRAW ON CANVAS canvas.stroke();
             var offset = _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
-            _DrawingContext.clearRect(this.currentXPosition - offset, 
-                this.currentYPosition, CanvasTextFunctions.letter(text).width, _DefaultFontSize + _DrawingContext.fontDescent(this.currentFont, this.currentFontSize));
+            _DrawingContext.clearRect(this.currentXPosition - offset, this.currentYPosition, CanvasTextFunctions.letter(text).width, _DefaultFontSize + _DrawingContext.fontDescent(this.currentFont, this.currentFontSize));
         }
 
         public advanceLine(): void {
