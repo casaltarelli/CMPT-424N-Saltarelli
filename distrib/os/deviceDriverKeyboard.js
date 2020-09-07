@@ -55,7 +55,7 @@ var TSOS;
             else if (keyCode >= 186) {
                 this.krnKbdDispatchSpecial(params);
             }
-            else if ((keyCode == 32) || (keyCode == 13) || (keyCode == 8)) { // Space + Enter
+            else if ((keyCode == 32) || (keyCode == 13) || (keyCode == 8) || (keyCode == 9)) { // Space + Enter + Backspace + Tab
                 chr = String.fromCharCode(keyCode);
                 _KernelInputQueue.enqueue(chr);
             }

@@ -13,7 +13,10 @@ module TSOS {
                     public currentFontSize = _DefaultFontSize,
                     public currentXPosition = 0,
                     public currentYPosition = _DefaultFontSize,
-                    public buffer = "") {
+                    public buffer = "",
+                    public tabList = [],
+                    public tabIndex = 0,
+                    public tabRegex = null) {
         }
 
         public init(): void {
@@ -51,9 +54,44 @@ module TSOS {
                     }
 
                     // Reset the tab index and list
-                    // this.tabIndex = 0;
-                    // this.tabList = [];
+                    this.tabIndex = 0;
+                    this.tabList = [];
 
+                } else if (chr == String.fromCharCode(9) && this.buffer) { // Tab Key
+                    if (this.tabList.length == 0) {
+                        // Create RegEx to Test Against
+                        this.tabRegex = new RegExp(`^${this.buffer}`);
+
+                        // Push current Buffer to TabList
+                        this.tabList.push(this.buffer);
+                        
+
+                        // Search Commands for Match 
+                        for (let cmd of _OsShell.commandList) {
+                            if (this.tabRegex.test(cmd.command)) {
+                                this.tabList.push(cmd.command);
+                            }
+                        }
+
+                        // Check for Next Index 
+                        if (this.tabList[this.tabIndex + 1] == undefined) {
+                            this.clearLine();
+
+                            // Reset TabList + Canvas
+                            this.tabIndex = 0;
+                            this.putText(this.tabList[this.tabIndex]);
+                            this.buffer = this.tabList[this.tabIndex];
+                            this.tabList = [];
+
+                        } else {
+                            this.clearLine();
+                            
+                            // Increment TabIndex + Update Canvas 
+                            this.tabIndex++;
+                            this.putText(this.tabList[this.tabIndex]);
+                            this.buffer = this.tabList[this.tabIndex];
+                        }
+                    }
                 } else {
                     // This is a "normal" character, so ...
                     // ... draw it on the screen...
@@ -102,6 +140,15 @@ module TSOS {
             // Update Current XPosition
             this.currentXPosition = this.currentXPosition - _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
 
+        }
+
+        public clearLine() {
+            // Reset Buffer + Update Canvas
+            for (let i = this.buffer.length - 1; i > -1; i--) {
+                this.removeText(this.buffer.charAt(i), this.buffer.length);
+            }
+
+            this.buffer = "";
         }
 
         public advanceLine(): void {

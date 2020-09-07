@@ -7,17 +7,23 @@
 var TSOS;
 (function (TSOS) {
     var Console = /** @class */ (function () {
-        function Console(currentFont, currentFontSize, currentXPosition, currentYPosition, buffer) {
+        function Console(currentFont, currentFontSize, currentXPosition, currentYPosition, buffer, tabList, tabIndex, tabRegex) {
             if (currentFont === void 0) { currentFont = _DefaultFontFamily; }
             if (currentFontSize === void 0) { currentFontSize = _DefaultFontSize; }
             if (currentXPosition === void 0) { currentXPosition = 0; }
             if (currentYPosition === void 0) { currentYPosition = _DefaultFontSize; }
             if (buffer === void 0) { buffer = ""; }
+            if (tabList === void 0) { tabList = []; }
+            if (tabIndex === void 0) { tabIndex = 0; }
+            if (tabRegex === void 0) { tabRegex = null; }
             this.currentFont = currentFont;
             this.currentFontSize = currentFontSize;
             this.currentXPosition = currentXPosition;
             this.currentYPosition = currentYPosition;
             this.buffer = buffer;
+            this.tabList = tabList;
+            this.tabIndex = tabIndex;
+            this.tabRegex = tabRegex;
         }
         Console.prototype.init = function () {
             this.clearScreen();
@@ -49,8 +55,39 @@ var TSOS;
                         this.buffer = this.buffer.slice(0, -1);
                     }
                     // Reset the tab index and list
-                    // this.tabIndex = 0;
-                    // this.tabList = [];
+                    this.tabIndex = 0;
+                    this.tabList = [];
+                }
+                else if (chr == String.fromCharCode(9) && this.buffer) { // Tab Key
+                    if (this.tabList.length == 0) {
+                        // Create RegEx to Test Against
+                        this.tabRegex = new RegExp("^" + this.buffer);
+                        // Push current Buffer to TabList
+                        this.tabList.push(this.buffer);
+                        // Search Commands for Match 
+                        for (var _i = 0, _a = _OsShell.commandList; _i < _a.length; _i++) {
+                            var cmd = _a[_i];
+                            if (this.tabRegex.test(cmd.command)) {
+                                this.tabList.push(cmd.command);
+                            }
+                        }
+                        // Check for Next Index 
+                        if (this.tabList[this.tabIndex + 1] == undefined) {
+                            this.clearLine();
+                            // Reset TabList + Canvas
+                            this.tabIndex = 0;
+                            this.putText(this.tabList[this.tabIndex]);
+                            this.buffer = this.tabList[this.tabIndex];
+                            this.tabList = [];
+                        }
+                        else {
+                            this.clearLine();
+                            // Increment TabIndex + Update Canvas 
+                            this.tabIndex++;
+                            this.putText(this.tabList[this.tabIndex]);
+                            this.buffer = this.tabList[this.tabIndex];
+                        }
+                    }
                 }
                 else {
                     // This is a "normal" character, so ...
@@ -79,7 +116,6 @@ var TSOS;
             }
         };
         Console.prototype.removeText = function (text, bufferLength) {
-            console.log("Buffer: " + this.buffer.toString());
             // Check if text is wrapped
             if (bufferLength > 0 && this.currentXPosition <= 0) {
                 this.getLineWidth();
@@ -91,6 +127,13 @@ var TSOS;
             _DrawingContext.clearRect(xOffset, yOffset, this.currentXPosition, this.currentYPosition + _DrawingContext.fontDescent(this.currentFont, this.currentFontSize));
             // Update Current XPosition
             this.currentXPosition = this.currentXPosition - _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
+        };
+        Console.prototype.clearLine = function () {
+            // Reset Buffer + Update Canvas
+            for (var i = this.buffer.length - 1; i > -1; i--) {
+                this.removeText(this.buffer.charAt(i), this.buffer.length);
+            }
+            this.buffer = "";
         };
         Console.prototype.advanceLine = function () {
             this.currentXPosition = 0;
@@ -119,10 +162,10 @@ var TSOS;
             this.currentXPosition = _DrawingContext.measureText(this.currentFont, this.currentFontSize, this.buffer);
             this.currentXPosition += _DrawingContext.measureText(this.currentFont, this.currentFontSize, _OsShell.promptStr + _OsShell.nameStr);
             // Y Position
-            var tempY = _DefaultFontSize +
+            var differenceYPosition = _DefaultFontSize +
                 _DrawingContext.fontDescent(this.currentFont, this.currentFontSize) +
                 _FontHeightMargin;
-            this.currentYPosition -= tempY;
+            this.currentYPosition -= differenceYPosition;
         };
         return Console;
     }());
