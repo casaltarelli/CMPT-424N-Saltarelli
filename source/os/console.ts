@@ -144,7 +144,6 @@ module TSOS {
                     this.buffer += chr;
                 }
 
-                
                 // TODO: Add a case for Ctrl-C that would allow the user to break the current program.
             }
         }
@@ -170,16 +169,13 @@ module TSOS {
                 if (this.currentXPosition >= (_Canvas.width - _DefaultFontSize)) {
                     this.advanceLine();
                 }
-                
-
-
             }
         }
 
         public removeText(text, bufferLength) {
-            // Check if text is wrapped
+            // Check if text is wrapped - Update X & Y 
             if (bufferLength > 0 && this.currentXPosition <= 0) {
-                this.getLineWidth();
+                this.getWrap();
             }
 
             // Calculate Rectangle Size
@@ -214,20 +210,17 @@ module TSOS {
                                      _DrawingContext.fontDescent(this.currentFont, this.currentFontSize) +
                                      _FontHeightMargin;
 
-            // TODO: Handle scrolling. (iProject 1)
             if (this.currentYPosition > 490) {
-                // Save Current Canvas
-                // Reset line
-                // Redraw canvas
+                // Reset YPosition
                 this.currentYPosition = _DefaultFontSize;
-                console.log("MARKER HIT");
+                
+                // Clear Screen
                 _DrawingContext.clearRect(0, 0, _Canvas.width, _Canvas.height);
             }
         }
 
-        public getLineWidth() {
-            // Calculate Updateded Line Length
-
+        public getWrap() {
+            // Calculate New X + Y for Line Wrap
             // X Position
             this.currentXPosition = _DrawingContext.measureText(this.currentFont, this.currentFontSize, this.buffer);
             this.currentXPosition += _DrawingContext.measureText(this.currentFont, this.currentFontSize, _OsShell.promptStr + _OsShell.nameStr);
