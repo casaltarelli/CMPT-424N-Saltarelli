@@ -1,10 +1,9 @@
-2019 Browser-based Operating System in TypeScript
+Browser-based Operating System in TypeScript
 =================================================
 
-This is Alan's Operating Systems class initial project.
+This is Christian Saltarelli's Operating Systems class project.
 See https://www.labouseur.com/courses/os/ for details.
 It was originally developed by Alan and then enhanced by Bob Nisco and Rebecca Murphy over the years.
-Fork this (or clone, but fork is probably better in case Alan changes anything about the initial project) into your own private repository. Or download it as a ZIP file. Then add Alan (userid *Labouseur*) as a collaborator.
 
 Setup TypeScript
 ================
@@ -38,12 +37,8 @@ I find Gulp annoying, so consider use a compile script from the command line.
 A Few Notes
 ===========
 
-**What's TypeScript?**
-TypeScript is a language that allows you to write in a statically-typed language that outputs standard JavaScript.
-It's all kinds of awesome.
+**Prof. Labouseur**
+Please grade for iProject I the master branch of this project.
 
-**Why should I use it?**
-This will be especially helpful for an OS or a Compiler that may need to run in the browser as you will have all of the great benefits of strong type checking and scope rules built right into your language.
-
-**Where can I get more info on TypeScript**
+**TypeScript Resources**
 [Right this way!](http://www.typescriptlang.org/)
