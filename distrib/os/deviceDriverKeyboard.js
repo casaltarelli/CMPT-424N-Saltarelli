@@ -55,11 +55,11 @@ var TSOS;
             else if (keyCode >= 186) {
                 this.krnKbdDispatchSpecial(params);
             }
-            else if (keyCode == 38) {
+            else if (keyCode == 38) { // Up Arrow
                 chr = "up_arrow"; // Manually Assign Value for Arrow Key
                 _KernelInputQueue.enqueue(chr);
             }
-            else if (keyCode == 40) {
+            else if (keyCode == 40) { // Up Arrow
                 chr = "down_arrow"; // Manually Assign Value for Arrow Key
                 _KernelInputQueue.enqueue(chr);
             }

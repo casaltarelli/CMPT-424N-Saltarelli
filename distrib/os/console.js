@@ -159,9 +159,9 @@ var TSOS;
             }
         };
         Console.prototype.removeText = function (text, bufferLength) {
-            // Check if text is wrapped
+            // Check if text is wrapped - Update X & Y 
             if (bufferLength > 0 && this.currentXPosition <= 0) {
-                this.getLineWidth();
+                this.getWrap();
             }
             // Calculate Rectangle Size
             var xOffset = this.currentXPosition - _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
@@ -188,18 +188,22 @@ var TSOS;
             this.currentYPosition += _DefaultFontSize +
                 _DrawingContext.fontDescent(this.currentFont, this.currentFontSize) +
                 _FontHeightMargin;
-            // TODO: Handle scrolling. (iProject 1)
-            if (this.currentYPosition > 490) {
-                // Save Current Canvas
-                // Reset line
-                // Redraw canvas
-                this.currentYPosition = _DefaultFontSize;
-                console.log("MARKER HIT");
-                _DrawingContext.clearRect(0, 0, _Canvas.width, _Canvas.height);
+            // Check if Canvas needs to be Scrolled
+            if (this.currentYPosition > _Canvas.height) {
+                // Get Image Data + Clear Current Console
+                var consoleData = _DrawingContext.getImageData(0, 0, _Canvas.width, this.currentYPosition + _FontHeightMargin);
+                this.clearScreen();
+                // Calculate Change to YPosition
+                var differenceYPosition = this.currentYPosition - _Canvas.height + _FontHeightMargin;
+                // Display Image Data at updated YPosition
+                _DrawingContext.putImageData(consoleData, 0, -(differenceYPosition));
+                // Reset XPosition + Update YPosition
+                this.currentXPosition = 0;
+                this.currentYPosition -= differenceYPosition;
             }
         };
-        Console.prototype.getLineWidth = function () {
-            // Calculate Updateded Line Length
+        Console.prototype.getWrap = function () {
+            // Calculate New X + Y for Line Wrap
             // X Position
             this.currentXPosition = _DrawingContext.measureText(this.currentFont, this.currentFontSize, this.buffer);
             this.currentXPosition += _DrawingContext.measureText(this.currentFont, this.currentFontSize, _OsShell.promptStr + _OsShell.nameStr);

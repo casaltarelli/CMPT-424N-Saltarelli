@@ -210,12 +210,21 @@ module TSOS {
                                      _DrawingContext.fontDescent(this.currentFont, this.currentFontSize) +
                                      _FontHeightMargin;
 
-            if (this.currentYPosition > 490) {
-                // Reset YPosition
-                this.currentYPosition = _DefaultFontSize;
-                
-                // Clear Screen
-                _DrawingContext.clearRect(0, 0, _Canvas.width, _Canvas.height);
+            // Check if Canvas needs to be Scrolled
+            if (this.currentYPosition > _Canvas.height) {
+                // Get Image Data + Clear Current Console
+                let consoleData = _DrawingContext.getImageData(0, 0, _Canvas.width, this.currentYPosition + _FontHeightMargin);
+                this.clearScreen();
+
+                // Calculate Change to YPosition
+                let differenceYPosition = this.currentYPosition - _Canvas.height + _FontHeightMargin;
+
+                // Display Image Data at updated YPosition
+                _DrawingContext.putImageData(consoleData, 0, -(differenceYPosition));
+
+                // Reset XPosition + Update YPosition
+                this.currentXPosition = 0;
+                this.currentYPosition -= differenceYPosition;
             }
         }
 
