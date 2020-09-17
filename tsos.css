@@ -1,12 +1,17 @@
 /* TSOS.css */
 
+/* General/Elements */
 body {
-  background: #cccdcf;
+  background: #CCCDCF;
+
   font-family: Helvetica, Verdana, Arial, sans-serif;
   font-size: 12pt;
   font-weight: normal;
   font-style: normal;
-  overflow: hidden;
+}
+
+.main {
+  margin: 0 auto;
 }
 
 h1 {
@@ -31,10 +36,34 @@ h3 {
   font-style: normal;
 }
 
-#display {
-  background-color:#DFDBC3;
-  cursor: default;
+/* Control Bar */
+.control-bar {
+  width: 100vw;
+  display: block;
+  padding-top: 15px;
+  margin-left: 4px; 
+  text-align: left;
 }
+
+.title-text {
+  text-decoration: none;
+  color: #494949;
+
+  font-size: 20px;
+  font-weight: 700;
+
+  display: inline;
+  right: 4%;
+  position: absolute;
+
+  transition: all 0.4s ease 0s;
+}
+
+.title-text:hover {
+  color: #303030;
+}
+
+
 
 .normal_button {
   width: 100px;
@@ -82,14 +111,43 @@ input[type=button]:hover {
   border-color: #f6b93b !important;
 }
 
-.footerText {
-  color: black;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 8pt;
+/* OS Wrapper + OS Conatiner */
+.os {
+  padding-top: 15px;
+  width: 100vw;
+  display: block;
+}
+
+.os-wrapper {
+  display: grid;
+  grid-template-columns: 45% 55%;
+  grid-template-rows: 50vw;
+  grid-gap: 1em;
+}
+
+.flex-wrapper {
+  display: flex;
+}
+
+/* OS Console */
+.os-console {
+  display: flex;
+}
+
+#display {
+  background-color:#DFDBC3;
+  cursor: default;
+}
+
+table {
+  background-color: #A9A9A9;
+  border: 4px solid #494949 !important;
+  border-radius: 1px; 
+
   text-align: center;
 }
 
-.consoleTaskBar {
+.console-task-bar {
   width: 500px; 
   height: 45px; 
 
@@ -108,8 +166,6 @@ input[type=button]:hover {
 
 #taskbar li {
   display: inline;
-
-  margin: 0 auto;
   padding-top: 2px;
 }
 
@@ -120,6 +176,20 @@ input[type=button]:hover {
   border-top: none;
 }
 
+/* Hardware Display */
+.hardware-display {
+  width: 100%;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.hardware-wrapper {
+  display: grid;
+  grid-template-columns: 28% 72%;
+  grid-template-rows: 50vw;
+  grid-gap: 1em;  
+}
+
 label {
   font-size: 13px;
   font-weight: 700;
@@ -127,4 +197,49 @@ label {
   color: #494949;
 }
 
+table {
+  width: 100%;
+}
 
+tbody {
+  width: auto;
+
+  text-align: center;
+}
+
+#border-cell {
+  border: 1px solid #494949;
+
+}
+
+.div-block {
+  width: 100%;
+}
+
+#divCPU {
+  margin-top: 1em;
+}
+
+/* Information Display */
+.info-display {
+  width: 62vw;
+  display: block;
+
+  margin-left: 4px;
+  margin-top: 10px;
+}
+
+.info-wrapper {
+  display: grid;
+  grid-template-columns: 50% 50%;
+  grid-template-rows: 20vw;
+  grid-gap: 1em; 
+}
+
+/* Footer */
+.footerText {
+  color: black;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 8pt;
+  text-align: center;
+}

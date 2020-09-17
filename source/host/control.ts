@@ -69,6 +69,148 @@ module TSOS {
             // TODO in the future: Optionally update a log database or some streaming service.
         }
 
+        // Display Updates
+        public static updatePCBDisplay() {
+            // Get Elements
+            let table = document.getElementById("tablePCB");
+            let newTBody = document.createElement("tbody");
+            table.style.display = "block";
+            
+            // Create + Update Row w/ PCB Data
+            let row;
+            row = newTBody.insertRow(-1);
+
+            row.insertCell(-1).innerHTML = _PCB.state.toLocaleUpperCase();
+            row.insertCell(-1).innerHTML = _PCB.PC;
+            row.insertCell(-1).innerHTML = _PCB.Acc.toString(16).toLocaleUpperCase();
+            row.insertCell(-1).innerHTML = _PCB.Xreg.toString(16).toLocaleUpperCase();
+            row.insertCell(-1).innerHTML = _PCB.Yreg.toString(16).toLocaleUpperCase();
+            row.insertCell(-1).innerHTML = _PCB.Zflag.toString(16);
+
+            // Replace Old TBody
+            table.replaceChild(newTBody, table.childNodes[0]);
+        }
+
+        public static updateCPUDisplay() {
+            // Get Elements
+            let table = document.getElementById("tableCPU");
+            let newTBody = document.createElement("tbody");
+
+            // Create + Update Row for CPU Data
+            let row;
+            row = newTBody.insertRow(-1);
+
+            row.insertCell(-1).innerHTML = _CPU.PC;
+            row.insertCell(-1).innerHTML = _CPU.IR;
+            row.insertCell(-1).innerHTML = _CPU.Acc.toString(16).toLocaleUpperCase();
+            row.insertCell(-1).innerHTML = _CPU.Xreg.toString(16).toLocaleUpperCase();
+            row.insertCell(-1).innerHTML = _CPU.Yreg.toString(16).toLocaleUpperCase();
+            row.insertCell(-1).innerHTML = _CPU.Zflag.toString(16);
+
+            // Replace Old TBody
+            table.replaceChild(newTBody, table.childNodes[0]);
+        }
+
+        public static updateMemoryDisplay() {
+            let opCodeInfo = {"A9": {"operandNumber": 1},
+                "AD": { "operandNumber": 2 },
+                "8D": { "operandNumber": 2 },
+                "6D": { "operandNumber": 2 },
+                "A2": { "operandNumber": 1 },
+                "AE": { "operandNumber": 2 },
+                "A0": { "operandNumber": 1 },
+                "AC": { "operandNumber": 2 },
+                "EA": { "operandNumber": 0 },
+                "00": { "operandNumber": 0 },
+                "EC": { "operandNumber": 2 },
+                "D0": { "operandNumber": 1 },
+                "EE": { "operandNumber": 2 },
+                "FF": { "operandNumber": 0 }
+            };
+
+            // Update Display
+            let table = document.getElementById("tableMemory");
+            let newTBody = document.createElement("tbody");
+
+            table.style.display = "block";
+
+            // Add Memory
+            let row;
+            let rowLabel = "0x00";
+            let rowNumber = 0;
+
+            let placeNumber = 0;
+            let physicalAddress = 0;
+            let memory = _MemoryAccessor.dump();
+            console.log
+            let highlightedCell;
+
+            for (let i = 0; i < _MemoryAccessor.getTotalSize() / 8; i++) {
+                // CREATE ROW
+                row = newTBody.insertRow(-1);
+
+                rowNumber = 8 * i;
+                if (rowNumber > 255) {
+                    placeNumber = 2
+                }else if (rowNumber > 15) {
+                    placeNumber = 3;
+                } else {
+                    placeNumber = 4;
+                }
+
+                row.insertCell(-1).innerHTML = rowLabel.slice(0, placeNumber) + rowNumber.toString(16).toLocaleUpperCase();
+
+                // Add Memory Information POPULATE EACH ROW
+                let cell;
+                let currentInstruction;
+                let operandHighlights = [];
+
+                for (let j = 0; j < 8; j++) {
+                    cell = row.insertCell(-1);
+                    cell.innerHTML = memory[physicalAddress].toLocaleUpperCase();
+                    cell.id = "border-cell"
+                    currentInstruction = TSOS.Utils.padHexValue(_CPU.IR.toString(16).toLocaleUpperCase());
+
+                    // Add Hover being read in the Display
+                    if (_CPU.PCB && _CPU.isExecuting && opCodeInfo[currentInstruction]) {
+
+                        if (_CPU.PCB.memory.baseRegister + _CPU.PC - opCodeInfo[currentInstruction].operandNumber - 1 == physicalAddress) {
+                            cell.style.backgroundColor = "#E6F2FF";
+
+                            highlightedCell = cell;
+                            operandHighlights[0] = opCodeInfo[currentInstruction].operandNumber;
+                            operandHighlights[1] = false;
+
+                            // Check for D0 Branch
+                            if (currentInstruction == "D0") {
+                                operandHighlights[0] = 0;
+                            }
+
+                            // Highlight Operands
+                            if (operandHighlights[0] > 0 && operandHighlights[1]) {
+                                cell.style.backgroundColor = "#80BFFF";
+                                highlightedCell = cell;
+                                operandHighlights[0]--;
+                            }
+
+                            // Skip Highlight Operands
+                            if (operandHighlights[0] > 0 && !operandHighlights[1]) {
+                                operandHighlights[1] = true;
+                            }
+
+                        }
+                    }
+                    physicalAddress++;
+                }
+
+                // Update TBody
+                table.replaceChild(newTBody, table.childNodes[0]);
+
+                if (highlightedCell) {
+                    highlightedCell.scrollIntoView({block: "nearest"});
+                }
+            }
+        }
 
         //
         // Host Events

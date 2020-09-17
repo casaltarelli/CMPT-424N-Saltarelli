@@ -419,7 +419,14 @@ module TSOS {
             let regex = /^[A-Fa-f0-9]+$/;
 
             if (regex.test(userInput)) {
-                _StdOut.putText("Hex Code is Valid.")
+                let input = userInput.match(/.{2}/g);
+                let pcb = _MemoryManager.load(input);
+
+                // Text Load Success
+                if (pcb) {
+                    _StdOut.putText('Program with PID ' + pcb.pid + ' loaded into main memory');
+                } 
+
             } else {
                 _StdOut.putText("Hex Code could not be validated. Please try again.");
             }

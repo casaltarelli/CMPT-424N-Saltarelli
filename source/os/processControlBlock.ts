@@ -9,12 +9,13 @@ module TSOS {
     export class processControlBlock {
         constructor(public state = "new",
                     public PC = 0,
+                    public pid = _PIDCounter++,
                     public Acc = 0,
                     public Xreg = 0,
                     public Yreg = 0,
                     public Zflag = 0,
-                    public pid = _PIDCounter++,
-                    public memory = {}) {}
+                    public memory = {},
+                    public memoryLocation = "Main Memory") {}
 
         terminate() {
             this.state = "terminated";

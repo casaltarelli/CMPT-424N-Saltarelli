@@ -58,6 +58,124 @@ var TSOS;
             taLog.value = str + taLog.value;
             // TODO in the future: Optionally update a log database or some streaming service.
         };
+        // Display Updates
+        Control.updatePCBDisplay = function () {
+            // Get Elements
+            var table = document.getElementById("tablePCB");
+            var newTBody = document.createElement("tbody");
+            table.style.display = "block";
+            // Create + Update Row w/ PCB Data
+            var row;
+            row = newTBody.insertRow(-1);
+            row.insertCell(-1).innerHTML = _PCB.state.toLocaleUpperCase();
+            row.insertCell(-1).innerHTML = _PCB.PC;
+            row.insertCell(-1).innerHTML = _PCB.Acc.toString(16).toLocaleUpperCase();
+            row.insertCell(-1).innerHTML = _PCB.Xreg.toString(16).toLocaleUpperCase();
+            row.insertCell(-1).innerHTML = _PCB.Yreg.toString(16).toLocaleUpperCase();
+            row.insertCell(-1).innerHTML = _PCB.Zflag.toString(16);
+            // Replace Old TBody
+            table.replaceChild(newTBody, table.childNodes[0]);
+        };
+        Control.updateCPUDisplay = function () {
+            // Get Elements
+            var table = document.getElementById("tableCPU");
+            var newTBody = document.createElement("tbody");
+            // Create + Update Row for CPU Data
+            var row;
+            row = newTBody.insertRow(-1);
+            row.insertCell(-1).innerHTML = _CPU.PC;
+            row.insertCell(-1).innerHTML = _CPU.IR;
+            row.insertCell(-1).innerHTML = _CPU.Acc.toString(16).toLocaleUpperCase();
+            row.insertCell(-1).innerHTML = _CPU.Xreg.toString(16).toLocaleUpperCase();
+            row.insertCell(-1).innerHTML = _CPU.Yreg.toString(16).toLocaleUpperCase();
+            row.insertCell(-1).innerHTML = _CPU.Zflag.toString(16);
+            // Replace Old TBody
+            table.replaceChild(newTBody, table.childNodes[0]);
+        };
+        Control.updateMemoryDisplay = function () {
+            var opCodeInfo = { "A9": { "operandNumber": 1 },
+                "AD": { "operandNumber": 2 },
+                "8D": { "operandNumber": 2 },
+                "6D": { "operandNumber": 2 },
+                "A2": { "operandNumber": 1 },
+                "AE": { "operandNumber": 2 },
+                "A0": { "operandNumber": 1 },
+                "AC": { "operandNumber": 2 },
+                "EA": { "operandNumber": 0 },
+                "00": { "operandNumber": 0 },
+                "EC": { "operandNumber": 2 },
+                "D0": { "operandNumber": 1 },
+                "EE": { "operandNumber": 2 },
+                "FF": { "operandNumber": 0 }
+            };
+            // Update Display
+            var table = document.getElementById("tableMemory");
+            var newTBody = document.createElement("tbody");
+            table.style.display = "block";
+            // Add Memory
+            var row;
+            var rowLabel = "0x00";
+            var rowNumber = 0;
+            var placeNumber = 0;
+            var physicalAddress = 0;
+            var memory = _MemoryAccessor.dump();
+            console.log;
+            var highlightedCell;
+            for (var i = 0; i < _MemoryAccessor.getTotalSize() / 8; i++) {
+                // CREATE ROW
+                row = newTBody.insertRow(-1);
+                rowNumber = 8 * i;
+                if (rowNumber > 255) {
+                    placeNumber = 2;
+                }
+                else if (rowNumber > 15) {
+                    placeNumber = 3;
+                }
+                else {
+                    placeNumber = 4;
+                }
+                row.insertCell(-1).innerHTML = rowLabel.slice(0, placeNumber) + rowNumber.toString(16).toLocaleUpperCase();
+                // Add Memory Information POPULATE EACH ROW
+                var cell = void 0;
+                var currentInstruction = void 0;
+                var operandHighlights = [];
+                for (var j = 0; j < 8; j++) {
+                    cell = row.insertCell(-1);
+                    cell.innerHTML = memory[physicalAddress].toLocaleUpperCase();
+                    cell.id = "border-cell";
+                    currentInstruction = TSOS.Utils.padHexValue(_CPU.IR.toString(16).toLocaleUpperCase());
+                    // Add Hover being read in the Display
+                    if (_CPU.PCB && _CPU.isExecuting && opCodeInfo[currentInstruction]) {
+                        if (_CPU.PCB.memory.baseRegister + _CPU.PC - opCodeInfo[currentInstruction].operandNumber - 1 == physicalAddress) {
+                            cell.style.backgroundColor = "#E6F2FF";
+                            highlightedCell = cell;
+                            operandHighlights[0] = opCodeInfo[currentInstruction].operandNumber;
+                            operandHighlights[1] = false;
+                            // Check for D0 Branch
+                            if (currentInstruction == "D0") {
+                                operandHighlights[0] = 0;
+                            }
+                            // Highlight Operands
+                            if (operandHighlights[0] > 0 && operandHighlights[1]) {
+                                cell.style.backgroundColor = "#80BFFF";
+                                highlightedCell = cell;
+                                operandHighlights[0]--;
+                            }
+                            // Skip Highlight Operands
+                            if (operandHighlights[0] > 0 && !operandHighlights[1]) {
+                                operandHighlights[1] = true;
+                            }
+                        }
+                    }
+                    physicalAddress++;
+                }
+                // Update TBody
+                table.replaceChild(newTBody, table.childNodes[0]);
+                if (highlightedCell) {
+                    highlightedCell.scrollIntoView({ block: "nearest" });
+                }
+            }
+        };
         //
         // Host Events
         //
@@ -72,6 +190,10 @@ var TSOS;
             // ... Create and initialize the CPU (because it's part of the hardware)  ...
             _CPU = new TSOS.Cpu(); // Note: We could simulate multi-core systems by instantiating more than one instance of the CPU here.
             _CPU.init(); //       There's more to do, like dealing with scheduling and such, but this would be a start. Pretty cool.
+            // ... Create and initialize Main Memory 
+            _Memory = new TSOS.Memory();
+            _Memory.init();
+            _MemoryAccessor = new TSOS.MemoryAccessor();
             // ... then set the host clock pulse ...
             _hardwareClockID = setInterval(TSOS.Devices.hostClockPulse, CPU_CLOCK_INTERVAL);
             // .. and call the OS Kernel Bootstrap routine.

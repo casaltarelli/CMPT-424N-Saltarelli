@@ -15,6 +15,8 @@
    <script type="text/javascript" src="distrib/host/control.js"></script>
    <script type="text/javascript" src="distrib/host/devices.js"></script>
    <script type="text/javascript" src="distrib/host/cpu.js"></script>
+   <script type="text/javascript" src="distrib/host/memory.js"></script>
+   <script type="text/javascript" src="distrib/host/memoryAccessor.js"></script>
 
    <!-- Virtual OS Routines: Make sure Kernel code is last, since it needs those above it. -->
    <script type="text/javascript" src="distrib/os/interrupt.js"></script>
@@ -27,6 +29,8 @@
    <script type="text/javascript" src="distrib/os/shellCommand.js"></script>
    <script type="text/javascript" src="distrib/os/userCommand.js"></script>
    <script type="text/javascript" src="distrib/os/kernel.js"></script>
+   <script type="text/javascript" src="distrib/os/memoryManager.js"></script>
+   <script type="text/javascript" src="distrib/os/processControlBlock.js"></script>
 
    <!-- Other Routines -->
    <script type="text/javascript" src="distrib/utils.js"></script>
@@ -37,83 +41,158 @@
 
 <body onload="onDocumentLoad()">
 
-<div id="divMain" style="width:100%;">
+<div class="main" style="width:100vw">
 
-   <div id="divButtonBar" style="margin:4px;">
-      <input type="button"
-             id = "btnStartOS"
-             name="brnStartOS"
-             class="normal_button"
-             value="START"
-             tabindex="0"
-             onclick="TSOS.Control.hostBtnStartOS_click(this);">
-
-      <input type="button"
-             id = "btnHaltOS"
-             name="brnHaltOS"
-             class="normal_button"
-             disabled="disabled"
-             value="HALT"
-             tabindex="1"
-             onclick="TSOS.Control.hostBtnHaltOS_click(this);">
-
-      <input type="button"
-             id = "btnReset"
-             name="brnReset"
-             class="normal_button"
-             disabled="disabled"
-             value="RESET"
-             tabindex="2"
-             onclick="TSOS.Control.hostBtnReset_click(this);">
-   </div>
-
-   <div id="divConsole" style="margin:4px; width:500px; height:500px; float:left;">
-      <div class="consoleTaskBar">
-         <ul id="taskbar" style="text-align: center;">
-            <li id="dateText" style="float: left;"></li>
-            <li id="statusMsg" style="float: right; margin-right: 50px;"></li>
-          </ul>
+   <section class="control-bar">
+      <a href="#" class="title-text"><p>TypeScript CSOS</p></a>
+      <div id="divButtonBar" style="margin:4px;">
+         <input type="button"
+                id = "btnStartOS"
+                name="brnStartOS"
+                class="normal_button"
+                value="START"
+                tabindex="0"
+                onclick="TSOS.Control.hostBtnStartOS_click(this);">
+   
+         <input type="button"
+                id = "btnHaltOS"
+                name="brnHaltOS"
+                class="normal_button"
+                disabled="disabled"
+                value="HALT"
+                tabindex="1"
+                onclick="TSOS.Control.hostBtnHaltOS_click(this);">
+   
+         <input type="button"
+                id = "btnReset"
+                name="brnReset"
+                class="normal_button"
+                disabled="disabled"
+                value="RESET"
+                tabindex="2"
+                onclick="TSOS.Control.hostBtnReset_click(this);">
       </div>
+   </section>
+   
 
-      <canvas id="display"
-         width="500px"
-         height="500px"
-         tabindex="3">
-      </canvas>  
-   </div>
+   <section class="os">
+      <div class="os-wrapper">
+         <section class="os-console">
+            <div id="divConsole" style="margin:4px; width:500px;">
+               <div class="console-task-bar">
+                  <ul id="taskbar" style="text-align: center;">
+                     <li id="dateText" style="float: left;"></li>
+                     <li id="statusMsg" style="float: right; margin-right: 50px;"></li>
+                   </ul>
+               </div>
+         
+               <canvas id="display"
+                  width="500px"
+                  height="639px"
+                  tabindex="3">
+               </canvas>  
+            </div>
 
-   <div id="divLog" style="margin-left:520px;">
-      <label>
-         HOST LOG
-         <br>
-         <textarea name="taHostLog"
-                   id  ="taHostLog"
-                   rows="26"
-                   cols="48"
-         ></textarea>
-      </label>
-   </div>
+         </section> <!-- OS Console -->
+         
+         <section class="hardware-display" style="margin: 0 auto;">
+            <div class="hardware-wrapper">
+               <div class="flex-wrapper" style="padding: 5px;">
+                  <div id="divMemory">
+                     <label>
+                        MEMORY DISPLAY
+                        <br>
+                        <table id="tableMemory">
+                           <tbody></tbody>
+                        </table>
+                     </label>
+                  </div>
+               </div>
+               
+               <div style="padding: 5px; margin: 0 auto; margin-right: 10%;">
+                  <div class="div-block" id="divPCB">
+                     <label>
+                        PCB DISPLAY
+                        <br>
+                        <table id="tablePCB"> <!-- Will need to add PID in future implementations -->
+                           <thead>
+                              <tr>
+                                 <th>State</th>
+                                 <th>PC</th>
+                                 <th>Acc</th>
+                                 <th>Xreg</th>
+                                 <th>Yreg</th>
+                                 <th>Yreg</th>
+                                 <th>Zflag</th>
+                              </tr>
+                           </thead>
+                           <tbody>
+                              <tr></tr>
+                           </tbody>
+                        </table>
+                     </label>
+                  </div>
+      
+                  <div class="div-block" id="divCPU">
+                     <label>
+                        CPU DISPLAY
+                        <br>
+                        <table id="tableCPU">
+                           <thead>
+                              <tr>
+                                 <th>PC</th>
+                                 <th>IR</th>
+                                 <th>Acc</th>
+                                 <th>Xreg</th>
+                                 <th>Yreg</th>
+                                 <th>Zflag</th>
+                              </tr>
+                           </thead>
+                           <tbody>
+                              <tr></tr>
+                           </tbody>
+                        </table>
+                     </label>
+                  </div>
+            </div>
+         </section> <!-- Hardware Display -->
+      </div> <!-- OS Wrapper -->
+   </section> <!-- OS Section -->
 
-   <div id="divUserProgramInput" style="margin-left:520px;">
-      <label>
-         USER PROGRAM INPUT
-         <br>
-         <textarea name="taProgramInput"
-                   id  ="taProgramInput"
-                   rows="8"
-                   cols="48"
-         ></textarea>
-      </label>
-   </div>
+   <section class="info-display">
+      <div class="info-wrapper">
+         <div class="flex-wrapper" id="divLog">
+            <label>
+               HOST LOG
+               <br>
+               <textarea name="taHostLog"
+                        id  ="taHostLog"
+                        rows="15"
+                        cols="48"
+               ></textarea>
+            </label>
+         </div>
+         <div class="flex-wrapper" id="divUserProgramInput">
+            <label>
+               USER PROGRAM INPUT
+               <br>
+               <textarea name="taProgramInput"
+                        id  ="taProgramInput"
+                        rows="15"
+                        cols="48"
+               ></textarea>
+            </label>
+         </div>
+      </div>
+   </section> <!-- Information + Input Display -->
+   
+   <p class="footerText" style="clear:both;">
+      <br>
+      Copyright &copy; 2008 - 2019 No Rights Reserved.
+      <br>
+      Reproduction is inhibited without the express written consent of
+      Ted Codd, Stevie Ray Vaughan, and Ian Fleming.
+   </p>
 </div>
-
-<p class="footerText" style="clear:both;">
-   <br>
-   Copyright &copy; 2008 - 2019 No Rights Reserved.
-   <br>
-   Reproduction is inhibited without the express written consent of
-   Ted Codd, Stevie Ray Vaughan, and Ian Fleming.
-</p>
-
 </body>
 </html>

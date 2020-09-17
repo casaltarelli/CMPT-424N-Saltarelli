@@ -37,6 +37,7 @@ module TSOS {
 
             // Initialize Memory Manager
             _MemoryManager = new MemoryManager();
+            _MemoryManager.init();
 
             // Enable the OS Interrupts.  (Not the CPU clock interrupt, as that is done in the hardware sim.)
             this.krnTrace("Enabling the interrupts.");
@@ -73,6 +74,10 @@ module TSOS {
                This, on the other hand, is the clock pulse from the hardware / VM / host that tells the kernel
                that it has to look for interrupts and process them if it finds any.                          
             */
+           // TODO: Update HTML Tables for Memory + PCB Display
+           Control.updateMemoryDisplay();
+           //Control.updatePCBDisplay();
+
 
             // Check for an interrupt, if there are any. Page 560
             if (_KernelInterruptQueue.getSize() > 0) {
@@ -82,11 +87,15 @@ module TSOS {
                 this.krnInterruptHandler(interrupt.irq, interrupt.params);
             } else if (_CPU.isExecuting) { // If there are no interrupts then run one CPU cycle if there is anything being processed.
                 _CPU.cycle();
+
+                // Update CPU Display
+                //Control.updateCPUDisplay();
             } else {                       // If there are no interrupts and there is nothing being executed then just be idle.
                 this.krnTrace("Idle");
             }
 
-            //TODO: Implement Update HTML Elements Memory, CPU, & PCB Tables
+            
+
         }
 
 

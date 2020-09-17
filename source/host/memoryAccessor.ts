@@ -11,13 +11,13 @@
             constructor() {}
     
             /**
-             * getTotalSize(logicalAddress) : number
+             * read(logicalAddress)
              * - Return Data contained in Main Memory
              *   at the provided Logical Address
              */
             read(logicalAddress) {
                 // Validate that logical address is actually applicable to Main Memory
-                if (logicalAddress > _MemoryAccessor.getTotalSize()) {
+                if (logicalAddress > _MemoryAccessor.getTotalSize() || logicalAddress < 0) {
                     // Trap Error
                     _Kernel.krnTrapError("Memory read exception: Memory address is out of bounds");
                 } else {
@@ -39,6 +39,8 @@
                     return false;
                 } else {
                     _Memory.mainMemory[logicalAddress] = value;
+                    console.log("Memory: " + _Memory.mainMemory.toString());
+                    return true
                 }
             }
 
@@ -52,6 +54,10 @@
                 for (let i = 0; i < _MemoryAccessor.getTotalSize(); i++) {
                     _Memory.mainMemory[i] = "00";
                 }
+            }
+
+            dump() {
+                return _Memory.mainMemory;
             }
 
             /**

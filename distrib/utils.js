@@ -44,6 +44,13 @@ var TSOS;
             }
             return retVal;
         };
+        Utils.padHexValue = function (str) {
+            while (str.length < 2) {
+                // Pad Value
+                str = "0" + str;
+            }
+            return str;
+        };
         return Utils;
     }());
     TSOS.Utils = Utils;

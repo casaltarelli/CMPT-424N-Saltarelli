@@ -16,6 +16,7 @@ module TSOS {
     export class Cpu {
 
         constructor(public PC: number = 0,
+                    public IR: number = 0x00,
                     public Acc: number = 0,
                     public Xreg: number = 0,
                     public Yreg: number = 0,
@@ -27,6 +28,7 @@ module TSOS {
 
         public init(): void {
             this.PC = 0;
+            this.IR = 0x00;
             this.Acc = 0;
             this.Xreg = 0;
             this.Yreg = 0;
@@ -39,40 +41,48 @@ module TSOS {
             _Kernel.krnTrace('CPU cycle');
             // TODO: Accumulate CPU usage and profiling statistics here.
             // Do the real work here. Be sure to set this.isExecuting appropriately.
+            this.IR = parseInt(_MemoryAccessor.read(this.PCB.memory), 16);
 
-            var opCode;
             // Read over given OP Code
-            switch(opCode) {
+            switch(this.IR) {
                 case 0xA9:
                     // Call on LoadAccumulatorConstant()
+                    this.loadAccWithConstant();
                     break;
 
                 case 0xAD:
                     // Call on LoadAccumulatorMemory()
+                    this.loadAccFromMemory(); 
                     break;
 
                 case 0x8D:
                     // Call on StoreAccumulatorMemory()
+                    this.storeAccInMemory();
                     break;
 
                 case 0x6D:
                     // Call on AddWithCarry()
+                    this.addWithCarry();
                     break;
 
                 case 0xA2:
                     // Call on LoadXConstant()
+                    this.loadXRegWithConstant();
                     break;
 
                 case 0xAE:
                     // Call on LoadXMemory()
+                    this.loadXRegFromMemory();
                     break;
 
                 case 0xA0:
                     // Call on LoadYConstant()
+                    this.loadYRegWithConstant
                     break;
 
                 case 0xAC:
                     // Call on LoadYMemory()
+                    this.loadYRegFromMemory();
                     break;
 
                 case 0xEA:
@@ -100,13 +110,68 @@ module TSOS {
                     break;
 
                 default: 
-                    _Kernel.krnTrapError(`Process Execution Exception: Instruction '${opCode.toUpperCode()}' is not valid`);
+                    _Kernel.krnTrapError(`Process Execution Exception: Instruction '${this.IR.toString(16).toUpperCase()}' is not valid`);
                     this.isExecuting = false;    
                     break;
             }
         }
 
         //TODO: Implement Op Code Functionality
+        increasePC() {
+            this.PC++;
+        }
+        // OP Codes
+        loadAccWithConstant() {
+            this.increasePC();
+            this.Acc = parseInt(_MemoryAccessor.read(this.PC), 16);
+        }
+
+        loadAccFromMemory() {
+            this.increasePC();
+            let address = parseInt(_MemoryAccessor.read(this.PC), 16);
+            this.increasePC();
+            this.Acc = parseInt(_MemoryAccessor.read(address), 16);
+        }
+
+        storeAccInMemory() {
+            this.increasePC();
+            let address = parseInt(_MemoryAccessor.read(this.PC), 16);
+            this.increasePC();
+            _MemoryAccessor.write(address, this.Acc.toString(16));
+        }
+
+        addWithCarry() {
+            this.increasePC();
+            let address = parseInt(_MemoryAccessor.read(this.PC), 16);
+            this.increasePC();
+            this.Acc += parseInt(_MemoryAccessor.read(address), 16);
+
+        }
+
+        loadXRegWithConstant() {
+            this.increasePC();
+            this.Xreg = parseInt(_MemoryAccessor.read(this.PC), 16);
+        }
+
+        loadXRegFromMemory() {
+            this.increasePC();
+            let address = parseInt(_MemoryAccessor.read(this.PC), 16);
+            this.increasePC();
+            this.Xreg = parseInt(_MemoryAccessor.read(address), 16);
+        }
+
+        loadYRegWithConstant() {
+            this.increasePC();
+            this.Yreg = parseInt(_MemoryAccessor.read(this.PC), 16);
+
+        }
+
+        loadYRegFromMemory() {
+            this.increasePC();
+            let address = parseInt(_MemoryAccessor.read(this.PC), 16);
+            this.increasePC();
+            this.Yreg = parseInt(_MemoryAccessor.read(address), 16);
+        }
 
     }
 }
