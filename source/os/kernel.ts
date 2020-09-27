@@ -74,10 +74,10 @@ module TSOS {
                This, on the other hand, is the clock pulse from the hardware / VM / host that tells the kernel
                that it has to look for interrupts and process them if it finds any.                          
             */
-           // TODO: Update HTML Tables for Memory + PCB Display
-           Control.updateMemoryDisplay();
-           //Control.updatePCBDisplay();
-
+           
+            // TODO: Update HTML Tables for Memory + PCB Display
+            _CPU.saveState();
+            Control.updateMemoryDisplay();
 
             // Check for an interrupt, if there are any. Page 560
             if (_KernelInterruptQueue.getSize() > 0) {
@@ -86,16 +86,16 @@ module TSOS {
                 var interrupt = _KernelInterruptQueue.dequeue();
                 this.krnInterruptHandler(interrupt.irq, interrupt.params);
             } else if (_CPU.isExecuting) { // If there are no interrupts then run one CPU cycle if there is anything being processed.
+                // Update CPU Display
+                Control.updateCPUDisplay();
+                Control.updatePCBDisplay();
+
                 _CPU.cycle();
 
-                // Update CPU Display
-                //Control.updateCPUDisplay();
+
             } else {                       // If there are no interrupts and there is nothing being executed then just be idle.
                 this.krnTrace("Idle");
             }
-
-            
-
         }
 
 
@@ -130,6 +130,19 @@ module TSOS {
                 case KEYBOARD_IRQ:
                     _krnKeyboardDriver.isr(params);   // Kernel mode device driver
                     _StdIn.handleInput();
+                    break;
+                case PRINT_YREGISTER_IRQ:
+                    _StdOut.putText(_CPU.Yreg.toString());
+                    break;
+                case PRINT_FROM_MEMORY_IRQ:
+                    let output = "";
+                    let address = _CPU.Yreg;
+                    let value = parseInt(_MemoryAccessor.read(address), 16);
+
+                    while (value != 0) {
+                        output += String.fromCharCode(value);
+                        value = parseInt(_MemoryAccessor.read(++address), 16);
+                    }
                     break;
                 default:
                     this.krnTrapError("Invalid Interrupt Request. irq=" + irq + " params=[" + params + "]");

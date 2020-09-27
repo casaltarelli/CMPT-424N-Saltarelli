@@ -7,7 +7,7 @@
 var TSOS;
 (function (TSOS) {
     var processControlBlock = /** @class */ (function () {
-        function processControlBlock(state, PC, pid, Acc, Xreg, Yreg, Zflag, memory, memoryLocation) {
+        function processControlBlock(state, PC, pid, Acc, Xreg, Yreg, Zflag) {
             if (state === void 0) { state = "new"; }
             if (PC === void 0) { PC = 0; }
             if (pid === void 0) { pid = _PIDCounter++; }
@@ -15,8 +15,6 @@ var TSOS;
             if (Xreg === void 0) { Xreg = 0; }
             if (Yreg === void 0) { Yreg = 0; }
             if (Zflag === void 0) { Zflag = 0; }
-            if (memory === void 0) { memory = {}; }
-            if (memoryLocation === void 0) { memoryLocation = "Main Memory"; }
             this.state = state;
             this.PC = PC;
             this.pid = pid;
@@ -24,12 +22,18 @@ var TSOS;
             this.Xreg = Xreg;
             this.Yreg = Yreg;
             this.Zflag = Zflag;
-            this.memory = memory;
-            this.memoryLocation = memoryLocation;
         }
         processControlBlock.prototype.terminate = function () {
+            var _this = this;
+            // Update State + Ready Queue
             this.state = "terminated";
-            // TODO: Add in Terminated Functionality
+            _ReadyQueue = _ReadyQueue.filter(function (element) { return element.pid != _this.pid; });
+            // Update Console
+            _StdOut.advanceLine();
+            _StdOut.putText("Process " + this.pid + " terminated.");
+            _StdOut.advanceLine();
+            _OsShell.putName();
+            _OsShell.putPrompt();
         };
         return processControlBlock;
     }());

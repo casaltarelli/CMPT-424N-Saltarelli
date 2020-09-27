@@ -17,12 +17,9 @@
                 this.limitRegister = _MemoryAccessor.getTotalSize() - 1;
             }
 
-            
-
             load(program) {
                 // Create PCB for new program
                 let pcb = new processControlBlock();
-                _PCB = pcb;
 
                 // Clear Memory of Old Programs
                 _MemoryAccessor.clear();
@@ -41,6 +38,9 @@
                 // Update PCB State + Global Reference
                 pcb.state = "resident";
                 _PCB = pcb;
+
+                // Add PCB to Resident List
+                _ResidentList.push(pcb);
 
                 // Return our updated PCB
                 return pcb;

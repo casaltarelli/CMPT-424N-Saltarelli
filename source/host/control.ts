@@ -85,30 +85,46 @@ module TSOS {
             row.insertCell(-1).innerHTML = _PCB.Acc.toString(16).toLocaleUpperCase();
             row.insertCell(-1).innerHTML = _PCB.Xreg.toString(16).toLocaleUpperCase();
             row.insertCell(-1).innerHTML = _PCB.Yreg.toString(16).toLocaleUpperCase();
-            row.insertCell(-1).innerHTML = _PCB.Zflag.toString(16);
+            row.insertCell(-1).innerHTML = _PCB.Zflag.toString(16).toLocaleUpperCase();
 
             // Replace Old TBody
             table.replaceChild(newTBody, table.childNodes[0]);
         }
 
         public static updateCPUDisplay() {
+            let opCodeInfo = {"A9": {"operandNumber": 1},
+                "AD": { "operandNumber": 2 },
+                "8D": { "operandNumber": 2 },
+                "6D": { "operandNumber": 2 },
+                "A2": { "operandNumber": 1 },
+                "AE": { "operandNumber": 2 },
+                "A0": { "operandNumber": 1 },
+                "AC": { "operandNumber": 2 },
+                "EA": { "operandNumber": 0 },
+                "00": { "operandNumber": 0 },
+                "EC": { "operandNumber": 2 },
+                "D0": { "operandNumber": 1 },
+                "EE": { "operandNumber": 2 },
+                "FF": { "operandNumber": 0 }
+            };
+
             // Get Elements
-            let table = document.getElementById("tableCPU");
-            let newTBody = document.createElement("tbody");
+            let table = (<HTMLTableElement >document.getElementById("tableCPU"));
+            let row = table.rows[1];
+            let currentInstruction = TSOS.Utils.padHexValue(_CPU.IR.toString(16).toLocaleUpperCase());
 
-            // Create + Update Row for CPU Data
-            let row;
-            row = newTBody.insertRow(-1);
+            // Validate Current Instruction
+            if (!opCodeInfo[currentInstruction]) {
+                return; // Don't Update
+            }
 
-            row.insertCell(-1).innerHTML = _CPU.PC;
-            row.insertCell(-1).innerHTML = _CPU.IR;
-            row.insertCell(-1).innerHTML = _CPU.Acc.toString(16).toLocaleUpperCase();
-            row.insertCell(-1).innerHTML = _CPU.Xreg.toString(16).toLocaleUpperCase();
-            row.insertCell(-1).innerHTML = _CPU.Yreg.toString(16).toLocaleUpperCase();
-            row.insertCell(-1).innerHTML = _CPU.Zflag.toString(16);
-
-            // Replace Old TBody
-            table.replaceChild(newTBody, table.childNodes[0]);
+            // Update Row for CPU Data
+            row.cells[0].innerHTML = (_CPU.PC - opCodeInfo[currentInstruction].operandNumber - 1).toString();
+            row.cells[1].innerHTML = currentInstruction;
+            row.cells[2].innerHTML = _CPU.Acc.toString(16).toLocaleUpperCase();
+            row.cells[3].innerHTML = _CPU.Xreg.toString(16).toLocaleUpperCase();
+            row.cells[4].innerHTML = _CPU.Yreg.toString(16).toLocaleUpperCase();
+            row.cells[5].innerHTML = _CPU.Zflag.toString(16);
         }
 
         public static updateMemoryDisplay() {
@@ -142,11 +158,10 @@ module TSOS {
             let placeNumber = 0;
             let physicalAddress = 0;
             let memory = _MemoryAccessor.dump();
-            console.log
             let highlightedCell;
 
             for (let i = 0; i < _MemoryAccessor.getTotalSize() / 8; i++) {
-                // CREATE ROW
+                // Create Row
                 row = newTBody.insertRow(-1);
 
                 rowNumber = 8 * i;
@@ -160,7 +175,7 @@ module TSOS {
 
                 row.insertCell(-1).innerHTML = rowLabel.slice(0, placeNumber) + rowNumber.toString(16).toLocaleUpperCase();
 
-                // Add Memory Information POPULATE EACH ROW
+                // Populate respective Row with cells
                 let cell;
                 let currentInstruction;
                 let operandHighlights = [];
@@ -174,7 +189,7 @@ module TSOS {
                     // Add Hover being read in the Display
                     if (_CPU.PCB && _CPU.isExecuting && opCodeInfo[currentInstruction]) {
 
-                        if (_CPU.PCB.memory.baseRegister + _CPU.PC - opCodeInfo[currentInstruction].operandNumber - 1 == physicalAddress) {
+                        if (_MemoryManager.baseRegister + _CPU.PC - opCodeInfo[currentInstruction].operandNumber - 1 == physicalAddress) {
                             cell.style.backgroundColor = "#E6F2FF";
 
                             highlightedCell = cell;

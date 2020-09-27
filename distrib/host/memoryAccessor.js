@@ -32,14 +32,14 @@ var TSOS;
          */
         MemoryAccessor.prototype.write = function (logicalAddress, value) {
             // Pad Hex Value if only one character
-            // TODO: Create Hex Padding Functionality
+            // Check if val needs to get padded
+            TSOS.Utils.padHexValue(value);
             if (logicalAddress > _MemoryAccessor.getTotalSize() || logicalAddress < 0) {
                 _Kernel.krnTrapError("Memory write exception: Memory address is out of bounds");
                 return false;
             }
             else {
                 _Memory.mainMemory[logicalAddress] = value;
-                console.log("Memory: " + _Memory.mainMemory.toString());
                 return true;
             }
         };

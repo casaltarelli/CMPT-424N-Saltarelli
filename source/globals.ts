@@ -19,6 +19,8 @@ const CPU_CLOCK_INTERVAL: number = 100;   // This is in ms (milliseconds) so 100
 const TIMER_IRQ: number = 0;  // Pages 23 (timer), 9 (interrupts), and 561 (interrupt priority).
                               // NOTE: The timer is different from hardware/host clock pulses. Don't confuse these.
 const KEYBOARD_IRQ: number = 1;
+const PRINT_YREGISTER_IRQ: number = 2;
+const PRINT_FROM_MEMORY_IRQ: number = 3;
 
 
 //
@@ -26,15 +28,17 @@ const KEYBOARD_IRQ: number = 1;
 // TODO: Make a global object and use that instead of the "_" naming convention in the global namespace.
 //
 // Hardware (Host)
-var _CPU: TSOS.Cpu = null;  // Utilize TypeScript's type annotation system to ensure that _CPU is an instance of the Cpu class.
-var _Memory: TSOS.Memory = null;
-var _MemoryAccessor: TSOS.MemoryAccessor = null;
+var _CPU: TSOS.Cpu;  // Utilize TypeScript's type annotation system to ensure that _CPU is an instance of the Cpu class.
+var _Memory: TSOS.Memory;
+var _MemoryAccessor: TSOS.MemoryAccessor;
 
 // Software (OS) 
-var _MemoryManager: TSOS.MemoryManager = null;
+var _MemoryManager: TSOS.MemoryManager;
 var _PIDCounter = 0;
 
-var _PCB : TSOS.processControlBlock = null;
+var _PCB : TSOS.processControlBlock;
+var _ResidentList = []; // List of all PCBs resident within the system
+var _ReadyQueue = []; // List of all PCBs ready within the system
 
 var _OSclock: number = 0;  // Page 23.
 

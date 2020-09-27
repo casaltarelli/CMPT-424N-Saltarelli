@@ -23,7 +23,6 @@ var TSOS;
         MemoryManager.prototype.load = function (program) {
             // Create PCB for new program
             var pcb = new TSOS.processControlBlock();
-            _PCB = pcb;
             // Clear Memory of Old Programs
             _MemoryAccessor.clear();
             // Load Program into Memory
@@ -38,6 +37,8 @@ var TSOS;
             // Update PCB State + Global Reference
             pcb.state = "resident";
             _PCB = pcb;
+            // Add PCB to Resident List
+            _ResidentList.push(pcb);
             // Return our updated PCB
             return pcb;
         };

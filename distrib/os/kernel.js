@@ -65,8 +65,8 @@ var TSOS;
                that it has to look for interrupts and process them if it finds any.
             */
             // TODO: Update HTML Tables for Memory + PCB Display
+            _CPU.saveState();
             TSOS.Control.updateMemoryDisplay();
-            //Control.updatePCBDisplay();
             // Check for an interrupt, if there are any. Page 560
             if (_KernelInterruptQueue.getSize() > 0) {
                 // Process the first interrupt on the interrupt queue.
@@ -75,9 +75,10 @@ var TSOS;
                 this.krnInterruptHandler(interrupt.irq, interrupt.params);
             }
             else if (_CPU.isExecuting) { // If there are no interrupts then run one CPU cycle if there is anything being processed.
-                _CPU.cycle();
                 // Update CPU Display
-                //Control.updateCPUDisplay();
+                TSOS.Control.updateCPUDisplay();
+                TSOS.Control.updatePCBDisplay();
+                _CPU.cycle();
             }
             else { // If there are no interrupts and there is nothing being executed then just be idle.
                 this.krnTrace("Idle");
@@ -111,6 +112,18 @@ var TSOS;
                 case KEYBOARD_IRQ:
                     _krnKeyboardDriver.isr(params); // Kernel mode device driver
                     _StdIn.handleInput();
+                    break;
+                case PRINT_YREGISTER_IRQ:
+                    _StdOut.putText(_CPU.Yreg.toString());
+                    break;
+                case PRINT_FROM_MEMORY_IRQ:
+                    var output = "";
+                    var address = _CPU.Yreg;
+                    var value = parseInt(_MemoryAccessor.read(address), 16);
+                    while (value != 0) {
+                        output += String.fromCharCode(value);
+                        value = parseInt(_MemoryAccessor.read(++address), 16);
+                    }
                     break;
                 default:
                     this.krnTrapError("Invalid Interrupt Request. irq=" + irq + " params=[" + params + "]");

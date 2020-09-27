@@ -57,16 +57,19 @@ var TSOS;
             sc = new TSOS.ShellCommand(this.shellSetName, "setname", "- Sets username.");
             this.commandList[this.commandList.length] = sc;
             // name 
-            sc = new TSOS.ShellCommand(this.shellName, "name", "- Displays username");
+            sc = new TSOS.ShellCommand(this.shellName, "name", "- Displays username.");
             this.commandList[this.commandList.length] = sc;
             // status <string>
-            sc = new TSOS.ShellCommand(this.shellStatus, "status", "- <string> Updates User Status");
+            sc = new TSOS.ShellCommand(this.shellStatus, "status", "- <string> Updates User Status.");
             this.commandList[this.commandList.length] = sc;
             // death
-            sc = new TSOS.ShellCommand(this.shellDeath, "death", "- death Displays BSOD Message for OS errors");
+            sc = new TSOS.ShellCommand(this.shellDeath, "death", "- death Displays BSOD Message for OS errors.");
             this.commandList[this.commandList.length] = sc;
             // load
-            sc = new TSOS.ShellCommand(this.shellLoad, "load", "- load Validates User Code");
+            sc = new TSOS.ShellCommand(this.shellLoad, "load", "- load validates user code and uploads to main memory.");
+            this.commandList[this.commandList.length] = sc;
+            // run
+            sc = new TSOS.ShellCommand(this.shellRun, "run", " - <pid> run executes a process by a specified pid.");
             this.commandList[this.commandList.length] = sc;
             // ps  - list the running processes and their IDs
             // kill <id> - kills the specified process id.
@@ -342,11 +345,47 @@ var TSOS;
                 var pcb = _MemoryManager.load(input);
                 // Text Load Success
                 if (pcb) {
-                    _StdOut.putText('Program with PID ' + pcb.pid + ' loaded into main memory');
+                    _StdOut.putText("Program with PID " + pcb.pid + " loaded into main memory.");
                 }
             }
             else {
                 _StdOut.putText("Hex Code could not be validated. Please try again.");
+            }
+        };
+        Shell.prototype.shellRun = function (args) {
+            if (args.length > 0) {
+                // Get Process PCB
+                var pid = parseInt(args[0]);
+                var pcb = void 0;
+                // Find Process within ResidentList
+                for (var _i = 0, _ResidentList_1 = _ResidentList; _i < _ResidentList_1.length; _i++) {
+                    var process = _ResidentList_1[_i];
+                    if (process.pid == pid) {
+                        pcb = process;
+                    }
+                }
+                // Update Console
+                if (!pcb) {
+                    _StdOut.putText("Process " + pid + " does not exist.");
+                }
+                else if (pcb.state === "ready") {
+                    _StdOut.putText("Process " + pid + " is already running.");
+                }
+                else if (pcb.state === "terminated") {
+                    _StdOut.putText("Procedd " + pid + " had already ran and has been terminated.");
+                }
+                else {
+                    _StdOut.putText("Running process " + pid + ".");
+                    // Reset CPU
+                    _CPU.init();
+                    // Update State + Enqueue PCB to Ready Queue
+                    pcb.state = "ready";
+                    _ReadyQueue.push(pcb);
+                    _PCB = pcb;
+                    // Update CPU Status
+                    _CPU.PCB = pcb;
+                    _CPU.isExecuting = true;
+                }
             }
         };
         return Shell;
