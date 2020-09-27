@@ -131,6 +131,13 @@ module TSOS {
                     _krnKeyboardDriver.isr(params);   // Kernel mode device driver
                     _StdIn.handleInput();
                     break;
+                case TERMINATE_CURRENT_PROCESS_IRQ:
+                    if (_CPU.PCB && _CPU.PCB.state != "terminate") {
+                        _CPU.saveState();
+                        _CPU.PCB.terminate();
+                        _CPU.isExecuting = false;
+                    }
+                    break;
                 case PRINT_YREGISTER_IRQ:
                     _StdOut.putText(_CPU.Yreg.toString());
                     break;

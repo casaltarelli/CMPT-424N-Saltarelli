@@ -146,6 +146,16 @@ module TSOS {
             }
         }
 
+        updateState(pcb) {
+            this.saveState();
+            this.PCB = pcb;
+            this.PC = pcb.PC;
+            this.Acc = pcb.Acc;
+            this.Xreg = pcb.Xreg;
+            this.Yreg = pcb.Yreg;
+            this.Zflag = pcb.Zflag;
+        }
+
         getFullAddress() {
             // Increase PC to get First Part
             this.increasePC();

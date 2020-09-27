@@ -376,14 +376,12 @@ var TSOS;
                 }
                 else {
                     _StdOut.putText("Running process " + pid + ".");
-                    // Reset CPU
-                    _CPU.init();
                     // Update State + Enqueue PCB to Ready Queue
                     pcb.state = "ready";
                     _ReadyQueue.push(pcb);
                     _PCB = pcb;
-                    // Update CPU Status
-                    _CPU.PCB = pcb;
+                    // Update CPU State + Status
+                    _CPU.updateState(pcb);
                     _CPU.isExecuting = true;
                 }
             }

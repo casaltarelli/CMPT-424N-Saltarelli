@@ -28,6 +28,7 @@ var TSOS;
             // Update State + Ready Queue
             this.state = "terminated";
             _ReadyQueue = _ReadyQueue.filter(function (element) { return element.pid != _this.pid; });
+            console.log("PROCESS TERMINATED");
             // Update Console
             _StdOut.advanceLine();
             _StdOut.putText("Process " + this.pid + " terminated.");
