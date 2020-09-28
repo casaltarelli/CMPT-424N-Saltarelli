@@ -190,7 +190,8 @@ module TSOS {
                     if (_CPU.PCB && _CPU.isExecuting && opCodeInfo[currentInstruction]) {
 
                         if (_MemoryManager.baseRegister + _CPU.PC - opCodeInfo[currentInstruction].operandNumber - 1 == physicalAddress) {
-                            cell.style.backgroundColor = "#E6F2FF";
+                            cell.style.backgroundColor = "#CCCDCF";
+                            cell.style.borderColor = "#89B0AE";
 
                             highlightedCell = cell;
                             operandHighlights[0] = opCodeInfo[currentInstruction].operandNumber;
@@ -203,7 +204,7 @@ module TSOS {
 
                             // Highlight Operands
                             if (operandHighlights[0] > 0 && operandHighlights[1]) {
-                                cell.style.backgroundColor = "#80BFFF";
+                                cell.style.borderColor = "#57CC99";
                                 highlightedCell = cell;
                                 operandHighlights[0]--;
                             }
@@ -234,9 +235,11 @@ module TSOS {
             // Disable the (passed-in) start button...
             btn.disabled = true;
 
-            // .. enable the Halt and Reset buttons ...
+            // .. enable the Halt + Reset + Step buttons ...
             (<HTMLButtonElement>document.getElementById("btnHaltOS")).disabled = false;
             (<HTMLButtonElement>document.getElementById("btnReset")).disabled = false;
+            (<HTMLButtonElement>document.getElementById("btnStep")).disabled = false;
+            (<HTMLButtonElement>document.getElementById("btnNext")).disabled = false;
 
             // .. set focus on the OS console display ...
             document.getElementById("display").focus();
@@ -273,6 +276,40 @@ module TSOS {
             // That boolean parameter is the 'forceget' flag. When it is true it causes the page to always
             // be reloaded from the server. If it is false or not specified the browser may reload the
             // page from its cache, which is not what we want.
+        }
+
+        public static hostBtnStep_click(btn): void {
+            // TODO: Implement Step Functionality
+            _Step = !_Step; 
+
+            // Update Btn CSS
+            // Display Next Btn
+            let btnNext = document.getElementById("btnNext");
+            btnNext.style.display = _Step ? "inline-block" : "none";
+
+            // Update Spacing
+            let btnStart = document.getElementById("btnStartOS");
+            let btnHalt = document.getElementById("btnHaltOS");
+            let btnReset = document.getElementById("btnReset");
+
+            if (_Step) {
+                btnStart.style.marginRight = "30px";
+                btnHalt.style.marginRight = "30px";
+                btnReset.style.marginRight = "30px";
+                btn.style.marginRight = "5px !important";
+            } else {
+                btnStart.style.marginRight = "43.5px";
+                btnHalt.style.marginRight = "43.5px";
+                btnReset.style.marginRight = "43.5px";
+                btn.style.marginRight = "5px !important";
+            }
+        }
+
+        public static hostBtnNext_click(btn): void {
+            // TODO: Implement Next Step Functionality
+            if (_Step) {
+                _NextStep = true;
+            }
         }
     }
 }

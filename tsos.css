@@ -73,10 +73,10 @@ h3 {
 }
 
 input[type=button] {
-  width: 100px;
+  width: 90px;
   height: 50px;
 
-  margin-right: 25px;
+  margin-right: 43.5px;
 
   font-size: 13px;
   font-weight: 700;
@@ -109,6 +109,27 @@ input[type=button]:hover {
 #btnReset:hover {
   background: #f6b93b;
   border-color: #f6b93b !important;
+}
+
+#btnStep {
+  margin-right: 5px;
+}
+
+#btnStep:hover {
+  background-color: #46494c;
+  border-color: #46494c !important;
+}
+
+#btnNext {
+  width: 30px;
+  height: 50px;
+
+  display: none;
+}
+
+#btnNext:hover {
+  background: #57cc99;
+  border-color: #57cc99!important; 
 }
 
 /* OS Wrapper + OS Conatiner */

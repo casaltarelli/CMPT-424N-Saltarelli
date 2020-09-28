@@ -52,6 +52,9 @@ var _StdOut = null;
 // UI
 var _Console;
 var _OsShell;
+// Single Step Functionality
+var _Step = false;
+var _NextStep = false;
 // At least this OS is not trying to kill you. (Yet.)
 var _SarcasticMode = false;
 // Global Device Driver Objects - page 12

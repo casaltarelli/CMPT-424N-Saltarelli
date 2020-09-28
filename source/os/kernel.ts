@@ -75,7 +75,7 @@ module TSOS {
                that it has to look for interrupts and process them if it finds any.                          
             */
            
-            // TODO: Update HTML Tables for Memory + PCB Display
+            // Save CPU State + Update Memory
             _CPU.saveState();
             Control.updateMemoryDisplay();
 
@@ -86,12 +86,18 @@ module TSOS {
                 var interrupt = _KernelInterruptQueue.dequeue();
                 this.krnInterruptHandler(interrupt.irq, interrupt.params);
             } else if (_CPU.isExecuting) { // If there are no interrupts then run one CPU cycle if there is anything being processed.
+                if (_Step) {
+                    if (_NextStep) {
+                        _CPU.cycle();  
+                        _NextStep = false; 
+                    }
+                } else {
+                    _CPU.cycle();
+                }
+
                 // Update CPU Display
                 Control.updateCPUDisplay();
                 Control.updatePCBDisplay();
-
-                _CPU.cycle();
-
 
             } else {                       // If there are no interrupts and there is nothing being executed then just be idle.
                 this.krnTrace("Idle");

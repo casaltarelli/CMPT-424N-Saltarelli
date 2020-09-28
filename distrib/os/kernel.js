@@ -64,7 +64,7 @@ var TSOS;
                This, on the other hand, is the clock pulse from the hardware / VM / host that tells the kernel
                that it has to look for interrupts and process them if it finds any.
             */
-            // TODO: Update HTML Tables for Memory + PCB Display
+            // Save CPU State + Update Memory
             _CPU.saveState();
             TSOS.Control.updateMemoryDisplay();
             // Check for an interrupt, if there are any. Page 560
@@ -75,10 +75,18 @@ var TSOS;
                 this.krnInterruptHandler(interrupt.irq, interrupt.params);
             }
             else if (_CPU.isExecuting) { // If there are no interrupts then run one CPU cycle if there is anything being processed.
+                if (_Step) {
+                    if (_NextStep) {
+                        _CPU.cycle();
+                        _NextStep = false;
+                    }
+                }
+                else {
+                    _CPU.cycle();
+                }
                 // Update CPU Display
                 TSOS.Control.updateCPUDisplay();
                 TSOS.Control.updatePCBDisplay();
-                _CPU.cycle();
             }
             else { // If there are no interrupts and there is nothing being executed then just be idle.
                 this.krnTrace("Idle");
@@ -114,9 +122,7 @@ var TSOS;
                     _StdIn.handleInput();
                     break;
                 case TERMINATE_CURRENT_PROCESS_IRQ:
-                    console.log("TERMINATE RECOGNIZED");
                     if (_CPU.PCB && _CPU.PCB.state != "terminate") {
-                        console.log("CALLED TERMINATE");
                         _CPU.saveState();
                         _CPU.PCB.terminate();
                         _CPU.isExecuting = false;

@@ -162,7 +162,8 @@ var TSOS;
                     // Add Hover being read in the Display
                     if (_CPU.PCB && _CPU.isExecuting && opCodeInfo[currentInstruction]) {
                         if (_MemoryManager.baseRegister + _CPU.PC - opCodeInfo[currentInstruction].operandNumber - 1 == physicalAddress) {
-                            cell.style.backgroundColor = "#E6F2FF";
+                            cell.style.backgroundColor = "#CCCDCF";
+                            cell.style.borderColor = "#89B0AE";
                             highlightedCell = cell;
                             operandHighlights[0] = opCodeInfo[currentInstruction].operandNumber;
                             operandHighlights[1] = false;
@@ -172,7 +173,7 @@ var TSOS;
                             }
                             // Highlight Operands
                             if (operandHighlights[0] > 0 && operandHighlights[1]) {
-                                cell.style.backgroundColor = "#80BFFF";
+                                cell.style.borderColor = "#57CC99";
                                 highlightedCell = cell;
                                 operandHighlights[0]--;
                             }
@@ -197,9 +198,11 @@ var TSOS;
         Control.hostBtnStartOS_click = function (btn) {
             // Disable the (passed-in) start button...
             btn.disabled = true;
-            // .. enable the Halt and Reset buttons ...
+            // .. enable the Halt + Reset + Step buttons ...
             document.getElementById("btnHaltOS").disabled = false;
             document.getElementById("btnReset").disabled = false;
+            document.getElementById("btnStep").disabled = false;
+            document.getElementById("btnNext").disabled = false;
             // .. set focus on the OS console display ...
             document.getElementById("display").focus();
             // ... Create and initialize the CPU (because it's part of the hardware)  ...
@@ -230,6 +233,36 @@ var TSOS;
             // That boolean parameter is the 'forceget' flag. When it is true it causes the page to always
             // be reloaded from the server. If it is false or not specified the browser may reload the
             // page from its cache, which is not what we want.
+        };
+        Control.hostBtnStep_click = function (btn) {
+            // TODO: Implement Step Functionality
+            _Step = !_Step;
+            // Update Btn CSS
+            // Display Next Btn
+            var btnNext = document.getElementById("btnNext");
+            btnNext.style.display = _Step ? "inline-block" : "none";
+            // Update Spacing
+            var btnStart = document.getElementById("btnStartOS");
+            var btnHalt = document.getElementById("btnHaltOS");
+            var btnReset = document.getElementById("btnReset");
+            if (_Step) {
+                btnStart.style.marginRight = "30px";
+                btnHalt.style.marginRight = "30px";
+                btnReset.style.marginRight = "30px";
+                btn.style.marginRight = "5px !important";
+            }
+            else {
+                btnStart.style.marginRight = "43.5px";
+                btnHalt.style.marginRight = "43.5px";
+                btnReset.style.marginRight = "43.5px";
+                btn.style.marginRight = "5px !important";
+            }
+        };
+        Control.hostBtnNext_click = function (btn) {
+            // TODO: Implement Next Step Functionality
+            if (_Step) {
+                _NextStep = true;
+            }
         };
         return Control;
     }());
