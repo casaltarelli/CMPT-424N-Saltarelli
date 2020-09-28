@@ -40,10 +40,16 @@ var TSOS;
         };
         DeviceDriverKeyboard.prototype.krnKbdDispatchKeyPress = function (params) {
             // Parse the params.  TODO: Check that the params are valid and osTrapError if not.
+            console.log("Params: " + params);
             var keyCode = params[0];
             var isShifted = params[1];
-            _Kernel.krnTrace("Key code:" + keyCode + " shifted:" + isShifted);
+            var ctrl = params[2];
+            _Kernel.krnTrace("Key code:" + keyCode + " shifted:" + isShifted + " ctrl:" + ctrl);
             var chr = "";
+            if (ctrl && keyCode == 67) { // Ctrl-C
+                chr = "ctrl-c";
+                _KernelInputQueue.enqueue(chr);
+            }
             // Check to see if we even want to deal with the key that was pressed.
             if ((keyCode >= 65) && (keyCode <= 90)) { // Letter
                 this.krnKbdDispatchLetter(params);

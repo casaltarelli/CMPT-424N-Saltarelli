@@ -35,9 +35,9 @@ module TSOS {
             _krnKeyboardDriver.driverEntry();                    // Call the driverEntry() initialization routine.
             this.krnTrace(_krnKeyboardDriver.status);
 
-            //
-            // ... more?
-            //
+            // Initialize Memory Manager
+            _MemoryManager = new MemoryManager();
+            _MemoryManager.init();
 
             // Enable the OS Interrupts.  (Not the CPU clock interrupt, as that is done in the hardware sim.)
             this.krnTrace("Enabling the interrupts.");
@@ -74,6 +74,10 @@ module TSOS {
                This, on the other hand, is the clock pulse from the hardware / VM / host that tells the kernel
                that it has to look for interrupts and process them if it finds any.                          
             */
+           
+            // Save CPU State + Update Memory
+            _CPU.saveState();
+            Control.updateMemoryDisplay();
 
             // Check for an interrupt, if there are any. Page 560
             if (_KernelInterruptQueue.getSize() > 0) {
@@ -82,7 +86,19 @@ module TSOS {
                 var interrupt = _KernelInterruptQueue.dequeue();
                 this.krnInterruptHandler(interrupt.irq, interrupt.params);
             } else if (_CPU.isExecuting) { // If there are no interrupts then run one CPU cycle if there is anything being processed.
-                _CPU.cycle();
+                if (_Step) {
+                    if (_NextStep) {
+                        _CPU.cycle();  
+                        _NextStep = false; 
+                    }
+                } else {
+                    _CPU.cycle();
+                }
+
+                // Update CPU + PCB Display
+                Control.updateCPUDisplay();
+                Control.updatePCBDisplay();
+
             } else {                       // If there are no interrupts and there is nothing being executed then just be idle.
                 this.krnTrace("Idle");
             }
@@ -120,6 +136,26 @@ module TSOS {
                 case KEYBOARD_IRQ:
                     _krnKeyboardDriver.isr(params);   // Kernel mode device driver
                     _StdIn.handleInput();
+                    break;
+                case TERMINATE_CURRENT_PROCESS_IRQ:
+                    if (_CPU.PCB && _CPU.PCB.state != "terminate") {
+                        _CPU.saveState();
+                        _CPU.PCB.terminate();
+                        _CPU.isExecuting = false;
+                    }
+                    break;
+                case PRINT_YREGISTER_IRQ:
+                    _StdOut.putText(_CPU.Yreg.toString());
+                    break;
+                case PRINT_FROM_MEMORY_IRQ:
+                    let output = "";
+                    let address = _CPU.Yreg;
+                    let value = parseInt(_MemoryAccessor.read(address), 16);
+
+                    while (value != 0) {
+                        output += String.fromCharCode(value);
+                        value = parseInt(_MemoryAccessor.read(++address), 16);
+                    }
                     break;
                 default:
                     this.krnTrapError("Invalid Interrupt Request. irq=" + irq + " params=[" + params + "]");

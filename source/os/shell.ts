@@ -96,25 +96,31 @@ module TSOS {
             // name 
             sc = new ShellCommand(this.shellName,
                                     "name",
-                                    "- Displays username");
+                                    "- Displays username.");
             this.commandList[this.commandList.length] = sc;
 
             // status <string>
             sc = new ShellCommand(this.shellStatus,
                                     "status",
-                                    "- <string> Updates User Status");
+                                    "- <string> Updates User Status.");
             this.commandList[this.commandList.length] = sc;
 
             // death
             sc = new ShellCommand(this.shellDeath,
                                     "death",
-                                    "- death Displays BSOD Message for OS errors");
+                                    "- death Displays BSOD Message for OS errors.");
             this.commandList[this.commandList.length] = sc;
 
             // load
             sc = new ShellCommand(this.shellLoad,
                                     "load",
-                                    "- load Validates User Code");
+                                    "- load validates user code and uploads to main memory.");
+            this.commandList[this.commandList.length] = sc;
+
+            // run
+            sc = new ShellCommand(this.shellRun,
+                                    "run",
+                                    " - <pid> run executes a process by a specified pid.");
             this.commandList[this.commandList.length] = sc;
 
             // ps  - list the running processes and their IDs
@@ -419,9 +425,53 @@ module TSOS {
             let regex = /^[A-Fa-f0-9]+$/;
 
             if (regex.test(userInput)) {
-                _StdOut.putText("Hex Code is Valid.")
+                let input = userInput.match(/.{2}/g);
+                let pcb = _MemoryManager.load(input);
+
+                // Text Load Success
+                if (pcb) {
+                    _StdOut.putText("Program with PID " + pcb.pid + " loaded into main memory.");
+                } 
+
             } else {
                 _StdOut.putText("Hex Code could not be validated. Please try again.");
+            }
+        }
+
+        public shellRun(args: string[]) {
+            if (args.length > 0) {
+                // Get Process PCB
+                let pid = parseInt(args[0]);
+                let pcb;
+
+                // Find Process within ResidentList
+                for (let process of _ResidentList) {
+                    if (process.pid == pid) {
+                        pcb = process;
+                    }
+                }
+
+                // Update Console
+                if (!pcb) {
+                    _StdOut.putText("Process " + pid + " does not exist.");
+                } else if (pcb.state === "ready") {
+                    _StdOut.putText("Process " + pid + " is already running.");
+                } else if (pcb.state === "terminated") {
+                    _StdOut.putText("Procedd " + pid + " had already ran and has been terminated.");
+                } else {
+                    _StdOut.putText("Running process " + pid + ".");
+                    
+                    // Update State + Enqueue PCB to Ready Queue
+                    pcb.state = "running";
+                    _ReadyQueue.push(pcb);
+                    _PCB = pcb;
+
+                    // Update CPU State + Status
+                    _CPU.updateState(pcb);
+                    _CPU.isExecuting = true;
+                }
+            } else {
+                _StdOut.putText("Usage: run <pid> Please provide a pid.");
             }
         }
     }
