@@ -462,7 +462,7 @@ module TSOS {
                     _StdOut.putText("Running process " + pid + ".");
                     
                     // Update State + Enqueue PCB to Ready Queue
-                    pcb.state = "ready";
+                    pcb.state = "running";
                     _ReadyQueue.push(pcb);
                     _PCB = pcb;
 
@@ -470,6 +470,8 @@ module TSOS {
                     _CPU.updateState(pcb);
                     _CPU.isExecuting = true;
                 }
+            } else {
+                _StdOut.putText("Usage: run <pid> Please provide a pid.");
             }
         }
     }

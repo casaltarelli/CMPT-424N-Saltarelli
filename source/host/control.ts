@@ -202,18 +202,19 @@ module TSOS {
                                 operandHighlights[0] = 0;
                             }
 
-                            // Highlight Operands
-                            if (operandHighlights[0] > 0 && operandHighlights[1]) {
-                                cell.style.borderColor = "#57CC99";
-                                highlightedCell = cell;
-                                operandHighlights[0]--;
-                            }
+                        }
 
-                            // Skip Highlight Operands
-                            if (operandHighlights[0] > 0 && !operandHighlights[1]) {
-                                operandHighlights[1] = true;
-                            }
+                        // Highlight Operands
+                        if (operandHighlights[0] > 0 && operandHighlights[1]) {
+                            //cell.style.borderColor = "#57CC99";
+                            cell.style.backgroundColor = "#CCCDCF";
+                            highlightedCell = cell;
+                            operandHighlights[0]--;
+                        }
 
+                        // Skip Highlight Operands for Current Instruction
+                        if (operandHighlights[0] > 0 && !operandHighlights[1]) {
+                            operandHighlights[1] = true;
                         }
                     }
                     physicalAddress++;
@@ -279,11 +280,10 @@ module TSOS {
         }
 
         public static hostBtnStep_click(btn): void {
-            // TODO: Implement Step Functionality
+            // Update Step
             _Step = !_Step; 
 
-            // Update Btn CSS
-            // Display Next Btn
+            // Update Btn CSS + Display Next Btn
             let btnNext = document.getElementById("btnNext");
             btnNext.style.display = _Step ? "inline-block" : "none";
 
@@ -306,7 +306,6 @@ module TSOS {
         }
 
         public static hostBtnNext_click(btn): void {
-            // TODO: Implement Next Step Functionality
             if (_Step) {
                 _NextStep = true;
             }

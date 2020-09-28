@@ -385,6 +385,9 @@ var TSOS;
                     _CPU.isExecuting = true;
                 }
             }
+            else {
+                _StdOut.putText("Usage: run <pid> Please provide a pid.");
+            }
         };
         return Shell;
     }());

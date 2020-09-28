@@ -41,50 +41,39 @@ module TSOS {
             _Kernel.krnTrace('CPU cycle');
             // TODO: Accumulate CPU usage and profiling statistics here.
             // Do the real work here. Be sure to set this.isExecuting appropriately.
-            console.log("New Cycle ---------------------");
-            console.log("PC: " + this.PC);
             this.IR = parseInt(_MemoryAccessor.read(this.PC), 16);
-            console.log("IR: " + TSOS.Utils.padHexValue(_CPU.IR.toString(16).toLocaleUpperCase()));
 
             // Read over given OP Code
             switch(this.IR) {
                 case 0xA9:
-                    // Call on LoadAccumulatorConstant()
                     this.loadAccWithConstant();
                     break;
 
                 case 0xAD:
-                    // Call on LoadAccumulatorMemory()
                     this.loadAccFromMemory(); 
                     break;
 
                 case 0x8D:
-                    // Call on StoreAccumulatorMemory()
                     this.storeAccInMemory();
                     break;
 
                 case 0x6D:
-                    // Call on AddWithCarry()
                     this.addWithCarry();
                     break;
 
                 case 0xA2:
-                    // Call on LoadXConstant()
                     this.loadXRegWithConstant();
                     break;
 
                 case 0xAE:
-                    // Call on LoadXMemory()
                     this.loadXRegFromMemory();
                     break;
 
                 case 0xA0:
-                    // Call on LoadYConstant()
                     this.loadYRegWithConstant();
                     break;
 
                 case 0xAC:
-                    // Call on LoadYMemory()
                     this.loadYRegFromMemory();
                     break;
 
@@ -93,8 +82,6 @@ module TSOS {
                     break;
 
                 case 0x00:
-                    // Call on Break()
-                    console.log("Break Program");
                     this.saveState();
                     this.PCB.terminate();
                     this.isExecuting = false;
@@ -128,7 +115,6 @@ module TSOS {
             this.increasePC();
         }
 
-        //TODO: Implement Op Code Functionality
         increasePC() {
             this.PC++;
         }
@@ -136,7 +122,6 @@ module TSOS {
         saveState() {
             // Update Process Control Block to Current CPU
             if (this.PCB) {
-                console.log("Updated PCB");
                 this.PCB.PC = this.PC;
                 this.PCB.IR = this.IR;
                 this.PCB.Acc = this.Acc;
@@ -163,9 +148,9 @@ module TSOS {
             // First + Increase PC
             let address = _MemoryAccessor.read(this.PC);
             this.increasePC();
+
             // Second
             address =  parseInt(_MemoryAccessor.read(this.PC), 16) + parseInt(address, 16);
-            console.log("Full Address: " + address);
 
             // Return Full Address
             return address;
@@ -204,7 +189,6 @@ module TSOS {
         loadYRegWithConstant() {
             this.increasePC();
             this.Yreg = parseInt(_MemoryAccessor.read(this.PC), 16);
-            console.log("Y Register Val: " + this.Yreg);
         }
 
         loadYRegFromMemory() {
@@ -228,14 +212,9 @@ module TSOS {
             // Get Byte Value
             this.increasePC();
             let bytes = parseInt(_MemoryAccessor.read(this.PC), 16);
-            console.log("Value in Memory: " + _MemoryAccessor.read(this.PC));
-            console.log("Byte Value: " + bytes.toString(16));
 
             if (this.Zflag === 0) {
-                console.log("Current PC: " + this.PC);
-                let newPC = this.PC + bytes;
-                this.PC = newPC;
-                console.log("New PC Value: " + newPC.toString(16).toLocaleUpperCase());
+                this.PC = this.PC + bytes;
 
                 // Check if PC is greater than Total Size
                 if (this.PC > _MemoryAccessor.getTotalSize()) {

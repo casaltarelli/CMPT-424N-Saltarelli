@@ -141,7 +141,7 @@ input[type=button]:hover {
 
 .os-wrapper {
   display: grid;
-  grid-template-columns: 45% 55%;
+  grid-template-columns: 40% 60%;
   grid-template-rows: 50vw;
   grid-gap: 1em;
 }
@@ -199,9 +199,7 @@ table {
 
 /* Hardware Display */
 .hardware-display {
-  width: 100%;
   justify-content: center;
-  margin: 0 auto;
 }
 
 .hardware-wrapper {
@@ -234,11 +232,17 @@ tbody {
 }
 
 .div-block {
-  width: 100%;
+  width: 250px;
+  height: 51px !important;
+}
+
+#divPCB {
+  margin-top: 5px;
 }
 
 #divCPU {
-  margin-top: 1em;
+  height: 33px;
+  margin-top: 2em;
 }
 
 /* Information Display */

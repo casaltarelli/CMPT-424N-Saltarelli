@@ -171,16 +171,17 @@ var TSOS;
                             if (currentInstruction == "D0") {
                                 operandHighlights[0] = 0;
                             }
-                            // Highlight Operands
-                            if (operandHighlights[0] > 0 && operandHighlights[1]) {
-                                cell.style.borderColor = "#57CC99";
-                                highlightedCell = cell;
-                                operandHighlights[0]--;
-                            }
-                            // Skip Highlight Operands
-                            if (operandHighlights[0] > 0 && !operandHighlights[1]) {
-                                operandHighlights[1] = true;
-                            }
+                        }
+                        // Highlight Operands
+                        if (operandHighlights[0] > 0 && operandHighlights[1]) {
+                            //cell.style.borderColor = "#57CC99";
+                            cell.style.backgroundColor = "#CCCDCF";
+                            highlightedCell = cell;
+                            operandHighlights[0]--;
+                        }
+                        // Skip Highlight Operands for Current Instruction
+                        if (operandHighlights[0] > 0 && !operandHighlights[1]) {
+                            operandHighlights[1] = true;
                         }
                     }
                     physicalAddress++;

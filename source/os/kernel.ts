@@ -95,7 +95,7 @@ module TSOS {
                     _CPU.cycle();
                 }
 
-                // Update CPU Display
+                // Update CPU + PCB Display
                 Control.updateCPUDisplay();
                 Control.updatePCBDisplay();
 
