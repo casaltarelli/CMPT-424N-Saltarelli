@@ -84,7 +84,7 @@ var TSOS;
                 else {
                     _CPU.cycle();
                 }
-                // Update CPU Display
+                // Update CPU + PCB Display
                 TSOS.Control.updateCPUDisplay();
                 TSOS.Control.updatePCBDisplay();
             }
@@ -124,8 +124,7 @@ var TSOS;
                 case TERMINATE_CURRENT_PROCESS_IRQ:
                     if (_CPU.PCB && _CPU.PCB.state != "terminate") {
                         _CPU.saveState();
-                        _CPU.PCB.terminate();
-                        _CPU.isExecuting = false;
+                        this.krnTerminateProcess();
                     }
                     break;
                 case PRINT_YREGISTER_IRQ:
@@ -134,10 +133,19 @@ var TSOS;
                 case PRINT_FROM_MEMORY_IRQ:
                     var output = "";
                     var address = _CPU.Yreg;
-                    var value = parseInt(_MemoryAccessor.read(address), 16);
-                    while (value != 0) {
-                        output += String.fromCharCode(value);
-                        value = parseInt(_MemoryAccessor.read(++address), 16);
+                    var val = parseInt(_MemoryAccessor.read(address), 16);
+                    while (val != 0) {
+                        // Only add valid chars
+                        if (String.fromCharCode(val) != undefined) {
+                            // Get Char
+                            output += String.fromCharCode(val);
+                            // Update val to next
+                            val = parseInt(_MemoryAccessor.read(++address), 16);
+                        }
+                    }
+                    // Check Null (Char Code Error)
+                    if (output != null) {
+                        _StdOut.putText(output);
                     }
                     break;
                 default:
@@ -187,6 +195,19 @@ var TSOS;
             // TODO: Display error on console, perhaps in some sort of colored screen. (Maybe blue?)
             _OsShell.shellDeath;
             this.krnShutdown();
+        };
+        Kernel.prototype.krnTerminateProcess = function () {
+            // Update State + Ready Queue
+            _CPU.PCB.state = "terminated";
+            _CPU.isExecuting = false;
+            _ReadyQueue = _ReadyQueue.filter(function (element) { return element.pid != _CPU.PCB.pid; });
+            // Update Console
+            _StdOut.advanceLine();
+            _StdOut.putText("Process " + _CPU.PCB.pid + " terminated.");
+            // Display Prompt
+            _StdOut.advanceLine();
+            _OsShell.putName();
+            _OsShell.putPrompt();
         };
         return Kernel;
     }());

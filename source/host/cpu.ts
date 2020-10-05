@@ -83,8 +83,7 @@ module TSOS {
 
                 case 0x00:
                     this.saveState();
-                    this.PCB.terminate();
-                    this.isExecuting = false;
+                    _Kernel.krnTerminateProcess()
                     break;
 
                 case 0xEC:
@@ -104,10 +103,8 @@ module TSOS {
                     break;
 
                 default: 
-                    _Kernel.krnTrapError(`Process Execution Exception: Instruction '${this.IR.toString(16).toUpperCase()}' is not valid`);
-                    console.log("Process Terminated");
-                    this.PCB.terminate();
-                    this.isExecuting = false;    
+                    _Kernel.krnTerminateProcess()
+                    _Kernel.krnTrapError(`Process Execution Exception: Instruction '${this.IR.toString(16).toUpperCase()}' is not valid`); 
                     break;
             }
 
@@ -132,6 +129,7 @@ module TSOS {
         }
 
         updateState(pcb) {
+            // Update Process Control Block object
             this.saveState();
             this.PCB = pcb;
             this.PC = pcb.PC;

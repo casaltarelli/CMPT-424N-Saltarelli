@@ -14,21 +14,5 @@ module TSOS {
                     public Xreg = 0,
                     public Yreg = 0,
                     public Zflag = 0) {}
-
-        terminate() {
-            // Update State + Ready Queue
-            this.state = "terminated";
-            _ReadyQueue = _ReadyQueue.filter(element => element.pid != this.pid);
-
-            // Update Console
-            _StdOut.advanceLine();
-            _StdOut.putText("Process " + this.pid + " terminated.");
-
-            // Display Prompt
-            _StdOut.advanceLine();
-            _OsShell.putName();
-            _OsShell.putPrompt();
-            
-        }
     }
 }

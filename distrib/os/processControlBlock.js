@@ -23,19 +23,6 @@ var TSOS;
             this.Yreg = Yreg;
             this.Zflag = Zflag;
         }
-        processControlBlock.prototype.terminate = function () {
-            var _this = this;
-            // Update State + Ready Queue
-            this.state = "terminated";
-            _ReadyQueue = _ReadyQueue.filter(function (element) { return element.pid != _this.pid; });
-            console.log("PROCESS TERMINATED");
-            // Update Console
-            _StdOut.advanceLine();
-            _StdOut.putText("Process " + this.pid + " terminated.");
-            _StdOut.advanceLine();
-            _OsShell.putName();
-            _OsShell.putPrompt();
-        };
         return processControlBlock;
     }());
     TSOS.processControlBlock = processControlBlock;

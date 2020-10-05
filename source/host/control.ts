@@ -296,12 +296,12 @@ module TSOS {
                 btnStart.style.marginRight = "30px";
                 btnHalt.style.marginRight = "30px";
                 btnReset.style.marginRight = "30px";
-                btn.style.marginRight = "5px !important";
+                //btn.style.marginRight = "5px !important";
             } else {
                 btnStart.style.marginRight = "43.5px";
                 btnHalt.style.marginRight = "43.5px";
                 btnReset.style.marginRight = "43.5px";
-                btn.style.marginRight = "5px !important";
+                //btn.style.marginRight = "5px !important";
             }
         }
 

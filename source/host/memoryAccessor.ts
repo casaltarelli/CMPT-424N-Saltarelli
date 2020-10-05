@@ -31,8 +31,6 @@
              *   at specified Logical Address
              */
             write(logicalAddress, value) {
-                // Pad Hex Value if only one character
-                
                 // Check if val needs to get padded
                 TSOS.Utils.padHexValue(value);
 

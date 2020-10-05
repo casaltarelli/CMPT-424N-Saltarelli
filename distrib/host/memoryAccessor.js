@@ -31,7 +31,6 @@ var TSOS;
          *   at specified Logical Address
          */
         MemoryAccessor.prototype.write = function (logicalAddress, value) {
-            // Pad Hex Value if only one character
             // Check if val needs to get padded
             TSOS.Utils.padHexValue(value);
             if (logicalAddress > _MemoryAccessor.getTotalSize() || logicalAddress < 0) {

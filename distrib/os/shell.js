@@ -377,7 +377,7 @@ var TSOS;
                 else {
                     _StdOut.putText("Running process " + pid + ".");
                     // Update State + Enqueue PCB to Ready Queue
-                    pcb.state = "ready";
+                    pcb.state = "running";
                     _ReadyQueue.push(pcb);
                     _PCB = pcb;
                     // Update CPU State + Status

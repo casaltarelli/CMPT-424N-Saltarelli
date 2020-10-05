@@ -236,10 +236,9 @@ var TSOS;
             // page from its cache, which is not what we want.
         };
         Control.hostBtnStep_click = function (btn) {
-            // TODO: Implement Step Functionality
+            // Update Step
             _Step = !_Step;
-            // Update Btn CSS
-            // Display Next Btn
+            // Update Btn CSS + Display Next Btn
             var btnNext = document.getElementById("btnNext");
             btnNext.style.display = _Step ? "inline-block" : "none";
             // Update Spacing
@@ -250,17 +249,16 @@ var TSOS;
                 btnStart.style.marginRight = "30px";
                 btnHalt.style.marginRight = "30px";
                 btnReset.style.marginRight = "30px";
-                btn.style.marginRight = "5px !important";
+                //btn.style.marginRight = "5px !important";
             }
             else {
                 btnStart.style.marginRight = "43.5px";
                 btnHalt.style.marginRight = "43.5px";
                 btnReset.style.marginRight = "43.5px";
-                btn.style.marginRight = "5px !important";
+                //btn.style.marginRight = "5px !important";
             }
         };
         Control.hostBtnNext_click = function (btn) {
-            // TODO: Implement Next Step Functionality
             if (_Step) {
                 _NextStep = true;
             }
