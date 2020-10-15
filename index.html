@@ -116,11 +116,42 @@
          <section class="hardware-display">
             <div class="hardware-wrapper">
                <div class="flex-wrapper" style="padding: 5px;">
-                  <div id="divMemory">
+                  <div id="btn-segments" style="visibility: hidden;">
+                     <input type="button"
+                        id = "btnOne"
+                        name="brnOne"
+                        class="memory_button"
+                        value="I"
+                        z-index="-1"
+                        onclick="TSOS.Control.hostBtnMemory_click(this);">
+
+                     <input type="button"
+                        id = "btnTwo"
+                        name="brnTwo"
+                        class="memory_button"
+                        value="II"
+                        z-index="-1"
+                        onclick="TSOS.Control.hostBtnMemory_click(this);">
+
+                     <input type="button"
+                        id = "btnThree"
+                        name="brnThree"
+                        class="memory_button"
+                        value="III"
+                        z-index="-1"
+                        onclick="TSOS.Control.hostBtnMemory_click(this);">
+                  </div>
+                  <div id="divMemory" style="display:block;">
                      <label>
                         MEMORY DISPLAY
                         <br>
-                        <table id="tableMemory">
+                        <table id="tbOne">
+                           <tbody></tbody>
+                        </table>
+                        <table id="tbTwo" style="display: none;">
+                           <tbody></tbody>
+                        </table>
+                        <table id="tbThree" style="display: none;">
                            <tbody></tbody>
                         </table>
                      </label>

@@ -63,13 +63,32 @@ h3 {
   color: #303030;
 }
 
-
-
 .normal_button {
   width: 100px;
   color: #494949;
   border: 4px solid #494949 !important;
   background-color: #FFFFFF;
+}
+
+#btn-segments {
+  padding-top: 15px;
+  width: 50px;
+}
+
+input.memory_button[type=button] {
+  width: 45px;
+  height: 25px;
+  margin-top: 3px;
+  color: #494949;
+  border: 4px solid #494949;
+  background-color: #FFFFFF;
+}
+
+input.memory_button[type=button]:hover {
+  color: #ffffff !important;
+  background: #46494c !important;
+  border-color: #46494c !important;
+  transition: all 0.4s ease 0s;
 }
 
 input[type=button] {

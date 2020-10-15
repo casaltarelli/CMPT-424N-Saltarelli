@@ -133,14 +133,14 @@ var TSOS;
                 case PRINT_FROM_MEMORY_IRQ:
                     var output = "";
                     var address = _CPU.Yreg;
-                    var val = parseInt(_MemoryAccessor.read(address), 16);
+                    var val = parseInt(_MemoryAccessor.read(_CPU.PCB.segment, address), 16);
                     while (val != 0) {
                         // Only add valid chars
                         if (String.fromCharCode(val) != undefined) {
                             // Get Char
                             output += String.fromCharCode(val);
                             // Update val to next
-                            val = parseInt(_MemoryAccessor.read(++address), 16);
+                            val = parseInt(_MemoryAccessor.read(_CPU.PCB.segment, ++address), 16);
                         }
                     }
                     // Check Null (Char Code Error)

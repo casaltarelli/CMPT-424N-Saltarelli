@@ -154,7 +154,7 @@ module TSOS {
                     let output = "";
 
                     let address = _CPU.Yreg;
-                    let val = parseInt(_MemoryAccessor.read(address), 16);
+                    let val = parseInt(_MemoryAccessor.read(_CPU.PCB.segment, address), 16);
 
                     while (val != 0) {
                         // Only add valid chars
@@ -163,7 +163,7 @@ module TSOS {
                             output += String.fromCharCode(val);
 
                             // Update val to next
-                            val = parseInt(_MemoryAccessor.read(++address), 16);
+                            val = parseInt(_MemoryAccessor.read(_CPU.PCB.segment, ++address), 16);
                         }
                     }
 

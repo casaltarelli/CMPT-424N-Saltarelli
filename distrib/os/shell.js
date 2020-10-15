@@ -343,9 +343,9 @@ var TSOS;
             if (regex.test(userInput)) {
                 var input = userInput.match(/.{2}/g);
                 var pcb = _MemoryManager.load(input);
-                // Text Load Success
+                // Test Load Success
                 if (pcb) {
-                    _StdOut.putText("Program with PID " + pcb.pid + " loaded into main memory.");
+                    _StdOut.putText("Program with PID " + pcb.pid + " loaded into memory segment.");
                 }
             }
             else {
@@ -356,32 +356,34 @@ var TSOS;
             if (args.length > 0) {
                 // Get Process PCB
                 var pid = parseInt(args[0]);
-                var pcb = void 0;
+                var pcb_1;
                 // Find Process within ResidentList
                 for (var _i = 0, _ResidentList_1 = _ResidentList; _i < _ResidentList_1.length; _i++) {
                     var process = _ResidentList_1[_i];
                     if (process.pid == pid) {
-                        pcb = process;
+                        pcb_1 = process;
                     }
                 }
                 // Update Console
-                if (!pcb) {
+                if (!pcb_1) {
                     _StdOut.putText("Process " + pid + " does not exist.");
                 }
-                else if (pcb.state === "ready") {
+                else if (pcb_1.state === "running") {
                     _StdOut.putText("Process " + pid + " is already running.");
                 }
-                else if (pcb.state === "terminated") {
+                else if (pcb_1.state === "terminated") {
                     _StdOut.putText("Procedd " + pid + " had already ran and has been terminated.");
                 }
                 else {
                     _StdOut.putText("Running process " + pid + ".");
                     // Update State + Enqueue PCB to Ready Queue
-                    pcb.state = "running";
-                    _ReadyQueue.push(pcb);
-                    _PCB = pcb;
+                    pcb_1.state = "running";
+                    _ReadyQueue.push(pcb_1);
+                    _PCB = pcb_1;
+                    // Update our Resident List
+                    _ResidentList = _ResidentList.filter(function (element) { return element.pid != pcb_1.pid; });
                     // Update CPU State + Status
-                    _CPU.updateState(pcb);
+                    _CPU.updateState(pcb_1);
                     _CPU.isExecuting = true;
                 }
             }

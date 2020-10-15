@@ -7,36 +7,55 @@
 var TSOS;
 (function (TSOS) {
     var MemoryManager = /** @class */ (function () {
-        function MemoryManager(memorySize, baseRegister, limitRegister) {
+        function MemoryManager(memorySize, memoryRegisters) {
             if (memorySize === void 0) { memorySize = 0; }
-            if (baseRegister === void 0) { baseRegister = 0; }
-            if (limitRegister === void 0) { limitRegister = 0; }
+            if (memoryRegisters === void 0) { memoryRegisters = []; }
             this.memorySize = memorySize;
-            this.baseRegister = baseRegister;
-            this.limitRegister = limitRegister;
+            this.memoryRegisters = memoryRegisters;
         }
         MemoryManager.prototype.init = function () {
             this.memorySize = _MemoryAccessor.getTotalSize();
-            this.baseRegister = 0;
-            this.limitRegister = _MemoryAccessor.getTotalSize() - 1;
+            var segments = _MemoryAccessor.getTotalSize() / _MemoryAccessor.getSegmentSize(); // 3
+            // Create Memory Segments
+            for (var i = 0; i < segments; i++) {
+                // Create Registers
+                this.memoryRegisters[i] = {
+                    index: i,
+                    baseRegister: i * _MemoryAccessor.getSegmentSize(),
+                    limitRegister: _MemoryAccessor.getSegmentSize() * (i + 1),
+                    isFilled: false
+                };
+            }
         };
         MemoryManager.prototype.load = function (program) {
+            // Find Available Memory Segment
+            var segment;
+            for (var i = 0; i < this.memoryRegisters.length; i++) {
+                if (this.memoryRegisters[i].isFilled == false) {
+                    segment = i;
+                    break; // Once found exit
+                }
+            }
             // Create PCB for new program
             var pcb = new TSOS.processControlBlock();
-            // Clear Memory of Old Programs
-            _MemoryAccessor.clear();
+            // Clear Memory Segment of Old Programs
+            _MemoryAccessor.clear(this.memoryRegisters[segment]);
             // Load Program into Memory
             var status;
             for (var i = 0; i < program.length; i++) {
-                status = _MemoryAccessor.write(i, program[i]);
+                status = _MemoryAccessor.write(this.memoryRegisters[segment], i, program[i]);
                 // Check if Write to Memory Succeeded
                 if (!status) {
+                    console.log("Failed to write process into memory segment");
                     return; // Terminate Load if Failed
                 }
             }
+            // Update Segment Status + PCB Reference
+            this.memoryRegisters[segment].isFilled = true;
+            pcb.segment = this.memoryRegisters[segment];
             // Update PCB State + Global Reference
             pcb.state = "resident";
-            _PCB = pcb;
+            //_PCB = pcb;
             // Add PCB to Resident List
             _ResidentList.push(pcb);
             // Return our updated PCB

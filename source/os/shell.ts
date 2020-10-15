@@ -428,9 +428,9 @@ module TSOS {
                 let input = userInput.match(/.{2}/g);
                 let pcb = _MemoryManager.load(input);
 
-                // Text Load Success
+                // Test Load Success
                 if (pcb) {
-                    _StdOut.putText("Program with PID " + pcb.pid + " loaded into main memory.");
+                    _StdOut.putText("Program with PID " + pcb.pid + " loaded into memory segment.");
                 } 
 
             } else {
@@ -454,7 +454,7 @@ module TSOS {
                 // Update Console
                 if (!pcb) {
                     _StdOut.putText("Process " + pid + " does not exist.");
-                } else if (pcb.state === "ready") {
+                } else if (pcb.state === "running") {
                     _StdOut.putText("Process " + pid + " is already running.");
                 } else if (pcb.state === "terminated") {
                     _StdOut.putText("Procedd " + pid + " had already ran and has been terminated.");
@@ -465,6 +465,9 @@ module TSOS {
                     pcb.state = "running";
                     _ReadyQueue.push(pcb);
                     _PCB = pcb;
+
+                    // Update our Resident List
+                    _ResidentList = _ResidentList.filter(element => element.pid != pcb.pid);
 
                     // Update CPU State + Status
                     _CPU.updateState(pcb);

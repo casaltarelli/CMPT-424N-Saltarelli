@@ -144,15 +144,18 @@ module TSOS {
                 "FF": { "operandNumber": 0 }
             };
 
-            // Update Display
-            let table = document.getElementById("tableMemory");
-            let newTBody = document.createElement("tbody");
+            // Create List for each of our Memory Segment Elements
+            let segments = [];
 
-            table.style.display = "block";
+            segments.push(document.getElementById("tbOne"));
+            segments.push(document.getElementById("tbTwo"));
+            segments.push(document.getElementById("tbThree"));
+            console.log(segments.length);
 
-            // Add Memory
+            // Create References
             let row;
-            let rowLabel = "0x00";
+            let newTBody;
+            let rowLabel = "0x0";
             let rowNumber = 0;
 
             let placeNumber = 0;
@@ -160,71 +163,84 @@ module TSOS {
             let memory = _MemoryAccessor.dump();
             let highlightedCell;
 
-            for (let i = 0; i < _MemoryAccessor.getTotalSize() / 8; i++) {
-                // Create Row
-                row = newTBody.insertRow(-1);
+            for (let i = 0; i < segments.length; i++) {
+                // Create new tbody element
+                newTBody = document.createElement("tbody");
 
-                rowNumber = 8 * i;
-                if (rowNumber > 255) {
-                    placeNumber = 2
-                }else if (rowNumber > 15) {
-                    placeNumber = 3;
-                } else {
-                    placeNumber = 4;
-                }
+                for(let j = 0; j < _MemoryAccessor.getSegmentSize() / 8; j++) {
+                    // Create Row
+                    row = newTBody.insertRow(-1);
 
-                row.insertCell(-1).innerHTML = rowLabel.slice(0, placeNumber) + rowNumber.toString(16).toLocaleUpperCase();
+                    // Row Label Value
+                    rowNumber = 8 * j;
+                    let segID = i.toString();
 
-                // Populate respective Row with cells
-                let cell;
-                let currentInstruction;
-                let operandHighlights = [];
+                    if (rowNumber > 255) {
+                        placeNumber = 0;
+                    } else if (rowNumber > 15) {
+                        placeNumber = 2;
+                    } else {
+                        placeNumber = 2;
 
-                for (let j = 0; j < 8; j++) {
-                    cell = row.insertCell(-1);
-                    cell.innerHTML = memory[physicalAddress].toLocaleUpperCase();
-                    cell.id = "border-cell"
-                    currentInstruction = TSOS.Utils.padHexValue(_CPU.IR.toString(16).toLocaleUpperCase());
+                        // Special Case Add "0" after
+                        segID = segID + "0";
+                    }
 
-                    // Add Hover being read in the Display
-                    if (_CPU.PCB && _CPU.isExecuting && opCodeInfo[currentInstruction]) {
+                    // Row Label Cell
+                    row.insertCell(-1).innerHTML = rowLabel.slice(0, placeNumber) + segID + rowNumber.toString(16).toLocaleUpperCase();
 
-                        if (_MemoryManager.baseRegister + _CPU.PC - opCodeInfo[currentInstruction].operandNumber - 1 == physicalAddress) {
-                            cell.style.backgroundColor = "#CCCDCF";
-                            cell.style.borderColor = "#89B0AE";
+                    // Populate respective Row with Memory Cells
+                    let cell;
+                    let currentInstruction;
+                    let operandHighlights = [];
 
-                            highlightedCell = cell;
-                            operandHighlights[0] = opCodeInfo[currentInstruction].operandNumber;
-                            operandHighlights[1] = false;
+                    for (let j = 0; j < 8; j++) {
+                        cell = row.insertCell(-1);
+                        cell.innerHTML = memory[physicalAddress].toLocaleUpperCase();
+                        cell.id = "border-cell"
+                        currentInstruction = TSOS.Utils.padHexValue(_CPU.IR.toString(16).toLocaleUpperCase());
 
-                            // Check for D0 Branch
-                            if (currentInstruction == "D0") {
-                                operandHighlights[0] = 0;
+                        // Add Hover being read in the Display
+                        if (_CPU.PCB && _CPU.isExecuting && opCodeInfo[currentInstruction]) {
+
+                            if (_CPU.PCB.segment.baseRegister + _CPU.PC - opCodeInfo[currentInstruction].operandNumber - 1 == physicalAddress) {
+                                cell.style.backgroundColor = "#CCCDCF";
+                                cell.style.borderColor = "#89B0AE";
+
+                                highlightedCell = cell;
+                                operandHighlights[0] = opCodeInfo[currentInstruction].operandNumber;
+                                operandHighlights[1] = false;
+
+                                // Check for D0 Branch
+                                if (currentInstruction == "D0") {
+                                    operandHighlights[0] = 0;
+                                }
+
                             }
 
-                        }
+                            // Highlight Operands
+                            if (operandHighlights[0] > 0 && operandHighlights[1]) {
+                                //cell.style.borderColor = "#57CC99";
+                                cell.style.backgroundColor = "#CCCDCF";
+                                highlightedCell = cell;
+                                operandHighlights[0]--;
+                            }
 
-                        // Highlight Operands
-                        if (operandHighlights[0] > 0 && operandHighlights[1]) {
-                            //cell.style.borderColor = "#57CC99";
-                            cell.style.backgroundColor = "#CCCDCF";
-                            highlightedCell = cell;
-                            operandHighlights[0]--;
+                            // Skip Highlight Operands for Current Instruction
+                            if (operandHighlights[0] > 0 && !operandHighlights[1]) {
+                                operandHighlights[1] = true;
+                            }
                         }
-
-                        // Skip Highlight Operands for Current Instruction
-                        if (operandHighlights[0] > 0 && !operandHighlights[1]) {
-                            operandHighlights[1] = true;
-                        }
+                        physicalAddress++;
                     }
-                    physicalAddress++;
-                }
 
-                // Update TBody
-                table.replaceChild(newTBody, table.childNodes[0]);
+                    // Update TBody
+                    segments[i].replaceChild(newTBody, segments[i].childNodes[0]);
 
-                if (highlightedCell) {
-                    highlightedCell.scrollIntoView({block: "nearest"});
+                    if (highlightedCell) {
+                        highlightedCell.scrollIntoView({block: "nearest"});
+                    }
+                    
                 }
             }
         }
@@ -236,11 +252,15 @@ module TSOS {
             // Disable the (passed-in) start button...
             btn.disabled = true;
 
-            // .. enable the Halt + Reset + Step buttons ...
+            // .. enable the Halt + Reset + Step + Memory Segment buttons ...
             (<HTMLButtonElement>document.getElementById("btnHaltOS")).disabled = false;
             (<HTMLButtonElement>document.getElementById("btnReset")).disabled = false;
             (<HTMLButtonElement>document.getElementById("btnStep")).disabled = false;
             (<HTMLButtonElement>document.getElementById("btnNext")).disabled = false;
+            document.getElementById("btn-segments").style.visibility = "visible";
+
+            // .. Display Segment One of Main Memory ...
+            document.getElementById("tbOne").style.display = "block";
 
             // .. set focus on the OS console display ...
             document.getElementById("display").focus();
@@ -296,18 +316,38 @@ module TSOS {
                 btnStart.style.marginRight = "30px";
                 btnHalt.style.marginRight = "30px";
                 btnReset.style.marginRight = "30px";
-                //btn.style.marginRight = "5px !important";
             } else {
                 btnStart.style.marginRight = "43.5px";
                 btnHalt.style.marginRight = "43.5px";
                 btnReset.style.marginRight = "43.5px";
-                //btn.style.marginRight = "5px !important";
             }
         }
 
         public static hostBtnNext_click(btn): void {
             if (_Step) {
                 _NextStep = true;
+            }
+        }
+
+        public static hostBtnMemory_click(btn): void {
+            let btns = ["One", "Two", "Three"];
+
+            for (let b of btns) {
+                let btnID = "btn" + b;
+                if (btn.id == ("btn" + b)) {
+                    // Update Current Btn Background
+                    btn.style.backgroundColor = "#46494C"; 
+                    btn.style.color = "#FFFFFF";
+                    
+                    // Update Visibility for Respective Memory Segment
+                    let currentSegment = document.getElementById("tb" + b);
+                    currentSegment.style.display = "block";
+
+                } else {
+                    document.getElementById("btn" + b).style.backgroundColor = "#FFFFFF";
+                    document.getElementById("btn" + b).style.color = "#46494C";
+                    document.getElementById("tb" + b).style.display = "none";
+                }
             }
         }
     }
