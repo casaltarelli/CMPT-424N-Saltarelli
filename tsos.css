@@ -255,13 +255,15 @@ tbody {
   height: 51px !important;
 }
 
-#divPCB {
-  margin-top: 5px;
+#divRQ {
+  display: block;
+  margin-top: 2em;
 }
 
 #divCPU {
   height: 33px;
-  margin-top: 2em;
+  margin-top: 5px;
+
 }
 
 /* Information Display */

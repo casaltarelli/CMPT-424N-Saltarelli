@@ -78,6 +78,7 @@ module TSOS {
             // Save CPU State + Update Memory
             _CPU.saveState();
             Control.updateMemoryDisplay();
+            Control.updateRQDisplay();
 
             // Check for an interrupt, if there are any. Page 560
             if (_KernelInterruptQueue.getSize() > 0) {
@@ -97,7 +98,6 @@ module TSOS {
 
                 // Update CPU + PCB Display
                 Control.updateCPUDisplay();
-                Control.updatePCBDisplay();
 
             } else {                       // If there are no interrupts and there is nothing being executed then just be idle.
                 this.krnTrace("Idle");

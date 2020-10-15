@@ -36,6 +36,11 @@
                     }
                 }
 
+                // Return null if no segments are empty
+                if (segment == undefined) {
+                    return null;
+                }
+
                 // Create PCB for new program
                 let pcb = new processControlBlock();
 
@@ -59,11 +64,11 @@
                 pcb.segment = this.memoryRegisters[segment];
 
                 // Update PCB State + Global Reference
-                pcb.state = "resident";
+                pcb.state = "ready";
                 //_PCB = pcb;
 
                 // Add PCB to Resident List
-                _ResidentList.push(pcb);
+                _ReadyQueue.push(pcb);
 
                 // Return our updated PCB
                 return pcb;

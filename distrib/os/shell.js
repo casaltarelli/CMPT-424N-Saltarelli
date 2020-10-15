@@ -345,7 +345,10 @@ var TSOS;
                 var pcb = _MemoryManager.load(input);
                 // Test Load Success
                 if (pcb) {
-                    _StdOut.putText("Program with PID " + pcb.pid + " loaded into memory segment.");
+                    _StdOut.putText("Program with PID " + pcb.pid + " loaded into memory segment" + pcb.segment + ".");
+                }
+                else {
+                    _StdOut.putText("Memory is full. Please clear before loading new process");
                 }
             }
             else {
@@ -357,9 +360,9 @@ var TSOS;
                 // Get Process PCB
                 var pid = parseInt(args[0]);
                 var pcb_1;
-                // Find Process within ResidentList
-                for (var _i = 0, _ResidentList_1 = _ResidentList; _i < _ResidentList_1.length; _i++) {
-                    var process = _ResidentList_1[_i];
+                // Find Process within ReadyQueue
+                for (var _i = 0, _ReadyQueue_1 = _ReadyQueue; _i < _ReadyQueue_1.length; _i++) {
+                    var process = _ReadyQueue_1[_i];
                     if (process.pid == pid) {
                         pcb_1 = process;
                     }
@@ -378,7 +381,7 @@ var TSOS;
                     _StdOut.putText("Running process " + pid + ".");
                     // Update State + Enqueue PCB to Ready Queue
                     pcb_1.state = "running";
-                    _ReadyQueue.push(pcb_1);
+                    //_ReadyQueue.push(pcb);
                     _PCB = pcb_1;
                     // Update our Resident List
                     _ResidentList = _ResidentList.filter(function (element) { return element.pid != pcb_1.pid; });

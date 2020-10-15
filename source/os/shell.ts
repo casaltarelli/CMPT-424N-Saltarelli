@@ -430,8 +430,10 @@ module TSOS {
 
                 // Test Load Success
                 if (pcb) {
-                    _StdOut.putText("Program with PID " + pcb.pid + " loaded into memory segment.");
-                } 
+                    _StdOut.putText("Program with PID " + pcb.pid + " loaded into memory segment" + pcb.segment + ".");
+                } else {
+                    _StdOut.putText("Memory is full. Please clear before loading new process");
+                }
 
             } else {
                 _StdOut.putText("Hex Code could not be validated. Please try again.");
@@ -444,8 +446,8 @@ module TSOS {
                 let pid = parseInt(args[0]);
                 let pcb;
 
-                // Find Process within ResidentList
-                for (let process of _ResidentList) {
+                // Find Process within ReadyQueue
+                for (let process of _ReadyQueue) {
                     if (process.pid == pid) {
                         pcb = process;
                     }
@@ -463,7 +465,7 @@ module TSOS {
                     
                     // Update State + Enqueue PCB to Ready Queue
                     pcb.state = "running";
-                    _ReadyQueue.push(pcb);
+                    //_ReadyQueue.push(pcb);
                     _PCB = pcb;
 
                     // Update our Resident List

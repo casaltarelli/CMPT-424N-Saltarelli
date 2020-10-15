@@ -23,8 +23,6 @@ const TERMINATE_CURRENT_PROCESS_IRQ = 2;
 const PRINT_YREGISTER_IRQ: number = 3;
 const PRINT_FROM_MEMORY_IRQ: number = 4;
 
-
-
 //
 // Global Variables
 // TODO: Make a global object and use that instead of the "_" naming convention in the global namespace.

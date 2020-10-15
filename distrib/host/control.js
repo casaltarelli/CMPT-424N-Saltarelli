@@ -59,22 +59,33 @@ var TSOS;
             // TODO in the future: Optionally update a log database or some streaming service.
         };
         // Display Updates
-        Control.updatePCBDisplay = function () {
-            // Get Elements
-            var table = document.getElementById("tablePCB");
-            var newTBody = document.createElement("tbody");
-            table.style.display = "block";
-            // Create + Update Row w/ PCB Data
-            var row;
-            row = newTBody.insertRow(-1);
-            row.insertCell(-1).innerHTML = _PCB.state.toLocaleUpperCase();
-            row.insertCell(-1).innerHTML = _PCB.PC;
-            row.insertCell(-1).innerHTML = _PCB.Acc.toString(16).toLocaleUpperCase();
-            row.insertCell(-1).innerHTML = _PCB.Xreg.toString(16).toLocaleUpperCase();
-            row.insertCell(-1).innerHTML = _PCB.Yreg.toString(16).toLocaleUpperCase();
-            row.insertCell(-1).innerHTML = _PCB.Zflag.toString(16).toLocaleUpperCase();
-            // Replace Old TBody
-            table.replaceChild(newTBody, table.childNodes[0]);
+        Control.updateRQDisplay = function () {
+            // Declare Variable References
+            var table = document.getElementById("tableRQ");
+            //table.style.display = "block";
+            var newTBody;
+            // No Processes Check
+            if (_ReadyQueue.length < 0) {
+                return;
+            }
+            else {
+                // Create new table for current processes
+                newTBody = document.createElement("tbody");
+                for (var _i = 0, _ReadyQueue_1 = _ReadyQueue; _i < _ReadyQueue_1.length; _i++) {
+                    var process = _ReadyQueue_1[_i];
+                    // Create + Update Row w/ PCB Data
+                    var row = void 0;
+                    row = newTBody.insertRow();
+                    row.insertCell(-1).innerHTML = process.state.toLocaleUpperCase();
+                    row.insertCell(-1).innerHTML = process.PC;
+                    row.insertCell(-1).innerHTML = process.Acc.toString(16).toLocaleUpperCase();
+                    row.insertCell(-1).innerHTML = process.Xreg.toString(16).toLocaleUpperCase();
+                    row.insertCell(-1).innerHTML = process.Yreg.toString(16).toLocaleUpperCase();
+                    row.insertCell(-1).innerHTML = process.Zflag.toString(16).toLocaleUpperCase();
+                }
+                // Replace Old TBody
+                table.replaceChild(newTBody, table.childNodes[0]);
+            }
         };
         Control.updateCPUDisplay = function () {
             var opCodeInfo = { "A9": { "operandNumber": 1 },
@@ -129,7 +140,6 @@ var TSOS;
             segments.push(document.getElementById("tbOne"));
             segments.push(document.getElementById("tbTwo"));
             segments.push(document.getElementById("tbThree"));
-            console.log(segments.length);
             // Create References
             var row;
             var newTBody;
@@ -140,13 +150,12 @@ var TSOS;
             var memory = _MemoryAccessor.dump();
             var highlightedCell;
             for (var i = 0; i < segments.length; i++) {
-                // Update Style + Create tbody element
-                //segments[i].style.display = "block";
+                // Create new tbody element
                 newTBody = document.createElement("tbody");
                 for (var j = 0; j < _MemoryAccessor.getSegmentSize() / 8; j++) {
                     // Create Row
                     row = newTBody.insertRow(-1);
-                    // Map Correct Row Number using i
+                    // Row Label Value
                     rowNumber = 8 * j;
                     var segID = i.toString();
                     if (rowNumber > 255) {
@@ -205,61 +214,6 @@ var TSOS;
                     }
                 }
             }
-            // OLD MEMORY POPULATION TECHNIQUE
-            // for (let i = 0; i < _MemoryAccessor.getTotalSize() / 8; i++) {
-            //     // Create Row
-            //     row = newTBody.insertRow(-1);
-            //     rowNumber = 8 * i;
-            //     if (rowNumber > 255) {
-            //         placeNumber = 2
-            //     }else if (rowNumber > 15) {
-            //         placeNumber = 3;
-            //     } else {
-            //         placeNumber = 4;
-            //     }
-            //     row.insertCell(-1).innerHTML = rowLabel.slice(0, placeNumber) + rowNumber.toString(16).toLocaleUpperCase();
-            //     // Populate respective Row with cells
-            //     let cell;
-            //     let currentInstruction;
-            //     let operandHighlights = [];
-            //     for (let j = 0; j < 8; j++) {
-            //         cell = row.insertCell(-1);
-            //         cell.innerHTML = memory[physicalAddress].toLocaleUpperCase();
-            //         cell.id = "border-cell"
-            //         currentInstruction = TSOS.Utils.padHexValue(_CPU.IR.toString(16).toLocaleUpperCase());
-            //         // Add Hover being read in the Display
-            //         if (_CPU.PCB && _CPU.isExecuting && opCodeInfo[currentInstruction]) {
-            //             if (_CPU.PCB.segment.baseRegister + _CPU.PC - opCodeInfo[currentInstruction].operandNumber - 1 == physicalAddress) {
-            //                 cell.style.backgroundColor = "#CCCDCF";
-            //                 cell.style.borderColor = "#89B0AE";
-            //                 highlightedCell = cell;
-            //                 operandHighlights[0] = opCodeInfo[currentInstruction].operandNumber;
-            //                 operandHighlights[1] = false;
-            //                 // Check for D0 Branch
-            //                 if (currentInstruction == "D0") {
-            //                     operandHighlights[0] = 0;
-            //                 }
-            //             }
-            //             // Highlight Operands
-            //             if (operandHighlights[0] > 0 && operandHighlights[1]) {
-            //                 //cell.style.borderColor = "#57CC99";
-            //                 cell.style.backgroundColor = "#CCCDCF";
-            //                 highlightedCell = cell;
-            //                 operandHighlights[0]--;
-            //             }
-            //             // Skip Highlight Operands for Current Instruction
-            //             if (operandHighlights[0] > 0 && !operandHighlights[1]) {
-            //                 operandHighlights[1] = true;
-            //             }
-            //         }
-            //         physicalAddress++;
-            //     }
-            //     // Update TBody
-            //     table.replaceChild(newTBody, table.childNodes[0]);
-            //     if (highlightedCell) {
-            //         highlightedCell.scrollIntoView({block: "nearest"});
-            //     }
-            // }
         };
         //
         // Host Events

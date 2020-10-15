@@ -70,25 +70,35 @@ module TSOS {
         }
 
         // Display Updates
-        public static updatePCBDisplay() {
-            // Get Elements
-            let table = document.getElementById("tablePCB");
-            let newTBody = document.createElement("tbody");
-            table.style.display = "block";
-            
-            // Create + Update Row w/ PCB Data
-            let row;
-            row = newTBody.insertRow(-1);
+        public static updateRQDisplay() {
+            // Declare Variable References
+            let table = document.getElementById("tableRQ");
+            //table.style.display = "block";
+            let newTBody;
 
-            row.insertCell(-1).innerHTML = _PCB.state.toLocaleUpperCase();
-            row.insertCell(-1).innerHTML = _PCB.PC;
-            row.insertCell(-1).innerHTML = _PCB.Acc.toString(16).toLocaleUpperCase();
-            row.insertCell(-1).innerHTML = _PCB.Xreg.toString(16).toLocaleUpperCase();
-            row.insertCell(-1).innerHTML = _PCB.Yreg.toString(16).toLocaleUpperCase();
-            row.insertCell(-1).innerHTML = _PCB.Zflag.toString(16).toLocaleUpperCase();
+            // No Processes Check
+            if (_ReadyQueue.length < 0) {
+                return;
+            } else {
+                // Create new table for current processes
+                newTBody = document.createElement("tbody");
 
-            // Replace Old TBody
-            table.replaceChild(newTBody, table.childNodes[0]);
+                for (let process of _ReadyQueue) {
+                    // Create + Update Row w/ PCB Data
+                    let row;
+                    row = newTBody.insertRow();
+    
+                    row.insertCell(-1).innerHTML = process.state.toLocaleUpperCase();
+                    row.insertCell(-1).innerHTML = process.PC;
+                    row.insertCell(-1).innerHTML = process.Acc.toString(16).toLocaleUpperCase();
+                    row.insertCell(-1).innerHTML = process.Xreg.toString(16).toLocaleUpperCase();
+                    row.insertCell(-1).innerHTML = process.Yreg.toString(16).toLocaleUpperCase();
+                    row.insertCell(-1).innerHTML = process.Zflag.toString(16).toLocaleUpperCase();
+                }
+
+                // Replace Old TBody
+                table.replaceChild(newTBody, table.childNodes[0]);
+            }
         }
 
         public static updateCPUDisplay() {
@@ -150,7 +160,6 @@ module TSOS {
             segments.push(document.getElementById("tbOne"));
             segments.push(document.getElementById("tbTwo"));
             segments.push(document.getElementById("tbThree"));
-            console.log(segments.length);
 
             // Create References
             let row;
@@ -237,10 +246,7 @@ module TSOS {
                     // Update TBody
                     segments[i].replaceChild(newTBody, segments[i].childNodes[0]);
 
-                    if (highlightedCell) {
-                        highlightedCell.scrollIntoView({block: "nearest"});
-                    }
-                    
+                    //TODO: Possibly Implement Updating Showing Segment Depending on Current Running Process
                 }
             }
         }

@@ -67,6 +67,7 @@ var TSOS;
             // Save CPU State + Update Memory
             _CPU.saveState();
             TSOS.Control.updateMemoryDisplay();
+            TSOS.Control.updateRQDisplay();
             // Check for an interrupt, if there are any. Page 560
             if (_KernelInterruptQueue.getSize() > 0) {
                 // Process the first interrupt on the interrupt queue.
@@ -86,7 +87,6 @@ var TSOS;
                 }
                 // Update CPU + PCB Display
                 TSOS.Control.updateCPUDisplay();
-                TSOS.Control.updatePCBDisplay();
             }
             else { // If there are no interrupts and there is nothing being executed then just be idle.
                 this.krnTrace("Idle");
