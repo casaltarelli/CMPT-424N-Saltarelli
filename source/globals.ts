@@ -19,9 +19,11 @@ const CPU_CLOCK_INTERVAL: number = 100;   // This is in ms (milliseconds) so 100
 const TIMER_IRQ: number = 0;  // Pages 23 (timer), 9 (interrupts), and 561 (interrupt priority).
                               // NOTE: The timer is different from hardware/host clock pulses. Don't confuse these.
 const KEYBOARD_IRQ: number = 1;
-const TERMINATE_CURRENT_PROCESS_IRQ = 2;
-const PRINT_YREGISTER_IRQ: number = 3;
-const PRINT_FROM_MEMORY_IRQ: number = 4;
+const RUN_CURRENT_PROCESS_IRQ = 2;
+const TERMINATE_CURRENT_PROCESS_IRQ = 3;
+const TERMINATE_PROCESS_IRQ = 4;
+const PRINT_YREGISTER_IRQ: number = 5;
+const PRINT_FROM_MEMORY_IRQ: number = 6;
 
 //
 // Global Variables
@@ -31,6 +33,7 @@ const PRINT_FROM_MEMORY_IRQ: number = 4;
 var _CPU: TSOS.Cpu;  // Utilize TypeScript's type annotation system to ensure that _CPU is an instance of the Cpu class.
 var _Memory: TSOS.Memory;
 var _MemoryAccessor: TSOS.MemoryAccessor;
+var _Dispatcher: TSOS.Dispatcher;
 
 // Software (OS) 
 var _MemoryManager: TSOS.MemoryManager;

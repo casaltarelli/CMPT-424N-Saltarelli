@@ -59,7 +59,7 @@ var TSOS;
             // TODO in the future: Optionally update a log database or some streaming service.
         };
         // Display Updates
-        Control.updateRQDisplay = function () {
+        Control.updateProcessDisplay = function () {
             // Declare Variable References
             var table = document.getElementById("tableRQ");
             //table.style.display = "block";
@@ -71,11 +71,12 @@ var TSOS;
             else {
                 // Create new table for current processes
                 newTBody = document.createElement("tbody");
-                for (var _i = 0, _ReadyQueue_1 = _ReadyQueue; _i < _ReadyQueue_1.length; _i++) {
-                    var process = _ReadyQueue_1[_i];
+                for (var _i = 0, _ResidentList_1 = _ResidentList; _i < _ResidentList_1.length; _i++) {
+                    var process = _ResidentList_1[_i];
                     // Create + Update Row w/ PCB Data
                     var row = void 0;
                     row = newTBody.insertRow();
+                    row.insertCell(-1).innerHTML = process.pid;
                     row.insertCell(-1).innerHTML = process.state.toLocaleUpperCase();
                     row.insertCell(-1).innerHTML = process.PC;
                     row.insertCell(-1).innerHTML = process.Acc.toString(16).toLocaleUpperCase();
@@ -195,7 +196,6 @@ var TSOS;
                             }
                             // Highlight Operands
                             if (operandHighlights[0] > 0 && operandHighlights[1]) {
-                                //cell.style.borderColor = "#57CC99";
                                 cell.style.backgroundColor = "#CCCDCF";
                                 highlightedCell = cell;
                                 operandHighlights[0]--;
@@ -209,9 +209,7 @@ var TSOS;
                     }
                     // Update TBody
                     segments[i].replaceChild(newTBody, segments[i].childNodes[0]);
-                    if (highlightedCell) {
-                        highlightedCell.scrollIntoView({ block: "nearest" });
-                    }
+                    //TODO: Possibly Implement Updating Showing Segment Depending on Current Running Process
                 }
             }
         };
@@ -227,6 +225,9 @@ var TSOS;
             document.getElementById("btnStep").disabled = false;
             document.getElementById("btnNext").disabled = false;
             document.getElementById("btn-segments").style.visibility = "visible";
+            // .. Update CSS to symbolize viewing segment one ...
+            document.getElementById("btnOne").style.backgroundColor = "#46494C";
+            document.getElementById("btnOne").style.color = "#FFFFFF";
             // .. Display Segment One of Main Memory ...
             document.getElementById("tbOne").style.display = "block";
             // .. set focus on the OS console display ...
@@ -234,10 +235,12 @@ var TSOS;
             // ... Create and initialize the CPU (because it's part of the hardware)  ...
             _CPU = new TSOS.Cpu(); // Note: We could simulate multi-core systems by instantiating more than one instance of the CPU here.
             _CPU.init(); //       There's more to do, like dealing with scheduling and such, but this would be a start. Pretty cool.
-            // ... Create and initialize Main Memory 
+            // ... Create and initialize Main Memory ...
             _Memory = new TSOS.Memory();
             _Memory.init();
             _MemoryAccessor = new TSOS.MemoryAccessor();
+            // ... Create our Dispatcher + Scheduler ...
+            _Dispatcher = new TSOS.Dispatcher();
             // ... then set the host clock pulse ...
             _hardwareClockID = setInterval(TSOS.Devices.hostClockPulse, CPU_CLOCK_INTERVAL);
             // .. and call the OS Kernel Bootstrap routine.

@@ -29,10 +29,11 @@
             load(program) {
                 // Find Available Memory Segment
                 let segment; 
+                out:
                 for (let i = 0; i < this.memoryRegisters.length; i++) {
                     if(this.memoryRegisters[i].isFilled == false) {
                         segment = i;
-                        break;  // Once found exit
+                        break out;  // Once found exit
                     }
                 }
 
@@ -62,10 +63,6 @@
                 // Update Segment Status + PCB Reference
                 this.memoryRegisters[segment].isFilled = true;
                 pcb.segment = this.memoryRegisters[segment];
-
-                // Update PCB State + Global Reference
-                pcb.state = "ready";
-                //_PCB = pcb;
 
                 // Add PCB to Resident List
                 _ReadyQueue.push(pcb);

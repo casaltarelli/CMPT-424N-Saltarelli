@@ -21,7 +21,6 @@ var TSOS;
         }
         Shell.prototype.init = function () {
             var sc;
-            //
             // Load the command list.
             // ver
             sc = new TSOS.ShellCommand(this.shellVer, "ver", "- Displays the current version data.");
@@ -68,8 +67,11 @@ var TSOS;
             // load
             sc = new TSOS.ShellCommand(this.shellLoad, "load", "- load validates user code and uploads to main memory.");
             this.commandList[this.commandList.length] = sc;
-            // run
+            // run <pid> 
             sc = new TSOS.ShellCommand(this.shellRun, "run", " - <pid> run executes a process by a specified pid.");
+            this.commandList[this.commandList.length] = sc;
+            // kill <pid> 
+            sc = new TSOS.ShellCommand(this.shellKill, "kill", " - <pid> kill terminates a process in main memory.");
             this.commandList[this.commandList.length] = sc;
             // ps  - list the running processes and their IDs
             // kill <id> - kills the specified process id.
@@ -348,7 +350,7 @@ var TSOS;
                     _StdOut.putText("Program with PID " + pcb.pid + " loaded into memory segment" + pcb.segment + ".");
                 }
                 else {
-                    _StdOut.putText("Memory is full. Please clear before loading new process");
+                    _StdOut.putText("Memory is full. Please clear before loading new process.");
                 }
             }
             else {
@@ -359,39 +361,70 @@ var TSOS;
             if (args.length > 0) {
                 // Get Process PCB
                 var pid = parseInt(args[0]);
-                var pcb_1;
+                var pcb = void 0;
                 // Find Process within ReadyQueue
-                for (var _i = 0, _ReadyQueue_1 = _ReadyQueue; _i < _ReadyQueue_1.length; _i++) {
-                    var process = _ReadyQueue_1[_i];
+                for (var _i = 0, _ResidentList_1 = _ResidentList; _i < _ResidentList_1.length; _i++) {
+                    var process = _ResidentList_1[_i];
                     if (process.pid == pid) {
-                        pcb_1 = process;
+                        pcb = process;
                     }
                 }
                 // Update Console
-                if (!pcb_1) {
+                if (!pcb) {
                     _StdOut.putText("Process " + pid + " does not exist.");
                 }
-                else if (pcb_1.state === "running") {
+                else if (pcb.state === "running") {
                     _StdOut.putText("Process " + pid + " is already running.");
                 }
-                else if (pcb_1.state === "terminated") {
-                    _StdOut.putText("Procedd " + pid + " had already ran and has been terminated.");
+                else if (pcb.state === "terminated") {
+                    _StdOut.putText("Process " + pid + " had already ran and has been terminated.");
+                }
+                else if (_CPU.PCB && _CPU.isExecuting == true) {
+                    _StdOut.putText("CPU is already running process " + _CPU.PCB.pid + ", process " + pid + " added to Ready Queue.");
+                    // Update Ready Queue through Kernel
+                    _KernelInterruptQueue.enqueue(new TSOS.Interrupt(RUN_CURRENT_PROCESS_IRQ, pcb));
                 }
                 else {
                     _StdOut.putText("Running process " + pid + ".");
-                    // Update State + Enqueue PCB to Ready Queue
-                    pcb_1.state = "running";
-                    //_ReadyQueue.push(pcb);
-                    _PCB = pcb_1;
-                    // Update our Resident List
-                    _ResidentList = _ResidentList.filter(function (element) { return element.pid != pcb_1.pid; });
-                    // Update CPU State + Status
-                    _CPU.updateState(pcb_1);
-                    _CPU.isExecuting = true;
+                    // Update CPU State through Kernel
+                    _KernelInterruptQueue.enqueue(new TSOS.Interrupt(RUN_CURRENT_PROCESS_IRQ, pcb));
                 }
             }
             else {
                 _StdOut.putText("Usage: run <pid> Please provide a pid.");
+            }
+        };
+        Shell.prototype.shellKill = function (args) {
+            if (args.length > 0) {
+                var pcb = void 0;
+                // Validate pid in our Resident List
+                out: for (var _i = 0, _ResidentList_2 = _ResidentList; _i < _ResidentList_2.length; _i++) {
+                    var process = _ResidentList_2[_i];
+                    if (process.pid == args[0]) {
+                        pcb = process;
+                        break out;
+                    }
+                }
+                // Update Console
+                if (pcb) {
+                    _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, pcb));
+                    _StdOut.putText("Process " + pcb.pid + " has been killed.");
+                }
+                else {
+                    _StdOut.putText("Process " + args[0] + " does not exist.");
+                }
+            }
+            else {
+                _StdOut.putText("Usage: kill <pid> Please provide a pid.");
+            }
+        };
+        Shell.prototype.shellKillAll = function (args) {
+            // Terminate all Proccesses Resident + Ready Queue
+            for (var _i = 0, _ResidentList_3 = _ResidentList; _i < _ResidentList_3.length; _i++) {
+                var process = _ResidentList_3[_i];
+                _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, process));
+                _StdOut.putText("Process " + process.pid + " has been killed.");
+                _StdOut.advanceLine();
             }
         };
         return Shell;

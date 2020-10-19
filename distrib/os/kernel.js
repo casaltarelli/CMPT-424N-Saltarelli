@@ -67,7 +67,7 @@ var TSOS;
             // Save CPU State + Update Memory
             _CPU.saveState();
             TSOS.Control.updateMemoryDisplay();
-            TSOS.Control.updateRQDisplay();
+            TSOS.Control.updateProcessDisplay();
             // Check for an interrupt, if there are any. Page 560
             if (_KernelInterruptQueue.getSize() > 0) {
                 // Process the first interrupt on the interrupt queue.
@@ -121,11 +121,24 @@ var TSOS;
                     _krnKeyboardDriver.isr(params); // Kernel mode device driver
                     _StdIn.handleInput();
                     break;
+                case RUN_CURRENT_PROCESS_IRQ:
+                    if (!_CPU.PCB && _CPU.isExecuting == false) {
+                        _Dispatcher.runProcess(params);
+                    }
+                    else {
+                        // Add Process to Ready Queue if CPU is already executing
+                        _ReadyQueue.push(params);
+                    }
+                //TODO: Implement Dispatcher to update current PCB on CPU
+                // Context Switch Control + Terminate Control
                 case TERMINATE_CURRENT_PROCESS_IRQ:
                     if (_CPU.PCB && _CPU.PCB.state != "terminate") {
                         _CPU.saveState();
-                        this.krnTerminateProcess();
+                        this.krnTerminateProcess(_CPU.PCB.pid);
                     }
+                    break;
+                case TERMINATE_PROCESS_IRQ:
+                    this.krnTerminateProcess(params[0]);
                     break;
                 case PRINT_YREGISTER_IRQ:
                     _StdOut.putText(_CPU.Yreg.toString());
@@ -196,14 +209,31 @@ var TSOS;
             _OsShell.shellDeath;
             this.krnShutdown();
         };
-        Kernel.prototype.krnTerminateProcess = function () {
-            // Update State + Ready Queue
-            _CPU.PCB.state = "terminated";
-            _CPU.isExecuting = false;
-            _ReadyQueue = _ReadyQueue.filter(function (element) { return element.pid != _CPU.PCB.pid; });
+        Kernel.prototype.krnTerminateProcess = function (process) {
+            // Check for Current Process
+            if (_CPU.PCB.pid == process.pid) {
+                // Update State + Status
+                _CPU.PCB.state = "terminated";
+                _CPU.saveState();
+                _CPU.isExecuting = false;
+            }
+            else {
+                // Update Process State
+                for (var _i = 0, _ResidentList_1 = _ResidentList; _i < _ResidentList_1.length; _i++) {
+                    var p = _ResidentList_1[_i];
+                    if (p.pid == process.pid) {
+                        p.state = "terminated";
+                    }
+                }
+            }
+            // Remove from our ResidentList + Ready Queue
+            _ResidentList = _ResidentList.filter(function (element) { return element.pid != process.pid; });
+            _ReadyQueue = _ReadyQueue.filter(function (element) { return element.pid != process.pid; });
+            // Clear Memory Segment
+            _MemoryAccessor.clear(process.segment);
             // Update Console
             _StdOut.advanceLine();
-            _StdOut.putText("Process " + _CPU.PCB.pid + " terminated.");
+            _StdOut.putText("Process " + process.pid + " terminated.");
             // Display Prompt
             _StdOut.advanceLine();
             _OsShell.putName();

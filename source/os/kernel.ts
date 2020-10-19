@@ -78,7 +78,7 @@ module TSOS {
             // Save CPU State + Update Memory
             _CPU.saveState();
             Control.updateMemoryDisplay();
-            Control.updateRQDisplay();
+            Control.updateProcessDisplay();
 
             // Check for an interrupt, if there are any. Page 560
             if (_KernelInterruptQueue.getSize() > 0) {
@@ -139,11 +139,25 @@ module TSOS {
                     _StdIn.handleInput();
                     break;
 
+                case RUN_CURRENT_PROCESS_IRQ:
+                    if (!_CPU.PCB && _CPU.isExecuting == false) {
+                        _Dispatcher.runProcess(params);
+                    } else {
+                        // Add Process to Ready Queue if CPU is already executing
+                        _ReadyQueue.push(params);  
+                    }
+                    //TODO: Implement Dispatcher to update current PCB on CPU
+                    // Context Switch Control + Terminate Control
+
                 case TERMINATE_CURRENT_PROCESS_IRQ:
                     if (_CPU.PCB && _CPU.PCB.state != "terminate") {
                         _CPU.saveState();
-                        this.krnTerminateProcess();
+                        this.krnTerminateProcess(_CPU.PCB.pid);
                     }
+                    break;
+
+                case TERMINATE_PROCESS_IRQ:
+                    this.krnTerminateProcess(params[0]);
                     break;
 
                 case PRINT_YREGISTER_IRQ:
@@ -227,15 +241,32 @@ module TSOS {
             this.krnShutdown();
         }
 
-        public krnTerminateProcess() {
-            // Update State + Ready Queue
-            _CPU.PCB.state = "terminated";
-            _CPU.isExecuting = false;
-            _ReadyQueue = _ReadyQueue.filter(element => element.pid != _CPU.PCB.pid);
+        public krnTerminateProcess(process) {
+            // Check for Current Process
+            if (_CPU.PCB.pid == process.pid) {
+                // Update State + Status
+                _CPU.PCB.state = "terminated";
+                _CPU.saveState();
+                _CPU.isExecuting = false;
+            } else {
+                // Update Process State
+                for (let p of _ResidentList) {
+                    if (p.pid == process.pid) {
+                        p.state = "terminated";
+                    }
+                }
+            }
+            
+            // Remove from our ResidentList + Ready Queue
+            _ResidentList = _ResidentList.filter(element => element.pid != process.pid);
+            _ReadyQueue = _ReadyQueue.filter(element => element.pid != process.pid);
 
+            // Clear Memory Segment
+            _MemoryAccessor.clear(process.segment);
+            
             // Update Console
             _StdOut.advanceLine();
-            _StdOut.putText("Process " + _CPU.PCB.pid + " terminated.");
+            _StdOut.putText("Process " + process.pid + " terminated.");
 
             // Display Prompt
             _StdOut.advanceLine();

@@ -77,7 +77,7 @@ var TSOS;
                     break;
                 case 0x00:
                     this.saveState();
-                    _Kernel.krnTerminateProcess();
+                    _Kernel.krnTerminateProcess(_CPU.PCB.pid);
                     break;
                 case 0xEC:
                     this.compareToXreg();
@@ -92,7 +92,7 @@ var TSOS;
                     this.systemCall();
                     break;
                 default:
-                    _Kernel.krnTerminateProcess();
+                    _Kernel.krnTerminateProcess(_CPU.PCB.pid);
                     _Kernel.krnTrapError("Process Execution Exception: Instruction '" + this.IR.toString(16).toUpperCase() + "' is not valid");
                     break;
             }

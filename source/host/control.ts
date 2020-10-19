@@ -70,7 +70,7 @@ module TSOS {
         }
 
         // Display Updates
-        public static updateRQDisplay() {
+        public static updateProcessDisplay() {
             // Declare Variable References
             let table = document.getElementById("tableRQ");
             //table.style.display = "block";
@@ -83,11 +83,12 @@ module TSOS {
                 // Create new table for current processes
                 newTBody = document.createElement("tbody");
 
-                for (let process of _ReadyQueue) {
+                for (let process of _ResidentList) {
                     // Create + Update Row w/ PCB Data
                     let row;
                     row = newTBody.insertRow();
     
+                    row.insertCell(-1).innerHTML = process.pid;
                     row.insertCell(-1).innerHTML = process.state.toLocaleUpperCase();
                     row.insertCell(-1).innerHTML = process.PC;
                     row.insertCell(-1).innerHTML = process.Acc.toString(16).toLocaleUpperCase();
@@ -229,7 +230,6 @@ module TSOS {
 
                             // Highlight Operands
                             if (operandHighlights[0] > 0 && operandHighlights[1]) {
-                                //cell.style.borderColor = "#57CC99";
                                 cell.style.backgroundColor = "#CCCDCF";
                                 highlightedCell = cell;
                                 operandHighlights[0]--;
@@ -263,7 +263,12 @@ module TSOS {
             (<HTMLButtonElement>document.getElementById("btnReset")).disabled = false;
             (<HTMLButtonElement>document.getElementById("btnStep")).disabled = false;
             (<HTMLButtonElement>document.getElementById("btnNext")).disabled = false;
+
             document.getElementById("btn-segments").style.visibility = "visible";
+
+            // .. Update CSS to symbolize viewing segment one ...
+            document.getElementById("btnOne").style.backgroundColor = "#46494C";
+            document.getElementById("btnOne").style.color = "#FFFFFF";
 
             // .. Display Segment One of Main Memory ...
             document.getElementById("tbOne").style.display = "block";
@@ -275,10 +280,13 @@ module TSOS {
             _CPU = new Cpu();  // Note: We could simulate multi-core systems by instantiating more than one instance of the CPU here.
             _CPU.init();       //       There's more to do, like dealing with scheduling and such, but this would be a start. Pretty cool.
 
-            // ... Create and initialize Main Memory 
+            // ... Create and initialize Main Memory ...
             _Memory = new Memory();
             _Memory.init();
             _MemoryAccessor = new MemoryAccessor();
+
+            // ... Create our Dispatcher + Scheduler ...
+            _Dispatcher = new Dispatcher();
 
             // ... then set the host clock pulse ...
             _hardwareClockID = setInterval(Devices.hostClockPulse, CPU_CLOCK_INTERVAL);
