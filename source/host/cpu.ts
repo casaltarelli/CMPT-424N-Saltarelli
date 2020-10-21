@@ -83,7 +83,7 @@ module TSOS {
 
                 case 0x00:
                     this.saveState();
-                    _Kernel.krnTerminateProcess(_CPU.PCB.pid);
+                    _Kernel.krnTerminateProcess(_CPU.PCB);
                     break;
 
                 case 0xEC:
@@ -103,7 +103,7 @@ module TSOS {
                     break;
 
                 default: 
-                    _Kernel.krnTerminateProcess(_CPU.PCB.pid)
+                    _Kernel.krnTerminateProcess(_CPU.PCB)
                     _Kernel.krnTrapError(`Process Execution Exception: Instruction '${this.IR.toString(16).toUpperCase()}' is not valid`); 
                     break;
             }
@@ -215,8 +215,8 @@ module TSOS {
                 this.PC = this.PC + bytes;
 
                 // Check if PC is greater than Total Size
-                if (this.PC > _MemoryAccessor.getTotalSize()) {
-                    this.PC %= _MemoryAccessor.getTotalSize();
+                if (this.PC > _MemoryAccessor.getSegmentSize()) {
+                    this.PC %= _MemoryAccessor.getSegmentSize();
                 }
             } 
         }

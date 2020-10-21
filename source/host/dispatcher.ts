@@ -8,7 +8,6 @@
 
     module TSOS {
         export class Dispatcher { 
-
             constructor() {}
 
             /**
@@ -26,6 +25,7 @@
                 _ReadyQueue.push(pcb);
                 pcb.state = "running";
 
+                _PCB = pcb;
                 _CPU.updateState(pcb);
                 _CPU.isExecuting = true;
             }

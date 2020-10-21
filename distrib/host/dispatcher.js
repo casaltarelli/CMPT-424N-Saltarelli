@@ -23,6 +23,7 @@ var TSOS;
             // Update new Process + Context Switch
             _ReadyQueue.push(pcb);
             pcb.state = "running";
+            _PCB = pcb;
             _CPU.updateState(pcb);
             _CPU.isExecuting = true;
         };

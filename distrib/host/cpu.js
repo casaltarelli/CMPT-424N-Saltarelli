@@ -77,7 +77,7 @@ var TSOS;
                     break;
                 case 0x00:
                     this.saveState();
-                    _Kernel.krnTerminateProcess(_CPU.PCB.pid);
+                    _Kernel.krnTerminateProcess(_CPU.PCB);
                     break;
                 case 0xEC:
                     this.compareToXreg();
@@ -92,7 +92,7 @@ var TSOS;
                     this.systemCall();
                     break;
                 default:
-                    _Kernel.krnTerminateProcess(_CPU.PCB.pid);
+                    _Kernel.krnTerminateProcess(_CPU.PCB);
                     _Kernel.krnTrapError("Process Execution Exception: Instruction '" + this.IR.toString(16).toUpperCase() + "' is not valid");
                     break;
             }
@@ -185,8 +185,8 @@ var TSOS;
             if (this.Zflag === 0) {
                 this.PC = this.PC + bytes;
                 // Check if PC is greater than Total Size
-                if (this.PC > _MemoryAccessor.getTotalSize()) {
-                    this.PC %= _MemoryAccessor.getTotalSize();
+                if (this.PC > _MemoryAccessor.getSegmentSize()) {
+                    this.PC %= _MemoryAccessor.getSegmentSize();
                 }
             }
         };

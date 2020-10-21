@@ -255,15 +255,22 @@ tbody {
   height: 51px !important;
 }
 
-#divRQ {
+#divP {
   display: block;
   margin-top: 2em;
+}
+
+#tableP {
+  width: 270px; 
 }
 
 #divCPU {
   height: 33px;
   margin-top: 5px;
+}
 
+#tableCPU {
+  width: 270px;
 }
 
 /* Information Display */

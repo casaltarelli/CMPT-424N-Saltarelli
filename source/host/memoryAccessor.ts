@@ -57,7 +57,8 @@
             clear(segment) {
                 // Clear Memory for specific Segment
                 for (let i = segment.baseRegister; i < segment.limitRegister; i++) {
-                    _Memory.mainMemory[i] == "00";
+                    console.log("Called!");
+                    _Memory.mainMemory[i] = "00";
                 }
             }
 

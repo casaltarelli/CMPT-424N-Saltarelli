@@ -121,10 +121,22 @@ module TSOS {
                                     " - <pid> run executes a process by a specified pid.");
             this.commandList[this.commandList.length] = sc;
 
+            // ps
+            sc = new ShellCommand(this.shellPs,
+                                    "ps",
+                                    " - displays all processes in main memory.");
+            this.commandList[this.commandList.length] = sc;
+
             // kill <pid> 
             sc = new ShellCommand(this.shellKill,
                                     "kill",
                                     " - <pid> kill terminates a process in main memory.");
+            this.commandList[this.commandList.length] = sc;
+
+            // killall
+            sc = new ShellCommand(this.shellKillAll,
+                                    "killall",
+                                    " - killall terminates all processes in main memory.");
             this.commandList[this.commandList.length] = sc;
 
             // ps  - list the running processes and their IDs
@@ -434,7 +446,7 @@ module TSOS {
 
                 // Test Load Success
                 if (pcb) {
-                    _StdOut.putText("Program with PID " + pcb.pid + " loaded into memory segment" + pcb.segment + ".");
+                    _StdOut.putText("Program with PID " + pcb.pid + " loaded into memory segment.");
                 } else {
                     _StdOut.putText("Memory is full. Please clear before loading new process.");
                 }
@@ -480,6 +492,42 @@ module TSOS {
             }
         }
 
+        public shellPs(args: string[]) {
+            if (_ResidentList.length > 0) {
+                for (let i = 0; i < _ResidentList.length; i++) {
+                    _StdOut.putText("  Process PID: " + _ResidentList[i].pid + " / State: " + _ResidentList[i].state);
+                    _StdOut.advanceLine();
+                }
+            } else {
+                _StdOut.putText("No processes are currently in main memory.");
+            }   
+        }
+
+        public shellClear(args: string[]) {
+            if (args.length > 0) {
+                let pcb;
+                
+                // Validate pid in our Resident List
+                out:
+                for (let process of _ResidentList) {
+                    if (process.pid == args[0]) {
+
+                        pcb = process;
+                        break out;
+                    }
+                }
+
+                // Update Console
+                if (pcb != undefined) {
+                    //TODO: Implement Clear at specific segment functionality
+                } else {
+                    _StdOut.putText("Process " + args[0] + " does not exist.");
+                }
+            } else {
+                _StdOut.putText("Usage: clear <pid> please provide a pid.");
+            }
+        }
+
         public shellKill(args: string[]) {
             if (args.length > 0) {
                 let pcb;
@@ -488,13 +536,14 @@ module TSOS {
                 out:
                 for (let process of _ResidentList) {
                     if (process.pid == args[0]) {
+
                         pcb = process;
                         break out;
                     }
                 }
 
                 // Update Console
-                if (pcb) {
+                if (pcb != undefined) {
                     _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, pcb));
                     _StdOut.putText("Process " + pcb.pid + " has been killed.");
                 } else {
@@ -508,9 +557,13 @@ module TSOS {
         public shellKillAll(args: string[]) {
             // Terminate all Proccesses Resident + Ready Queue
             for (let process of _ResidentList) {
-                _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, process));
-                _StdOut.putText("Process " + process.pid + " has been killed.");
-                _StdOut.advanceLine();
+                if (process.state == "terminated") {
+                    continue;   // No need to send interrupt
+                } else {
+                    let pcb = process;
+                    var params = [process, true];
+                    _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, params));
+                }
             }
         }
     }

@@ -76,6 +76,7 @@ var TSOS;
                 this.krnInterruptHandler(interrupt.irq, interrupt.params);
             }
             else if (_CPU.isExecuting) { // If there are no interrupts then run one CPU cycle if there is anything being processed.
+                console.log("PROCESS ASSIGNED AND CPU EXECUTING NOTICED");
                 if (_Step) {
                     if (_NextStep) {
                         _CPU.cycle();
@@ -122,23 +123,20 @@ var TSOS;
                     _StdIn.handleInput();
                     break;
                 case RUN_CURRENT_PROCESS_IRQ:
-                    if (!_CPU.PCB && _CPU.isExecuting == false) {
-                        _Dispatcher.runProcess(params);
-                    }
-                    else {
-                        // Add Process to Ready Queue if CPU is already executing
-                        _ReadyQueue.push(params);
-                    }
-                //TODO: Implement Dispatcher to update current PCB on CPU
-                // Context Switch Control + Terminate Control
+                    _Dispatcher.runProcess(params);
+                    break;
                 case TERMINATE_CURRENT_PROCESS_IRQ:
                     if (_CPU.PCB && _CPU.PCB.state != "terminate") {
-                        _CPU.saveState();
-                        this.krnTerminateProcess(_CPU.PCB.pid);
+                        this.krnTerminateProcess(_CPU.PCB);
                     }
                     break;
                 case TERMINATE_PROCESS_IRQ:
-                    this.krnTerminateProcess(params[0]);
+                    if (Array.isArray(params)) {
+                        this.krnTerminateProcess(params[0], params[1]);
+                    }
+                    else {
+                        this.krnTerminateProcess(params);
+                    }
                     break;
                 case PRINT_YREGISTER_IRQ:
                     _StdOut.putText(_CPU.Yreg.toString());
@@ -209,9 +207,10 @@ var TSOS;
             _OsShell.shellDeath;
             this.krnShutdown();
         };
-        Kernel.prototype.krnTerminateProcess = function (process) {
+        Kernel.prototype.krnTerminateProcess = function (process, killall) {
+            console.log("Process PID: " + process.pid);
             // Check for Current Process
-            if (_CPU.PCB.pid == process.pid) {
+            if (_CPU.PCB && _CPU.PCB.pid == process.pid) {
                 // Update State + Status
                 _CPU.PCB.state = "terminated";
                 _CPU.saveState();
@@ -227,17 +226,19 @@ var TSOS;
                 }
             }
             // Remove from our ResidentList + Ready Queue
-            _ResidentList = _ResidentList.filter(function (element) { return element.pid != process.pid; });
+            // _ResidentList = _ResidentList.filter(element => element.pid != process.pid);
             _ReadyQueue = _ReadyQueue.filter(function (element) { return element.pid != process.pid; });
             // Clear Memory Segment
             _MemoryAccessor.clear(process.segment);
             // Update Console
             _StdOut.advanceLine();
             _StdOut.putText("Process " + process.pid + " terminated.");
-            // Display Prompt
-            _StdOut.advanceLine();
-            _OsShell.putName();
-            _OsShell.putPrompt();
+            if (!killall) {
+                // Display Prompt
+                _StdOut.advanceLine();
+                _OsShell.putName();
+                _OsShell.putPrompt();
+            }
         };
         return Kernel;
     }());

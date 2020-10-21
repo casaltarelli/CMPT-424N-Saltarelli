@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-   <meta name="author"             content="Alan G. Labouseur" />
+   <meta name="author"             content="Christian Saltarelli" />
    <link rel="stylesheet" href="tsos.css" type="text/css" media="screen" />
    <title>
       CSOS - a browser-based virtual Operating System in TypeScript
@@ -17,6 +17,7 @@
    <script type="text/javascript" src="distrib/host/cpu.js"></script>
    <script type="text/javascript" src="distrib/host/memory.js"></script>
    <script type="text/javascript" src="distrib/host/memoryAccessor.js"></script>
+   <script type="text/javascript" src="distrib/host/dispatcher.js"></script>
 
    <!-- Virtual OS Routines: Make sure Kernel code is last, since it needs those above it. -->
    <script type="text/javascript" src="distrib/os/interrupt.js"></script>
@@ -188,11 +189,11 @@
                      </label>
                   </div>
                   
-                  <div class="div-block" id="divRQ">
+                  <div class="div-block" id="divP">
                      <label>
                         PROCESS DISPLAY
                         <br>
-                        <table id="tableRQ"> <!-- Will need to add PID in future implementations -->
+                        <table id="tableP"> <!-- Will need to add PID in future implementations -->
                            <thead>
                               <tr>
                                  <th>PID</th>

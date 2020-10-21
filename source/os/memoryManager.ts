@@ -22,7 +22,7 @@
                         baseRegister: i * _MemoryAccessor.getSegmentSize(),
                         limitRegister: _MemoryAccessor.getSegmentSize() * (i + 1),   // index starts at 0
                         isFilled: false
-                    }
+                    };
                 }
             }
 
@@ -63,9 +63,10 @@
                 // Update Segment Status + PCB Reference
                 this.memoryRegisters[segment].isFilled = true;
                 pcb.segment = this.memoryRegisters[segment];
+                pcb.state = "resident";
 
                 // Add PCB to Resident List
-                _ReadyQueue.push(pcb);
+                _ResidentList.push(pcb);
 
                 // Return our updated PCB
                 return pcb;

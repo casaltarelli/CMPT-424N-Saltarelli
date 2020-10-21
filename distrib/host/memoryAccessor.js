@@ -54,7 +54,8 @@ var TSOS;
         MemoryAccessor.prototype.clear = function (segment) {
             // Clear Memory for specific Segment
             for (var i = segment.baseRegister; i < segment.limitRegister; i++) {
-                _Memory.mainMemory[i] == "00";
+                console.log("Called!");
+                _Memory.mainMemory[i] = "00";
             }
         };
         /**

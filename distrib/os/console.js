@@ -154,8 +154,9 @@ var TSOS;
                 _DrawingContext.drawText(this.currentFont, this.currentFontSize, this.currentXPosition, this.currentYPosition, text);
                 // Move the current X position.
                 var offset = _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
+                // Check Before Printing next line
                 this.currentXPosition = this.currentXPosition + offset;
-                // Check XPosition is not at End of Canvas
+                // Check XPosition is at End of Canvas
                 if (this.currentXPosition >= (_Canvas.width - _DefaultFontSize)) {
                     this.advanceLine();
                 }

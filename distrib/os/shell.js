@@ -70,8 +70,14 @@ var TSOS;
             // run <pid> 
             sc = new TSOS.ShellCommand(this.shellRun, "run", " - <pid> run executes a process by a specified pid.");
             this.commandList[this.commandList.length] = sc;
+            // ps
+            sc = new TSOS.ShellCommand(this.shellPs, "ps", " - displays all processes in main memory.");
+            this.commandList[this.commandList.length] = sc;
             // kill <pid> 
             sc = new TSOS.ShellCommand(this.shellKill, "kill", " - <pid> kill terminates a process in main memory.");
+            this.commandList[this.commandList.length] = sc;
+            // killall
+            sc = new TSOS.ShellCommand(this.shellKillAll, "killall", " - killall terminates all processes in main memory.");
             this.commandList[this.commandList.length] = sc;
             // ps  - list the running processes and their IDs
             // kill <id> - kills the specified process id.
@@ -347,7 +353,7 @@ var TSOS;
                 var pcb = _MemoryManager.load(input);
                 // Test Load Success
                 if (pcb) {
-                    _StdOut.putText("Program with PID " + pcb.pid + " loaded into memory segment" + pcb.segment + ".");
+                    _StdOut.putText("Program with PID " + pcb.pid + " loaded into memory segment.");
                 }
                 else {
                     _StdOut.putText("Memory is full. Please clear before loading new process.");
@@ -394,6 +400,17 @@ var TSOS;
                 _StdOut.putText("Usage: run <pid> Please provide a pid.");
             }
         };
+        Shell.prototype.shellPs = function (args) {
+            if (_ResidentList.length > 0) {
+                for (var i = 0; i < _ResidentList.length; i++) {
+                    _StdOut.putText("  Process PID: " + _ResidentList[i].pid + " / State: " + _ResidentList[i].state);
+                    _StdOut.advanceLine();
+                }
+            }
+            else {
+                _StdOut.putText("No processes are currently in main memory.");
+            }
+        };
         Shell.prototype.shellKill = function (args) {
             if (args.length > 0) {
                 var pcb = void 0;
@@ -406,7 +423,7 @@ var TSOS;
                     }
                 }
                 // Update Console
-                if (pcb) {
+                if (pcb != undefined) {
                     _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, pcb));
                     _StdOut.putText("Process " + pcb.pid + " has been killed.");
                 }
@@ -422,9 +439,14 @@ var TSOS;
             // Terminate all Proccesses Resident + Ready Queue
             for (var _i = 0, _ResidentList_3 = _ResidentList; _i < _ResidentList_3.length; _i++) {
                 var process = _ResidentList_3[_i];
-                _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, process));
-                _StdOut.putText("Process " + process.pid + " has been killed.");
-                _StdOut.advanceLine();
+                if (process.state == "terminated") {
+                    continue; // No need to send interrupt
+                }
+                else {
+                    var pcb = process;
+                    var params = [process, true];
+                    _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, params));
+                }
             }
         };
         return Shell;

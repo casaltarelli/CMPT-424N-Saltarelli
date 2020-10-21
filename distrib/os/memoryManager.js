@@ -57,8 +57,9 @@ var TSOS;
             // Update Segment Status + PCB Reference
             this.memoryRegisters[segment].isFilled = true;
             pcb.segment = this.memoryRegisters[segment];
+            pcb.state = "resident";
             // Add PCB to Resident List
-            _ReadyQueue.push(pcb);
+            _ResidentList.push(pcb);
             // Return our updated PCB
             return pcb;
         };
