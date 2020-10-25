@@ -57,8 +57,14 @@
             clear(segment) {
                 // Clear Memory for specific Segment
                 for (let i = segment.baseRegister; i < segment.limitRegister; i++) {
-                    console.log("Called!");
                     _Memory.mainMemory[i] = "00";
+                }
+
+                // Check for Respective Segment + Update
+                for (let segments of _MemoryManager.memoryRegisters) {
+                    if (segments.index == segment.index) {
+                        segments.isFilled = false;
+                    }
                 }
             }
 

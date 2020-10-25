@@ -73,11 +73,10 @@ module TSOS {
         public static updateProcessDisplay() {
             // Declare Variable References
             let table = document.getElementById("tableP");
-            //table.style.display = "block";
             let newTBody;
 
             // No Processes Check
-            if (_ResidentList.length <= 0) {
+            if (_ResidentList.length == 0) {
                 // Create new table to remove terminated processes
                 newTBody = document.createElement("tbody");
 

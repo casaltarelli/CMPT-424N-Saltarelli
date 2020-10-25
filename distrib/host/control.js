@@ -62,10 +62,9 @@ var TSOS;
         Control.updateProcessDisplay = function () {
             // Declare Variable References
             var table = document.getElementById("tableP");
-            //table.style.display = "block";
             var newTBody;
             // No Processes Check
-            if (_ResidentList.length <= 0) {
+            if (_ResidentList.length == 0) {
                 // Create new table to remove terminated processes
                 newTBody = document.createElement("tbody");
                 table.replaceChild(newTBody, table.childNodes[0]);

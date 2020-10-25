@@ -87,7 +87,6 @@ module TSOS {
                 var interrupt = _KernelInterruptQueue.dequeue();
                 this.krnInterruptHandler(interrupt.irq, interrupt.params);
             } else if (_CPU.isExecuting) { // If there are no interrupts then run one CPU cycle if there is anything being processed.
-                console.log("PROCESS ASSIGNED AND CPU EXECUTING NOTICED");
                 if (_Step) {
                     if (_NextStep) {
                         _CPU.cycle();  
@@ -152,6 +151,7 @@ module TSOS {
 
                 case TERMINATE_PROCESS_IRQ:
                     if (Array.isArray(params)) {
+                        console.log("Params Recognized for terminate.");
                         this.krnTerminateProcess(params[0], params[1]);
                     } else {
                         this.krnTerminateProcess(params);
@@ -256,7 +256,7 @@ module TSOS {
                 }
             }
             
-            // Remove from our ResidentList + Ready Queue
+            // Remove from our Ready Queue
             _ReadyQueue = _ReadyQueue.filter(element => element.pid != process.pid);
             
             // Update Console
@@ -269,7 +269,7 @@ module TSOS {
                 _StdOut.advanceLine();
                 _OsShell.putName();
                 _OsShell.putPrompt();
-            }
+            } 
         }
     }
 }

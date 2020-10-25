@@ -127,6 +127,18 @@ module TSOS {
                                     " - displays all processes in main memory.");
             this.commandList[this.commandList.length] = sc;
 
+            // clear <pid>
+            sc = new ShellCommand(this.shellClear,
+                                    "clear",
+                                    " - clears a specified segment of memory from a given index.");
+            this.commandList[this.commandList.length] = sc;
+
+            // clearmem
+            sc = new ShellCommand(this.shellClearmem,
+                                    "clearmem",
+                                    " - clears all segments of main memory.");
+            this.commandList[this.commandList.length] = sc;
+
             // kill <pid> 
             sc = new ShellCommand(this.shellKill,
                                     "kill",
@@ -446,7 +458,9 @@ module TSOS {
 
                 // Test Load Success
                 if (pcb) {
-                    _StdOut.putText("Program with PID " + pcb.pid + " loaded into memory segment.");
+                    let segment;
+                    segment = pcb.segment;
+                    _StdOut.putText("Program with PID " + pcb.pid + " loaded into memory segment " + segment.index + ".");
                 } else {
                     _StdOut.putText("Memory is full. Please clear before loading new process.");
                 }
@@ -505,26 +519,113 @@ module TSOS {
 
         public shellClear(args: string[]) {
             if (args.length > 0) {
+                let segment;
                 let pcb;
                 
-                // Validate pid in our Resident List
+                // Validate index of Arg
                 out:
-                for (let process of _ResidentList) {
-                    if (process.pid == args[0]) {
-
-                        pcb = process;
+                for (let seg of _MemoryManager.memoryRegisters) {
+                    if (seg.index == args[0]) {
+                        segment = seg;
                         break out;
                     }
                 }
 
-                // Update Console
-                if (pcb != undefined) {
-                    //TODO: Implement Clear at specific segment functionality
+                // Validate Segment
+                if (segment != undefined) {
+                    // Find if Memory Segment contains Process
+                    for (let process of _ResidentList) {
+                        if (process.segment.index == segment.index) {
+                            pcb = process;
+                        }
+                    }
+
+                    if (pcb != undefined) {
+                        if (pcb.state != "terminated" && pcb.state != "running") {
+                            _MemoryAccessor.clear(pcb.segment);
+                            _StdOut.putText("Process " + pcb.pid + " in segment " + segment.index + " has been cleared from memory.");
+
+                        } else {
+                            if (pcb.state == "running") {
+                                var params = [pcb, true];
+                                _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, params));
+                                _MemoryAccessor.clear(pcb.segment);
+
+                                _StdOut.putText("Process " + pcb.pid + " in segment " + segment.index + " has been cleared from memory.");
+
+                            } else {
+                                _MemoryAccessor.clear(pcb.segment);
+                                
+                                _StdOut.putText("Process " + pcb.pid + " is already terminated.");
+                                _StdOut.advanceLine();
+                                _StdOut.putText("Process " + pcb.pid + " in segment " + segment.index + " has been cleared from memory.");
+                            }
+                        }
+
+                        // Update Resident List
+                        _ResidentList = _ResidentList.filter(element => element.pid != pcb.pid);
+                    } else {
+                        _StdOut.putText("Memory segment " + segment.index + " has been cleared.")
+                        _MemoryAccessor.clear(segment);
+                    }
                 } else {
-                    _StdOut.putText("Process " + args[0] + " does not exist.");
+                    _StdOut.putText("Memory segment " + segment.index + " does not exist");
                 }
             } else {
-                _StdOut.putText("Usage: clear <pid> please provide a pid.");
+                _StdOut.putText("Usage: clear <index> please provide a segment id.");
+            }
+        }
+
+        public shellClearmem(args: string[]) {
+            let last = false;   // Trigger for last process
+            // Iterate through Memory Segments
+            for(let segment of _MemoryManager.memoryRegisters) {
+                // Check Segment for containing process
+                if (segment.isFilled) {
+                    // Find Respective Process within current segment
+                    for(let process of _ResidentList) {
+                        if (process.segment.index == segment.index) {
+                            // Check if Process in Segment is running or terminated
+                            if (process.state != "terminated" && process.state != "running") {
+                                _MemoryAccessor.clear(process.segment);
+                                _StdOut.putText("Process " + process.pid + " in segment " + segment.index + " has been cleared from memory.");
+                                _StdOut.advanceLine();
+        
+                            } else {
+                                if (process.state == "running") {
+                                    // Output User Prompt if clearing last segment
+                                    if (process.state.index == 2) {
+                                        _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, process));    
+                                    } else {
+                                        var params = [process, true];
+                                        _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, params));
+                                    }
+                                    _MemoryAccessor.clear(process.segment);
+        
+                                    _StdOut.putText("Process " + process.pid + " in segment " + segment.index + " has been cleared from memory.");
+                                    _StdOut.advanceLine();
+        
+                                } else {
+                                    _MemoryAccessor.clear(process.segment);
+                                    
+                                    _StdOut.putText("Process " + process.pid + " is already terminated.");
+                                    _StdOut.advanceLine();
+                                    _StdOut.putText("Process " + process.pid + " in segment " + segment.index + " has been cleared from memory.");
+                                    _StdOut.advanceLine();
+                                }
+                            }
+
+                            // Update Resident List
+                            _ResidentList = _ResidentList.filter(element => element.pid != process.pid);
+                        }
+                    }
+                } else {
+                    // Clear Current Memory Segment
+                    _MemoryAccessor.clear(segment);
+                    _StdOut.putText("Segment " + segment.index + " has been cleared.");
+                    _StdOut.advanceLine();
+                }
+                
             }
         }
 
@@ -536,7 +637,6 @@ module TSOS {
                 out:
                 for (let process of _ResidentList) {
                     if (process.pid == args[0]) {
-
                         pcb = process;
                         break out;
                     }
@@ -545,7 +645,6 @@ module TSOS {
                 // Update Console
                 if (pcb != undefined) {
                     _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, pcb));
-                    _StdOut.putText("Process " + pcb.pid + " has been killed.");
                 } else {
                     _StdOut.putText("Process " + args[0] + " does not exist.");
                 }
@@ -555,14 +654,40 @@ module TSOS {
         }
 
         public shellKillAll(args: string[]) {
-            // Terminate all Proccesses Resident + Ready Queue
+            let last = false;
+            // Terminate all Proccesses Resident
             for (let process of _ResidentList) {
                 if (process.state == "terminated") {
                     continue;   // No need to send interrupt
                 } else {
-                    let pcb = process;
-                    var params = [process, true];
-                    _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, params));
+                    // Check if current process is last in ResidentList
+                    if (!last) {
+                        console.log("NEW CYCLE FOR NEW PROCESS")
+                        for (let i = 0; i < _ResidentList.length; i++) {
+                            console.log("Index of Current Process: " + _ResidentList.indexOf(_ResidentList[i]));
+                            if (i != _ResidentList.indexOf(process)) {
+                                if (_ResidentList[i].state != "terminated") {
+                                    console.log("Last set to false");
+                                    last = false;
+                                } else {
+                                    console.log("Last set to true");
+                                    last = true;
+                                }
+                            }
+                        }
+                    }
+
+                    // Execute Terminate Interrupt
+                    if (last) {
+                        _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, process));    
+                    } else {
+                        var params = [process, true];
+
+                        // Hard State Update to process before next loop to prevent late Interrupt update for next cycle
+                        process.state = "terminated"; 
+
+                        _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, params));
+                    }
                 }
             }
         }
