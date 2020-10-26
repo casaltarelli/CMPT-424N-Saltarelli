@@ -96,7 +96,8 @@ module TSOS {
                     _CPU.cycle();
                 }
 
-                // Update CPU + PCB Display
+                // Update CPU + RoundRobin States
+                _Schedular.update();
                 Control.updateCPUDisplay();
 
             } else {                       // If there are no interrupts and there is nothing being executed then just be idle.
@@ -143,20 +144,12 @@ module TSOS {
                     _Dispatcher.runProcess(params);
                     break;
 
-                case TERMINATE_CURRENT_PROCESS_IRQ:
-                    if (_CPU.PCB && _CPU.PCB.state != "terminate") {
-                        this.krnTerminateProcess(_CPU.PCB);
-                    }
-                    break;
-
                 case TERMINATE_PROCESS_IRQ:
                     if (Array.isArray(params)) {
-                        console.log("Params Recognized for terminate.");
                         this.krnTerminateProcess(params[0], params[1]);
                     } else {
                         this.krnTerminateProcess(params);
                     }
-                    
                     break;
 
                 case PRINT_YREGISTER_IRQ:
@@ -258,6 +251,12 @@ module TSOS {
             
             // Remove from our Ready Queue
             _ReadyQueue = _ReadyQueue.filter(element => element.pid != process.pid);
+
+            // Update Schedular
+            if (_ReadyQueue.length > 0) {
+                _Schedular.assignProcess(_ReadyQueue[0]);
+            }
+            
             
             // Update Console
             _StdOut.advanceLine();

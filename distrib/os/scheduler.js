@@ -22,19 +22,32 @@ var TSOS;
          *   process to our Ready Queue
          */
         Scheduler.prototype.addReadyQueue = function (pcb) {
+            pcb.state = "ready";
             _ReadyQueue.push(pcb);
         };
         /**
-         * runProcess(pcb)
+         * assignProcess(pcb)
          * - Calls our dispatcher
          *   to run a specified process
          */
-        Scheduler.prototype.runProcess = function () {
+        Scheduler.prototype.assignProcess = function (process) {
             // Check if given process is running on CPU currently
             if (!this.currentProcess || this.currentProcess.pid != _ReadyQueue[0].pid) {
-                // Perform context switch through dispatcher
+                // Perform context switch through interrupt to dispatcher
                 _Kernel.krnTrace("Performing context switch");
-                _KernelInterruptQueue.enqueue(new TSOS.Interrupt(RUN_CURRENT_PROCESS_IRQ, _ReadyQueue[0]));
+                _KernelInterruptQueue.enqueue(new TSOS.Interrupt(RUN_CURRENT_PROCESS_IRQ, process));
+            }
+        };
+        /**
+         * scheduleProcess()
+         * - Updates currentProcess
+         */
+        Scheduler.prototype.scheduleProcess = function () {
+            for (var _i = 0, _ReadyQueue_1 = _ReadyQueue; _i < _ReadyQueue_1.length; _i++) {
+                var process = _ReadyQueue_1[_i];
+                if (process.state == "running") {
+                    this.currentProcess = process;
+                }
             }
         };
         /**
@@ -43,7 +56,31 @@ var TSOS;
          *   memory through round robin
          */
         Scheduler.prototype.roundRobin = function () {
-            //TODO: Breakdown Round Robin Scheduling + Implement Statistics to trackk cycles    
+            // Validate Current Process
+            if (this.currentProcess && _ReadyQueue.length > 0 && this.currentProcess.pid == _ReadyQueue[0].pid) {
+                if (this.cycles < this.quantum) {
+                    // Update Cycles  
+                    this.cycles++;
+                }
+                else {
+                    // Move Current Process to end of our Ready Queue
+                    var old = _ReadyQueue.shift();
+                    _ReadyQueue.push(old);
+                    // Reset Cycles
+                    this.cycles = 0;
+                    // Run next process
+                    this.assignProcess(_ReadyQueue[0]);
+                    console.log("ReadyQueue[0].pid: " + _ReadyQueue[0].pid);
+                }
+            }
+        };
+        /**
+         * update()
+         * - Updates process statistics
+         */
+        Scheduler.prototype.update = function () {
+            this.roundRobin();
+            // TODO: Implement ability to track turnaround and wait time for all processes
         };
         return Scheduler;
     }());

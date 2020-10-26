@@ -85,7 +85,8 @@ var TSOS;
                 else {
                     _CPU.cycle();
                 }
-                // Update CPU + PCB Display
+                // Update CPU + RoundRobin States
+                _Schedular.update();
                 TSOS.Control.updateCPUDisplay();
             }
             else { // If there are no interrupts and there is nothing being executed then just be idle.
@@ -124,14 +125,8 @@ var TSOS;
                 case RUN_CURRENT_PROCESS_IRQ:
                     _Dispatcher.runProcess(params);
                     break;
-                case TERMINATE_CURRENT_PROCESS_IRQ:
-                    if (_CPU.PCB && _CPU.PCB.state != "terminate") {
-                        this.krnTerminateProcess(_CPU.PCB);
-                    }
-                    break;
                 case TERMINATE_PROCESS_IRQ:
                     if (Array.isArray(params)) {
-                        console.log("Params Recognized for terminate.");
                         this.krnTerminateProcess(params[0], params[1]);
                     }
                     else {
@@ -226,6 +221,10 @@ var TSOS;
             }
             // Remove from our Ready Queue
             _ReadyQueue = _ReadyQueue.filter(function (element) { return element.pid != process.pid; });
+            // Update Schedular
+            if (_ReadyQueue.length > 0) {
+                _Schedular.assignProcess(_ReadyQueue[0]);
+            }
             // Update Console
             _StdOut.advanceLine();
             _StdOut.putText("Process " + process.pid + " terminated.");

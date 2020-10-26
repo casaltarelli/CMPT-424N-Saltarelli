@@ -137,6 +137,11 @@ var TSOS;
                 "EE": { "operandNumber": 2 },
                 "FF": { "operandNumber": 0 }
             };
+            // Create List for each of our Memory Segment Buttons
+            var segmentBtns = [];
+            segmentBtns.push(document.getElementById("btnOne"));
+            segmentBtns.push(document.getElementById("btnTwo"));
+            segmentBtns.push(document.getElementById("btnThree"));
             // Create List for each of our Memory Segment Elements
             var segments = [];
             segments.push(document.getElementById("tbOne"));
@@ -152,6 +157,16 @@ var TSOS;
             var memory = _MemoryAccessor.dump();
             var highlightedCell;
             for (var i = 0; i < segments.length; i++) {
+                // Update Current Display based on current process being executed by CPU
+                if (_CPU.isExecuting && _CPU.PCB) {
+                    if (_CPU.PCB.segment.index == i) {
+                        if (segments[i].style.display == "none") {
+                            ;
+                            // Imitate HostBtn_Click to display proper Segment
+                            this.hostBtnMemory_click(segmentBtns[i]);
+                        }
+                    }
+                }
                 // Create new tbody element
                 newTBody = document.createElement("tbody");
                 for (var j = 0; j < _MemoryAccessor.getSegmentSize() / 8; j++) {
@@ -242,6 +257,7 @@ var TSOS;
             _MemoryAccessor = new TSOS.MemoryAccessor();
             // ... Create our Dispatcher + Scheduler ...
             _Dispatcher = new TSOS.Dispatcher();
+            _Schedular = new TSOS.Scheduler();
             // ... then set the host clock pulse ...
             _hardwareClockID = setInterval(TSOS.Devices.hostClockPulse, CPU_CLOCK_INTERVAL);
             // .. and call the OS Kernel Bootstrap routine.
@@ -294,8 +310,8 @@ var TSOS;
             var btns = ["One", "Two", "Three"];
             for (var _i = 0, btns_1 = btns; _i < btns_1.length; _i++) {
                 var b = btns_1[_i];
-                var btnID = "btn" + b;
                 if (btn.id == ("btn" + b)) {
+                    console.log("Host Btn ID Recognized");
                     // Update Current Btn Background
                     btn.style.backgroundColor = "#46494C";
                     btn.style.color = "#FFFFFF";

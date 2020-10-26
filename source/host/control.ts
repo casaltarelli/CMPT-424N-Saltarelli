@@ -157,9 +157,14 @@ module TSOS {
                 "FF": { "operandNumber": 0 }
             };
 
+            // Create List for each of our Memory Segment Buttons
+            let segmentBtns = [];
+            segmentBtns.push(document.getElementById("btnOne"));
+            segmentBtns.push(document.getElementById("btnTwo"));
+            segmentBtns.push(document.getElementById("btnThree"));
+
             // Create List for each of our Memory Segment Elements
             let segments = [];
-
             segments.push(document.getElementById("tbOne"));
             segments.push(document.getElementById("tbTwo"));
             segments.push(document.getElementById("tbThree"));
@@ -176,6 +181,16 @@ module TSOS {
             let highlightedCell;
 
             for (let i = 0; i < segments.length; i++) {
+                // Update Current Display based on current process being executed by CPU
+                if (_CPU.isExecuting && _CPU.PCB) {
+                    if (_CPU.PCB.segment.index == i) {
+                        if (segments[i].style.display == "none") {;
+                            // Imitate HostBtn_Click to display proper Segment
+                            this.hostBtnMemory_click(segmentBtns[i]);
+                        }
+                    }
+                }
+
                 // Create new tbody element
                 newTBody = document.createElement("tbody");
 
@@ -289,6 +304,7 @@ module TSOS {
 
             // ... Create our Dispatcher + Scheduler ...
             _Dispatcher = new Dispatcher();
+            _Schedular = new Scheduler();
 
             // ... then set the host clock pulse ...
             _hardwareClockID = setInterval(Devices.hostClockPulse, CPU_CLOCK_INTERVAL);
@@ -349,8 +365,8 @@ module TSOS {
             let btns = ["One", "Two", "Three"];
 
             for (let b of btns) {
-                let btnID = "btn" + b;
                 if (btn.id == ("btn" + b)) {
+                    console.log("Host Btn ID Recognized");
                     // Update Current Btn Background
                     btn.style.backgroundColor = "#46494C"; 
                     btn.style.color = "#FFFFFF";

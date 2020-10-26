@@ -70,6 +70,9 @@ var TSOS;
             // run <pid> 
             sc = new TSOS.ShellCommand(this.shellRun, "run", " - <pid> run executes a process by a specified pid.");
             this.commandList[this.commandList.length] = sc;
+            // runall
+            sc = new TSOS.ShellCommand(this.shellRunAll, "runall", " - executes all process in main memory at once.");
+            this.commandList[this.commandList.length] = sc;
             // ps
             sc = new TSOS.ShellCommand(this.shellPs, "ps", " - displays all processes in main memory.");
             this.commandList[this.commandList.length] = sc;
@@ -396,7 +399,7 @@ var TSOS;
                 else if (_CPU.PCB && _CPU.isExecuting == true) {
                     _StdOut.putText("CPU is already running process " + _CPU.PCB.pid + ", process " + pid + " added to Ready Queue.");
                     // Update Ready Queue through Kernel
-                    _KernelInterruptQueue.enqueue(new TSOS.Interrupt(RUN_CURRENT_PROCESS_IRQ, pcb));
+                    _Schedular.addReadyQueue(pcb);
                 }
                 else {
                     _StdOut.putText("Running process " + pid + ".");
@@ -406,6 +409,31 @@ var TSOS;
             }
             else {
                 _StdOut.putText("Usage: run <pid> Please provide a pid.");
+            }
+        };
+        Shell.prototype.shellRunAll = function (args) {
+            // Create List of all processes not terminate or running
+            var residentProcesses = _ResidentList.filter(function (element) { return element.state == "resident"; });
+            // Add all Resident Processes to our ReadyQueue
+            if (residentProcesses.length > 0) {
+                for (var _i = 0, residentProcesses_1 = residentProcesses; _i < residentProcesses_1.length; _i++) {
+                    var process = residentProcesses_1[_i];
+                    if (_ReadyQueue.indexOf(process) == -1) {
+                        _Schedular.addReadyQueue(process);
+                    }
+                }
+                // Check if CPU needs to be assigned Process
+                if (!_CPU.isExecuting && !_CPU.PCB) {
+                    _StdOut.putText("Running process " + _ReadyQueue[0].pid + ".");
+                    _KernelInterruptQueue.enqueue(new TSOS.Interrupt(RUN_CURRENT_PROCESS_IRQ, _ReadyQueue[0]));
+                }
+                else if (_CPU.PCB.state == "terminated") {
+                    _KernelInterruptQueue.enqueue(new TSOS.Interrupt(RUN_CURRENT_PROCESS_IRQ, null));
+                }
+            }
+            else {
+                _StdOut.putText("No processes in main memory to execute.");
+                _StdOut.advanceLine();
             }
         };
         Shell.prototype.shellPs = function (args) {
@@ -560,6 +588,8 @@ var TSOS;
             for (var _i = 0, _ResidentList_5 = _ResidentList; _i < _ResidentList_5.length; _i++) {
                 var process = _ResidentList_5[_i];
                 if (process.state == "terminated") {
+                    _StdOut.putText("Process " + process.pid + " is already terminated.");
+                    _StdOut.advanceLine();
                     continue; // No need to send interrupt
                 }
                 else {
@@ -586,7 +616,8 @@ var TSOS;
                     }
                     else {
                         var params = [process, true];
-                        process.state = "terminated"; // Hard State Update to process before next cycle within Killall
+                        // Hard State Update to process before next loop to prevent late Interrupt update for next cycle
+                        process.state = "terminated";
                         _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, params));
                     }
                 }

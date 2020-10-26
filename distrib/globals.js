@@ -17,10 +17,9 @@ var TIMER_IRQ = 0; // Pages 23 (timer), 9 (interrupts), and 561 (interrupt prior
 // NOTE: The timer is different from hardware/host clock pulses. Don't confuse these.
 var KEYBOARD_IRQ = 1;
 var RUN_CURRENT_PROCESS_IRQ = 2;
-var TERMINATE_CURRENT_PROCESS_IRQ = 3;
-var TERMINATE_PROCESS_IRQ = 4;
-var PRINT_YREGISTER_IRQ = 5;
-var PRINT_FROM_MEMORY_IRQ = 6;
+var TERMINATE_PROCESS_IRQ = 3;
+var PRINT_YREGISTER_IRQ = 4;
+var PRINT_FROM_MEMORY_IRQ = 5;
 //
 // Global Variables
 // TODO: Make a global object and use that instead of the "_" naming convention in the global namespace.
@@ -32,8 +31,9 @@ var _MemoryAccessor;
 var _Dispatcher;
 // Software (OS) 
 var _MemoryManager;
+var _Schedular;
 var _PIDCounter = 0;
-var _PCB;
+//var _PCB : TSOS.processControlBlock;
 var _ResidentList = []; // List of all PCBs resident within the system
 var _ReadyQueue = []; // List of all PCBs ready within the system
 var _OSclock = 0; // Page 23.

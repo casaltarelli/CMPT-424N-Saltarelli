@@ -121,6 +121,12 @@ module TSOS {
                                     " - <pid> run executes a process by a specified pid.");
             this.commandList[this.commandList.length] = sc;
 
+            // runall
+            sc = new ShellCommand(this.shellRunAll,
+                                    "runall",
+                                    " - executes all process in main memory at once.");
+            this.commandList[this.commandList.length] = sc;
+
             // ps
             sc = new ShellCommand(this.shellPs,
                                     "ps",
@@ -494,7 +500,7 @@ module TSOS {
                     _StdOut.putText("CPU is already running process " + _CPU.PCB.pid + ", process " + pid + " added to Ready Queue.");
 
                     // Update Ready Queue through Kernel
-                    _KernelInterruptQueue.enqueue(new TSOS.Interrupt(RUN_CURRENT_PROCESS_IRQ, pcb));
+                    _Schedular.addReadyQueue(pcb);
                 } else {
                     _StdOut.putText("Running process " + pid + ".");
 
@@ -503,6 +509,31 @@ module TSOS {
                 }
             } else {
                 _StdOut.putText("Usage: run <pid> Please provide a pid.");
+            }
+        }
+
+        public shellRunAll(args: string[]) {
+            // Create List of all processes not terminate or running
+            let residentProcesses = _ResidentList.filter(element => element.state == "resident");
+
+            // Add all Resident Processes to our ReadyQueue
+            if (residentProcesses.length > 0) {
+                for (let process of residentProcesses) {
+                    if (_ReadyQueue.indexOf(process) == -1) {
+                        _Schedular.addReadyQueue(process);
+                    }
+                }
+
+                // Check if CPU needs to be assigned Process
+                if (!_CPU.isExecuting && !_CPU.PCB) {
+                    _StdOut.putText("Running process " + _ReadyQueue[0].pid + ".");
+                    _KernelInterruptQueue.enqueue(new TSOS.Interrupt(RUN_CURRENT_PROCESS_IRQ, _ReadyQueue[0]));
+                } else if (_CPU.PCB.state == "terminated") {
+                    _KernelInterruptQueue.enqueue(new TSOS.Interrupt(RUN_CURRENT_PROCESS_IRQ, null));
+                }
+            } else {
+                _StdOut.putText("No processes in main memory to execute.");
+                _StdOut.advanceLine();
             }
         }
 
@@ -658,6 +689,8 @@ module TSOS {
             // Terminate all Proccesses Resident
             for (let process of _ResidentList) {
                 if (process.state == "terminated") {
+                    _StdOut.putText("Process " + process.pid + " is already terminated.");
+                    _StdOut.advanceLine();
                     continue;   // No need to send interrupt
                 } else {
                     // Check if current process is last in ResidentList

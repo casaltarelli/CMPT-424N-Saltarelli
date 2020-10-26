@@ -16,17 +16,31 @@
              *   to be executed on the next cycle
              */
             public runProcess(pcb) {
+                // Check if PCB given is null... Find next available Process
+                if (pcb == null) {
+                    pcb = _ReadyQueue.filter(element => element.state = "ready");
+                }
+
+
                 // Update State of current Process -- if there is one
                 if (_CPU.PCB && _CPU.PCB.state != "terminated") {
                     _CPU.PCB.state = "ready";
                 }
 
-                // Update new Process + Context Switch
-                _ReadyQueue.push(pcb);
-                pcb.state = "running";
-
-                _PCB = pcb;
-                _CPU.updateState(pcb);
+                // Check if PCB is already in our Ready Queue (multiple run <pid> bug pervention)
+                if (_ReadyQueue.indexOf(pcb) == -1) {
+                    _ReadyQueue.push(pcb);
+                }
+                
+                // Verify if given PCB is first process
+                if (_ReadyQueue.indexOf(pcb) != 0) {
+                    pcb.state = "ready";
+                } else {
+                    pcb.state = "running";
+                    _Schedular.scheduleProcess();
+                    _CPU.updateState(pcb);
+                }
+                
                 _CPU.isExecuting = true;
             }
         }
