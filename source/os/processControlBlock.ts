@@ -14,6 +14,8 @@ module TSOS {
                     public Xreg = 0,
                     public Yreg = 0,
                     public Zflag = 0,
-                    public segment = {}) {}
+                    public segment = {},
+                    public waitTime = 0,
+                    public turnaroundTime = 0) {}
     }
 }

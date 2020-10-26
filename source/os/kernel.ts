@@ -89,15 +89,15 @@ module TSOS {
             } else if (_CPU.isExecuting) { // If there are no interrupts then run one CPU cycle if there is anything being processed.
                 if (_Step) {
                     if (_NextStep) {
-                        _CPU.cycle();  
+                        _CPU.cycle();
+                        _Schedular.update();  
                         _NextStep = false; 
                     }
                 } else {
+                    _Schedular.update();
                     _CPU.cycle();
                 }
-
-                // Update CPU + RoundRobin States
-                _Schedular.update();
+                
                 Control.updateCPUDisplay();
 
             } else {                       // If there are no interrupts and there is nothing being executed then just be idle.
@@ -256,7 +256,6 @@ module TSOS {
             if (_ReadyQueue.length > 0) {
                 _Schedular.assignProcess(_ReadyQueue[0]);
             }
-            
             
             // Update Console
             _StdOut.advanceLine();

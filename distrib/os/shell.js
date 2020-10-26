@@ -88,8 +88,9 @@ var TSOS;
             // killall
             sc = new TSOS.ShellCommand(this.shellKillAll, "killall", " - killall terminates all processes in main memory.");
             this.commandList[this.commandList.length] = sc;
-            // ps  - list the running processes and their IDs
-            // kill <id> - kills the specified process id.
+            // quantum <int>
+            sc = new TSOS.ShellCommand(this.shellQuantum, "quantum", " - <int> set the quantum value for the CPU Schedular.");
+            this.commandList[this.commandList.length] = sc;
             // Display the initial  prompt.
             this.putName();
             this.putPrompt();
@@ -490,9 +491,12 @@ var TSOS;
                         // Update Resident List
                         _ResidentList = _ResidentList.filter(function (element) { return element.pid != pcb_1.pid; });
                     }
-                    else {
+                    else if (segment.isFilled) {
                         _StdOut.putText("Memory segment " + segment.index + " has been cleared.");
                         _MemoryAccessor.clear(segment);
+                    }
+                    else {
+                        _StdOut.putText("Memory segment " + segment.index + " is already empty.");
                     }
                 }
                 else {
@@ -554,7 +558,7 @@ var TSOS;
                 else {
                     // Clear Current Memory Segment
                     _MemoryAccessor.clear(segment);
-                    _StdOut.putText("Segment " + segment.index + " has been cleared.");
+                    _StdOut.putText("Segment " + segment.index + " is already empty.");
                     _StdOut.advanceLine();
                 }
             }
@@ -616,11 +620,28 @@ var TSOS;
                     }
                     else {
                         var params = [process, true];
-                        // Hard State Update to process before next loop to prevent late Interrupt update for next cycle
+                        // Hard State Update to process before next loop to prevent late Interrupt update
                         process.state = "terminated";
                         _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, params));
                     }
                 }
+            }
+        };
+        Shell.prototype.shellQuantum = function (args) {
+            if (args.length > 0) {
+                // If float round down... Prevents float case
+                var num = Math.floor(Number(args[0]));
+                // Verify value given is a number
+                if (!isNaN(num)) {
+                    _Schedular.setQuantum(num);
+                    _StdOut.putText("Quantum set to: " + num);
+                }
+                else {
+                    _StdOut.putText("Given value " + args[0] + " is not a integer.");
+                }
+            }
+            else {
+                _StdOut.putText("Usage: quantum <int> please provide a integer.");
             }
         };
         return Shell;

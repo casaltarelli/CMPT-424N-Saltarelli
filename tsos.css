@@ -290,9 +290,59 @@ tbody {
 }
 
 /* Footer */
-.footerText {
-  color: black;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 8pt;
+.footer-div {
+  display: block;
+  height: 50px;
+  width: 100vw;
+
+  color: #494949;
+  font-family: Arial, Helvetica, sans-serif;  
+}
+
+.footer-list {  
+  width: 100vw;
   text-align: center;
+  list-style: none;
+  padding-left: 0;
+  margin: 0 auto;
+}
+
+.footer-element {
+  display: inline;
+}
+
+.footer-divider {
+  margin-left: 1em;
+  margin-right: 1em;
+}
+
+.footer-link {
+  color: #494949;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.footer-link:hover {
+  color: #A0A0A0;
+  transition: all 0.4s ease 0s; 
+}
+
+.hand-wave {
+  padding-right: 1em;
+  display: inline-block;
+  animation: wave-animation 0.3s infinite;  
+}
+
+@keyframes wave-animation {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(20deg);
+  }
+  75% {
+    transform: rotate(-15deg);
+  }
 }

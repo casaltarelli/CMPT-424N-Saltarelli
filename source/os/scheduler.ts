@@ -13,6 +13,15 @@ module TSOS {
                     public cycles : number = 0) {}
 
         /**
+         * setQuantum(n) 
+         *  - Allows User to set
+         *  quantum level
+         */
+        public setQuantum(n) {
+            this.quantum = n;
+        }
+
+        /**
          * addReadyQueue(pcb)
          * - Allows us to add a 
          *   process to our Ready Queue
@@ -41,9 +50,11 @@ module TSOS {
          * - Updates currentProcess
          */
         public scheduleProcess() {
+            out:
             for (let process of _ReadyQueue) {
                 if (process.state == "running") {
                     this.currentProcess = process;
+                    break out;
                 }
             } 
         }
@@ -69,7 +80,6 @@ module TSOS {
 
                     // Run next process
                     this.assignProcess(_ReadyQueue[0]);
-                    console.log("ReadyQueue[0].pid: " + _ReadyQueue[0].pid);
                 }
             }
         }
@@ -79,10 +89,18 @@ module TSOS {
          * - Updates process statistics
          */
         public update() {
+            // Update Round Robin
             this.roundRobin();
-            // TODO: Implement ability to track turnaround and wait time for all processes
+            
+            // Update Turnaround + WaitTime for ea Process
+            for (let process of _ResidentList) {
+                if (_CPU.PCB == process) {
+                    process.turnaroundTime++;
+                    if (process.state == "ready") {
+                        process.waitTime++;
+                    }
+                }
+            }
         }
-
-        
     }
 }

@@ -79,14 +79,14 @@ var TSOS;
                 if (_Step) {
                     if (_NextStep) {
                         _CPU.cycle();
+                        _Schedular.update();
                         _NextStep = false;
                     }
                 }
                 else {
+                    _Schedular.update();
                     _CPU.cycle();
                 }
-                // Update CPU + RoundRobin States
-                _Schedular.update();
                 TSOS.Control.updateCPUDisplay();
             }
             else { // If there are no interrupts and there is nothing being executed then just be idle.

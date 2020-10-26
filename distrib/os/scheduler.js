@@ -17,6 +17,14 @@ var TSOS;
             this.cycles = cycles;
         }
         /**
+         * setQuantum(n)
+         *  - Allows User to set
+         *  quantum level
+         */
+        Scheduler.prototype.setQuantum = function (n) {
+            this.quantum = n;
+        };
+        /**
          * addReadyQueue(pcb)
          * - Allows us to add a
          *   process to our Ready Queue
@@ -43,10 +51,11 @@ var TSOS;
          * - Updates currentProcess
          */
         Scheduler.prototype.scheduleProcess = function () {
-            for (var _i = 0, _ReadyQueue_1 = _ReadyQueue; _i < _ReadyQueue_1.length; _i++) {
+            out: for (var _i = 0, _ReadyQueue_1 = _ReadyQueue; _i < _ReadyQueue_1.length; _i++) {
                 var process = _ReadyQueue_1[_i];
                 if (process.state == "running") {
                     this.currentProcess = process;
+                    break out;
                 }
             }
         };
@@ -70,7 +79,6 @@ var TSOS;
                     this.cycles = 0;
                     // Run next process
                     this.assignProcess(_ReadyQueue[0]);
-                    console.log("ReadyQueue[0].pid: " + _ReadyQueue[0].pid);
                 }
             }
         };
@@ -79,8 +87,18 @@ var TSOS;
          * - Updates process statistics
          */
         Scheduler.prototype.update = function () {
+            // Update Round Robin
             this.roundRobin();
-            // TODO: Implement ability to track turnaround and wait time for all processes
+            // Update Turnaround + WaitTime for ea Process
+            for (var _i = 0, _ResidentList_1 = _ResidentList; _i < _ResidentList_1.length; _i++) {
+                var process = _ResidentList_1[_i];
+                if (_CPU.PCB == process) {
+                    process.turnaroundTime++;
+                    if (process.state == "ready") {
+                        process.waitTime++;
+                    }
+                }
+            }
         };
         return Scheduler;
     }());
