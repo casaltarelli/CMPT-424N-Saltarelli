@@ -11,48 +11,63 @@ var TSOS;
         function MemoryAccessor() {
         }
         /**
-         * read(logicalAddress)
+         * read(segment, logicalAddress)
          * - Return Data contained in Main Memory
          *   at the provided Logical Address
          */
-        MemoryAccessor.prototype.read = function (logicalAddress) {
-            // Validate that logical address is actually applicable to Main Memory
-            if (logicalAddress > _MemoryAccessor.getTotalSize() || logicalAddress < 0) {
-                // Trap Error
+        MemoryAccessor.prototype.read = function (segment, logicalAddress) {
+            // Map Logical to Physical Address in Main Memory
+            var physicalAddress = logicalAddress + segment.baseRegister;
+            // Validate physical address doesn't exceed bounds
+            if (physicalAddress < segment.baseRegister || physicalAddress > segment.limitRegitser) {
                 _Kernel.krnTrapError("Memory read exception: Memory address is out of bounds");
             }
             else {
-                return _Memory.mainMemory[logicalAddress];
+                return _Memory.mainMemory[physicalAddress];
             }
         };
         /**
-         * write(logicalAddress, value) : boolean
-         * - Write given value in Main Memory
-         *   at specified Logical Address
+         * write(segment, logicalAddress, value) : boolean
+         * - Write given value at segment
+         *   in Main Memory
          */
-        MemoryAccessor.prototype.write = function (logicalAddress, value) {
+        MemoryAccessor.prototype.write = function (segment, logicalAddress, value) {
             // Check if val needs to get padded
             TSOS.Utils.padHexValue(value);
-            if (logicalAddress > _MemoryAccessor.getTotalSize() || logicalAddress < 0) {
+            // Map Logical to Physical Address in Main Memory
+            var physicalAddress = logicalAddress + segment.baseRegister;
+            // Validate physical address doesn't exceed bounds
+            if (physicalAddress < segment.baseRegister || physicalAddress > segment.limitRegitser) {
                 _Kernel.krnTrapError("Memory write exception: Memory address is out of bounds");
                 return false;
             }
             else {
-                _Memory.mainMemory[logicalAddress] = value;
+                _Memory.mainMemory[physicalAddress] = value;
                 return true;
             }
         };
         /**
-         * clear()
-         * - Empties Main Memory of all
-         *   stored values
+         * clear(segment)
+         * - Empties a specified segment
+         *   in Main Memory
          */
-        MemoryAccessor.prototype.clear = function () {
-            // Fill each memory with 00's to mark as empty
-            for (var i = 0; i < _MemoryAccessor.getTotalSize(); i++) {
+        MemoryAccessor.prototype.clear = function (segment) {
+            // Clear Memory for specific Segment
+            for (var i = segment.baseRegister; i < segment.limitRegister; i++) {
                 _Memory.mainMemory[i] = "00";
             }
+            // Check for Respective Segment + Update
+            for (var _i = 0, _a = _MemoryManager.memoryRegisters; _i < _a.length; _i++) {
+                var segments = _a[_i];
+                if (segments.index == segment.index) {
+                    segments.isFilled = false;
+                }
+            }
         };
+        /**
+         * dump()
+         * - Return Main Memory
+         */
         MemoryAccessor.prototype.dump = function () {
             return _Memory.mainMemory;
         };
@@ -63,6 +78,14 @@ var TSOS;
          */
         MemoryAccessor.prototype.getTotalSize = function () {
             return _Memory.totalSize;
+        };
+        /**
+         * getSegmentSize() : number
+         * - Return the set Segment
+         *   size
+         */
+        MemoryAccessor.prototype.getSegmentSize = function () {
+            return _Memory.segmentSize;
         };
         return MemoryAccessor;
     }());

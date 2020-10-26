@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-   <meta name="author"             content="Alan G. Labouseur" />
+   <meta name="author"             content="Christian Saltarelli" />
    <link rel="stylesheet" href="tsos.css" type="text/css" media="screen" />
    <title>
       CSOS - a browser-based virtual Operating System in TypeScript
@@ -17,6 +17,7 @@
    <script type="text/javascript" src="distrib/host/cpu.js"></script>
    <script type="text/javascript" src="distrib/host/memory.js"></script>
    <script type="text/javascript" src="distrib/host/memoryAccessor.js"></script>
+   <script type="text/javascript" src="distrib/host/dispatcher.js"></script>
 
    <!-- Virtual OS Routines: Make sure Kernel code is last, since it needs those above it. -->
    <script type="text/javascript" src="distrib/os/interrupt.js"></script>
@@ -31,11 +32,13 @@
    <script type="text/javascript" src="distrib/os/kernel.js"></script>
    <script type="text/javascript" src="distrib/os/memoryManager.js"></script>
    <script type="text/javascript" src="distrib/os/processControlBlock.js"></script>
+   <script type="text/javascript" src="distrib/os/scheduler.js"></script>
+
 
    <!-- Other Routines -->
    <script type="text/javascript" src="distrib/utils.js"></script>
    <!-- Uncomment the line below to enable GLaDOS testing. -->
-   <!-- <script type="text/javascript" src="http://alanclasses.github.io/TSOS/test/glados-ip2.js"></script> -->
+   <script type="text/javascript" src="http://alanclasses.github.io/TSOS/test/glados-ip3.js"></script>
    
 </head>
 
@@ -116,11 +119,42 @@
          <section class="hardware-display">
             <div class="hardware-wrapper">
                <div class="flex-wrapper" style="padding: 5px;">
-                  <div id="divMemory">
+                  <div id="btn-segments" style="visibility: hidden;">
+                     <input type="button"
+                        id = "btnOne"
+                        name="brnOne"
+                        class="memory_button"
+                        value="I"
+                        z-index="-1"
+                        onclick="TSOS.Control.hostBtnMemory_click(this);">
+
+                     <input type="button"
+                        id = "btnTwo"
+                        name="brnTwo"
+                        class="memory_button"
+                        value="II"
+                        z-index="-1"
+                        onclick="TSOS.Control.hostBtnMemory_click(this);">
+
+                     <input type="button"
+                        id = "btnThree"
+                        name="brnThree"
+                        class="memory_button"
+                        value="III"
+                        z-index="-1"
+                        onclick="TSOS.Control.hostBtnMemory_click(this);">
+                  </div>
+                  <div id="divMemory" style="display:block;">
                      <label>
                         MEMORY DISPLAY
                         <br>
-                        <table id="tableMemory">
+                        <table id="tbOne">
+                           <tbody></tbody>
+                        </table>
+                        <table id="tbTwo" style="display: none;">
+                           <tbody></tbody>
+                        </table>
+                        <table id="tbThree" style="display: none;">
                            <tbody></tbody>
                         </table>
                      </label>
@@ -128,28 +162,6 @@
                </div>
                
                <div style="padding-left: 50px;">
-                  <div class="div-block" id="divPCB">
-                     <label>
-                        PCB DISPLAY
-                        <br>
-                        <table id="tablePCB"> <!-- Will need to add PID in future implementations -->
-                           <thead>
-                              <tr>
-                                 <th>State</th>
-                                 <th>PC</th>
-                                 <th>Acc</th>
-                                 <th>Xreg</th>
-                                 <th>Yreg</th>
-                                 <th>Zflag</th>
-                              </tr>
-                           </thead>
-                           <tbody>
-                              <tr></tr>
-                           </tbody>
-                        </table>
-                     </label>
-                  </div>
-      
                   <div class="div-block" id="divCPU">
                      <label>
                         CPU DISPLAY
@@ -174,6 +186,29 @@
                                  <td></td>
                                  <td></td>
                               </tr>
+                           </tbody>
+                        </table>
+                     </label>
+                  </div>
+                  
+                  <div class="div-block" id="divP">
+                     <label>
+                        PROCESS DISPLAY
+                        <br>
+                        <table id="tableP"> <!-- Will need to add PID in future implementations -->
+                           <thead>
+                              <tr>
+                                 <th>PID</th>
+                                 <th>State</th>
+                                 <th>PC</th>
+                                 <th>Acc</th>
+                                 <th>Xreg</th>
+                                 <th>Yreg</th>
+                                 <th>Zflag</th>
+                              </tr>
+                           </thead>
+                           <tbody>
+                              <tr></tr>
                            </tbody>
                         </table>
                      </label>
@@ -210,13 +245,17 @@
       </div>
    </section> <!-- Information + Input Display -->
    
-   <p class="footerText" style="clear:both;">
-      <br>
-      Copyright &copy; 2008 - 2019 No Rights Reserved.
-      <br>
-      Reproduction is inhibited without the express written consent of
-      Ted Codd, Stevie Ray Vaughan, and Ian Fleming.
-   </p>
+   <div class="footer-div" style="clear:both;">
+      <p style="text-align: center; font-size: 13px; font-weight: 700; margin-bottom: 0;">COPYRIGHT &copy; 2020 CHRISTIAN SALTARELLI.</p>
+      <ul class="footer-list">
+         <li class="footer-element">
+            <p class="hand-wave">👋</p>
+          </li>
+         <li class="footer-element"><a class="footer-link" href="https://casaltarelli.com" alt="Personal Website">PORTFOLIO</a></li>
+         <li class="footer-element footer-divider">|</li>
+         <li class="footer-element"><a class="footer-link" href="https://github.com/casaltarelli" alt="GitHub Repository">GITHUB</a></li>
+      </ul>
+   </div>
 </div>
 </body>
 </html>

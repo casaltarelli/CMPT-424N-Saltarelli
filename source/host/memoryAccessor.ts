@@ -11,50 +11,67 @@
             constructor() {}
     
             /**
-             * read(logicalAddress)
+             * read(segment, logicalAddress)
              * - Return Data contained in Main Memory
              *   at the provided Logical Address
              */
-            read(logicalAddress) {
-                // Validate that logical address is actually applicable to Main Memory
-                if (logicalAddress > _MemoryAccessor.getTotalSize() || logicalAddress < 0) {
-                    // Trap Error
+            read(segment, logicalAddress) {
+                // Map Logical to Physical Address in Main Memory
+                let physicalAddress = logicalAddress + segment.baseRegister;
+
+                // Validate physical address doesn't exceed bounds
+                if (physicalAddress < segment.baseRegister || physicalAddress > segment.limitRegitser) {
                     _Kernel.krnTrapError("Memory read exception: Memory address is out of bounds");
                 } else {
-                    return _Memory.mainMemory[logicalAddress];
+                    return _Memory.mainMemory[physicalAddress];
                 }
             }
 
             /**
-             * write(logicalAddress, value) : boolean
-             * - Write given value in Main Memory
-             *   at specified Logical Address
+             * write(segment, logicalAddress, value) : boolean
+             * - Write given value at segment 
+             *   in Main Memory
              */
-            write(logicalAddress, value) {
+            write(segment, logicalAddress, value) {
                 // Check if val needs to get padded
                 TSOS.Utils.padHexValue(value);
 
-                if (logicalAddress > _MemoryAccessor.getTotalSize() || logicalAddress < 0) {
+                // Map Logical to Physical Address in Main Memory
+                let physicalAddress = logicalAddress + segment.baseRegister;
+
+                // Validate physical address doesn't exceed bounds
+                if (physicalAddress < segment.baseRegister || physicalAddress > segment.limitRegitser) {
                     _Kernel.krnTrapError("Memory write exception: Memory address is out of bounds");
                     return false;
                 } else {
-                    _Memory.mainMemory[logicalAddress] = value;
-                    return true
+                    _Memory.mainMemory[physicalAddress] = value;
+                    return true;
                 }
             }
 
             /**
-             * clear() 
-             * - Empties Main Memory of all
-             *   stored values
+             * clear(segment) 
+             * - Empties a specified segment
+             *   in Main Memory
              */
-            clear() {
-                // Fill each memory with 00's to mark as empty
-                for (let i = 0; i < _MemoryAccessor.getTotalSize(); i++) {
+            clear(segment) {
+                // Clear Memory for specific Segment
+                for (let i = segment.baseRegister; i < segment.limitRegister; i++) {
                     _Memory.mainMemory[i] = "00";
+                }
+
+                // Check for Respective Segment + Update
+                for (let segments of _MemoryManager.memoryRegisters) {
+                    if (segments.index == segment.index) {
+                        segments.isFilled = false;
+                    }
                 }
             }
 
+            /**
+             * dump() 
+             * - Return Main Memory
+             */
             dump() {
                 return _Memory.mainMemory;
             }
@@ -66,6 +83,15 @@
              */
             getTotalSize() {
                 return _Memory.totalSize;
+            }
+
+            /**
+             * getSegmentSize() : number
+             * - Return the set Segment
+             *   size
+             */
+            getSegmentSize() {
+                return _Memory.segmentSize;
             }
         }
     }

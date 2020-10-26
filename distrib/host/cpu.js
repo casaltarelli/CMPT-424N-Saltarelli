@@ -45,7 +45,7 @@ var TSOS;
             _Kernel.krnTrace('CPU cycle');
             // TODO: Accumulate CPU usage and profiling statistics here.
             // Do the real work here. Be sure to set this.isExecuting appropriately.
-            this.IR = parseInt(_MemoryAccessor.read(this.PC), 16);
+            this.IR = parseInt(_MemoryAccessor.read(this.PCB.segment, this.PC), 16);
             // Read over given OP Code
             switch (this.IR) {
                 case 0xA9:
@@ -77,7 +77,7 @@ var TSOS;
                     break;
                 case 0x00:
                     this.saveState();
-                    _Kernel.krnTerminateProcess();
+                    _Kernel.krnTerminateProcess(_CPU.PCB);
                     break;
                 case 0xEC:
                     this.compareToXreg();
@@ -92,7 +92,7 @@ var TSOS;
                     this.systemCall();
                     break;
                 default:
-                    _Kernel.krnTerminateProcess();
+                    _Kernel.krnTerminateProcess(_CPU.PCB);
                     _Kernel.krnTrapError("Process Execution Exception: Instruction '" + this.IR.toString(16).toUpperCase() + "' is not valid");
                     break;
             }
@@ -127,49 +127,49 @@ var TSOS;
             // Increase PC to get First Part
             this.increasePC();
             // First + Increase PC
-            var address = _MemoryAccessor.read(this.PC);
+            var address = _MemoryAccessor.read(this.PCB.segment, this.PC);
             this.increasePC();
             // Second
-            address = parseInt(_MemoryAccessor.read(this.PC), 16) + parseInt(address, 16);
+            address = parseInt(_MemoryAccessor.read(this.PCB.segment, this.PC), 16) + parseInt(address, 16);
             // Return Full Address
             return address;
         };
         // OP Codes
         Cpu.prototype.loadAccWithConstant = function () {
             this.increasePC();
-            this.Acc = parseInt(_MemoryAccessor.read(this.PC), 16);
+            this.Acc = parseInt(_MemoryAccessor.read(this.PCB.segment, this.PC), 16);
         };
         Cpu.prototype.loadAccFromMemory = function () {
             var address = this.getFullAddress();
-            this.Acc = parseInt(_MemoryAccessor.read(address), 16);
+            this.Acc = parseInt(_MemoryAccessor.read(this.PCB.segment, address), 16);
         };
         Cpu.prototype.storeAccInMemory = function () {
             var address = this.getFullAddress();
-            _MemoryAccessor.write(address, this.Acc.toString(16));
+            _MemoryAccessor.write(this.PCB.segment, address, this.Acc.toString(16));
         };
         Cpu.prototype.addWithCarry = function () {
             var address = this.getFullAddress();
-            this.Acc += parseInt(_MemoryAccessor.read(address), 16);
+            this.Acc += parseInt(_MemoryAccessor.read(this.PCB.segment, address), 16);
         };
         Cpu.prototype.loadXRegWithConstant = function () {
             this.increasePC();
-            this.Xreg = parseInt(_MemoryAccessor.read(this.PC), 16);
+            this.Xreg = parseInt(_MemoryAccessor.read(this.PCB.segment, this.PC), 16);
         };
         Cpu.prototype.loadXRegFromMemory = function () {
             var address = this.getFullAddress();
-            this.Xreg = parseInt(_MemoryAccessor.read(address), 16);
+            this.Xreg = parseInt(_MemoryAccessor.read(this.PCB.segment, address), 16);
         };
         Cpu.prototype.loadYRegWithConstant = function () {
             this.increasePC();
-            this.Yreg = parseInt(_MemoryAccessor.read(this.PC), 16);
+            this.Yreg = parseInt(_MemoryAccessor.read(this.PCB.segment, this.PC), 16);
         };
         Cpu.prototype.loadYRegFromMemory = function () {
             var address = this.getFullAddress();
-            this.Yreg = parseInt(_MemoryAccessor.read(address), 16);
+            this.Yreg = parseInt(_MemoryAccessor.read(this.PCB.segment, address), 16);
         };
         Cpu.prototype.compareToXreg = function () {
             var address = this.getFullAddress();
-            var value = parseInt(_MemoryAccessor.read(address), 16);
+            var value = parseInt(_MemoryAccessor.read(this.PCB.segment, address), 16);
             // Update CPU Zflag accordingly
             if (value === this.Xreg) {
                 this.Zflag = 1;
@@ -181,12 +181,12 @@ var TSOS;
         Cpu.prototype.branchOnBytes = function () {
             // Get Byte Value
             this.increasePC();
-            var bytes = parseInt(_MemoryAccessor.read(this.PC), 16);
+            var bytes = parseInt(_MemoryAccessor.read(this.PCB.segment, this.PC), 16);
             if (this.Zflag === 0) {
                 this.PC = this.PC + bytes;
                 // Check if PC is greater than Total Size
-                if (this.PC > _MemoryAccessor.getTotalSize()) {
-                    this.PC %= _MemoryAccessor.getTotalSize();
+                if (this.PC > _MemoryAccessor.getSegmentSize()) {
+                    this.PC %= _MemoryAccessor.getSegmentSize();
                 }
             }
         };
@@ -194,10 +194,10 @@ var TSOS;
             // Get Address
             var address = this.getFullAddress();
             // Get Value
-            var value = parseInt(_MemoryAccessor.read(address), 16);
+            var value = parseInt(_MemoryAccessor.read(this.PCB.segment, address), 16);
             value++;
             // Update Memory
-            _MemoryAccessor.write(address, value.toString());
+            _MemoryAccessor.write(this.PCB.segment, address, value.toString());
         };
         Cpu.prototype.systemCall = function () {
             if (this.Xreg == 1) {

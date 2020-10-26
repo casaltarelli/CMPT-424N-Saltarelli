@@ -78,6 +78,7 @@ module TSOS {
             // Save CPU State + Update Memory
             _CPU.saveState();
             Control.updateMemoryDisplay();
+            Control.updateProcessDisplay();
 
             // Check for an interrupt, if there are any. Page 560
             if (_KernelInterruptQueue.getSize() > 0) {
@@ -88,16 +89,16 @@ module TSOS {
             } else if (_CPU.isExecuting) { // If there are no interrupts then run one CPU cycle if there is anything being processed.
                 if (_Step) {
                     if (_NextStep) {
-                        _CPU.cycle();  
+                        _CPU.cycle();
+                        _Schedular.update();  
                         _NextStep = false; 
                     }
                 } else {
+                    _Schedular.update();
                     _CPU.cycle();
                 }
-
-                // Update CPU + PCB Display
+                
                 Control.updateCPUDisplay();
-                Control.updatePCBDisplay();
 
             } else {                       // If there are no interrupts and there is nothing being executed then just be idle.
                 this.krnTrace("Idle");
@@ -139,10 +140,15 @@ module TSOS {
                     _StdIn.handleInput();
                     break;
 
-                case TERMINATE_CURRENT_PROCESS_IRQ:
-                    if (_CPU.PCB && _CPU.PCB.state != "terminate") {
-                        _CPU.saveState();
-                        this.krnTerminateProcess();
+                case RUN_CURRENT_PROCESS_IRQ:
+                    _Dispatcher.runProcess(params);
+                    break;
+
+                case TERMINATE_PROCESS_IRQ:
+                    if (Array.isArray(params)) {
+                        this.krnTerminateProcess(params[0], params[1]);
+                    } else {
+                        this.krnTerminateProcess(params);
                     }
                     break;
 
@@ -154,7 +160,7 @@ module TSOS {
                     let output = "";
 
                     let address = _CPU.Yreg;
-                    let val = parseInt(_MemoryAccessor.read(address), 16);
+                    let val = parseInt(_MemoryAccessor.read(_CPU.PCB.segment, address), 16);
 
                     while (val != 0) {
                         // Only add valid chars
@@ -163,7 +169,7 @@ module TSOS {
                             output += String.fromCharCode(val);
 
                             // Update val to next
-                            val = parseInt(_MemoryAccessor.read(++address), 16);
+                            val = parseInt(_MemoryAccessor.read(_CPU.PCB.segment, ++address), 16);
                         }
                     }
 
@@ -227,20 +233,41 @@ module TSOS {
             this.krnShutdown();
         }
 
-        public krnTerminateProcess() {
-            // Update State + Ready Queue
-            _CPU.PCB.state = "terminated";
-            _CPU.isExecuting = false;
-            _ReadyQueue = _ReadyQueue.filter(element => element.pid != _CPU.PCB.pid);
+        public krnTerminateProcess(process, killall?) {
+            // Check for Current Process
+            if (_CPU.PCB && _CPU.PCB.pid == process.pid) {
+                // Update State + Status
+                _CPU.PCB.state = "terminated";
+                _CPU.saveState();
+                _CPU.isExecuting = false;
+            } else {
+                // Update Process State
+                for (let p of _ResidentList) {
+                    if (p.pid == process.pid) {
+                        p.state = "terminated";
+                    }
+                }
+            }
+            
+            // Remove from our Ready Queue
+            _ReadyQueue = _ReadyQueue.filter(element => element.pid != process.pid);
 
+            // Update Schedular
+            if (_ReadyQueue.length > 0) {
+                _Schedular.assignProcess(_ReadyQueue[0]);
+            }
+            
             // Update Console
             _StdOut.advanceLine();
-            _StdOut.putText("Process " + _CPU.PCB.pid + " terminated.");
+            _StdOut.putText("Process " + process.pid + " terminated.");
 
-            // Display Prompt
-            _StdOut.advanceLine();
-            _OsShell.putName();
-            _OsShell.putPrompt();
+            // Check if Killall Command
+            if (!killall) {
+                // Display Prompt
+                _StdOut.advanceLine();
+                _OsShell.putName();
+                _OsShell.putPrompt();
+            } 
         }
     }
 }

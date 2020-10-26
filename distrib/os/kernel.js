@@ -67,6 +67,7 @@ var TSOS;
             // Save CPU State + Update Memory
             _CPU.saveState();
             TSOS.Control.updateMemoryDisplay();
+            TSOS.Control.updateProcessDisplay();
             // Check for an interrupt, if there are any. Page 560
             if (_KernelInterruptQueue.getSize() > 0) {
                 // Process the first interrupt on the interrupt queue.
@@ -78,15 +79,15 @@ var TSOS;
                 if (_Step) {
                     if (_NextStep) {
                         _CPU.cycle();
+                        _Schedular.update();
                         _NextStep = false;
                     }
                 }
                 else {
+                    _Schedular.update();
                     _CPU.cycle();
                 }
-                // Update CPU + PCB Display
                 TSOS.Control.updateCPUDisplay();
-                TSOS.Control.updatePCBDisplay();
             }
             else { // If there are no interrupts and there is nothing being executed then just be idle.
                 this.krnTrace("Idle");
@@ -121,10 +122,15 @@ var TSOS;
                     _krnKeyboardDriver.isr(params); // Kernel mode device driver
                     _StdIn.handleInput();
                     break;
-                case TERMINATE_CURRENT_PROCESS_IRQ:
-                    if (_CPU.PCB && _CPU.PCB.state != "terminate") {
-                        _CPU.saveState();
-                        this.krnTerminateProcess();
+                case RUN_CURRENT_PROCESS_IRQ:
+                    _Dispatcher.runProcess(params);
+                    break;
+                case TERMINATE_PROCESS_IRQ:
+                    if (Array.isArray(params)) {
+                        this.krnTerminateProcess(params[0], params[1]);
+                    }
+                    else {
+                        this.krnTerminateProcess(params);
                     }
                     break;
                 case PRINT_YREGISTER_IRQ:
@@ -133,14 +139,14 @@ var TSOS;
                 case PRINT_FROM_MEMORY_IRQ:
                     var output = "";
                     var address = _CPU.Yreg;
-                    var val = parseInt(_MemoryAccessor.read(address), 16);
+                    var val = parseInt(_MemoryAccessor.read(_CPU.PCB.segment, address), 16);
                     while (val != 0) {
                         // Only add valid chars
                         if (String.fromCharCode(val) != undefined) {
                             // Get Char
                             output += String.fromCharCode(val);
                             // Update val to next
-                            val = parseInt(_MemoryAccessor.read(++address), 16);
+                            val = parseInt(_MemoryAccessor.read(_CPU.PCB.segment, ++address), 16);
                         }
                     }
                     // Check Null (Char Code Error)
@@ -196,18 +202,39 @@ var TSOS;
             _OsShell.shellDeath;
             this.krnShutdown();
         };
-        Kernel.prototype.krnTerminateProcess = function () {
-            // Update State + Ready Queue
-            _CPU.PCB.state = "terminated";
-            _CPU.isExecuting = false;
-            _ReadyQueue = _ReadyQueue.filter(function (element) { return element.pid != _CPU.PCB.pid; });
+        Kernel.prototype.krnTerminateProcess = function (process, killall) {
+            // Check for Current Process
+            if (_CPU.PCB && _CPU.PCB.pid == process.pid) {
+                // Update State + Status
+                _CPU.PCB.state = "terminated";
+                _CPU.saveState();
+                _CPU.isExecuting = false;
+            }
+            else {
+                // Update Process State
+                for (var _i = 0, _ResidentList_1 = _ResidentList; _i < _ResidentList_1.length; _i++) {
+                    var p = _ResidentList_1[_i];
+                    if (p.pid == process.pid) {
+                        p.state = "terminated";
+                    }
+                }
+            }
+            // Remove from our Ready Queue
+            _ReadyQueue = _ReadyQueue.filter(function (element) { return element.pid != process.pid; });
+            // Update Schedular
+            if (_ReadyQueue.length > 0) {
+                _Schedular.assignProcess(_ReadyQueue[0]);
+            }
             // Update Console
             _StdOut.advanceLine();
-            _StdOut.putText("Process " + _CPU.PCB.pid + " terminated.");
-            // Display Prompt
-            _StdOut.advanceLine();
-            _OsShell.putName();
-            _OsShell.putPrompt();
+            _StdOut.putText("Process " + process.pid + " terminated.");
+            // Check if Killall Command
+            if (!killall) {
+                // Display Prompt
+                _StdOut.advanceLine();
+                _OsShell.putName();
+                _OsShell.putPrompt();
+            }
         };
         return Kernel;
     }());

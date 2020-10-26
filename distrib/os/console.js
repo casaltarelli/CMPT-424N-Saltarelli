@@ -46,7 +46,7 @@ var TSOS;
                 var chr = _KernelInputQueue.dequeue();
                 // Check to see if it's "special" (enter or ctrl-c) or "normal" (anything else that the keyboard device driver gave us).
                 if (chr === "ctrl-c") {
-                    _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_CURRENT_PROCESS_IRQ, null));
+                    _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, _CPU.PCB));
                 }
                 else if (chr === String.fromCharCode(13)) { // the Enter key
                     // The enter key marks the end of a console command, so ...
@@ -154,8 +154,9 @@ var TSOS;
                 _DrawingContext.drawText(this.currentFont, this.currentFontSize, this.currentXPosition, this.currentYPosition, text);
                 // Move the current X position.
                 var offset = _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
+                // Check Before Printing next line
                 this.currentXPosition = this.currentXPosition + offset;
-                // Check XPosition is not at End of Canvas
+                // Check XPosition is at End of Canvas
                 if (this.currentXPosition >= (_Canvas.width - _DefaultFontSize)) {
                     this.advanceLine();
                 }

@@ -8,8 +8,10 @@ module TSOS {
 
     export class Memory {
 
-        constructor(public totalSize = 256, 
-                    public mainMemory = []) {
+        constructor(public totalSize = 768,
+                    public segmentSize = 256, 
+                    public mainMemory = []
+                ) {
         }
 
         init() : void {
@@ -17,6 +19,7 @@ module TSOS {
             for (let i = 0; i < this.totalSize; i++) {
                 this.mainMemory[i] = "00";
             }
+            
         }
     }
 }

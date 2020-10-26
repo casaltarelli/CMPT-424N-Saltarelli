@@ -41,7 +41,7 @@ module TSOS {
             _Kernel.krnTrace('CPU cycle');
             // TODO: Accumulate CPU usage and profiling statistics here.
             // Do the real work here. Be sure to set this.isExecuting appropriately.
-            this.IR = parseInt(_MemoryAccessor.read(this.PC), 16);
+            this.IR = parseInt(_MemoryAccessor.read(this.PCB.segment, this.PC), 16);
 
             // Read over given OP Code
             switch(this.IR) {
@@ -83,7 +83,7 @@ module TSOS {
 
                 case 0x00:
                     this.saveState();
-                    _Kernel.krnTerminateProcess()
+                    _Kernel.krnTerminateProcess(_CPU.PCB);
                     break;
 
                 case 0xEC:
@@ -103,7 +103,7 @@ module TSOS {
                     break;
 
                 default: 
-                    _Kernel.krnTerminateProcess()
+                    _Kernel.krnTerminateProcess(_CPU.PCB)
                     _Kernel.krnTrapError(`Process Execution Exception: Instruction '${this.IR.toString(16).toUpperCase()}' is not valid`); 
                     break;
             }
@@ -144,11 +144,11 @@ module TSOS {
             this.increasePC();
 
             // First + Increase PC
-            let address = _MemoryAccessor.read(this.PC);
+            let address = _MemoryAccessor.read(this.PCB.segment, this.PC);
             this.increasePC();
 
             // Second
-            address =  parseInt(_MemoryAccessor.read(this.PC), 16) + parseInt(address, 16);
+            address =  parseInt(_MemoryAccessor.read(this.PCB.segment, this.PC), 16) + parseInt(address, 16);
 
             // Return Full Address
             return address;
@@ -156,47 +156,47 @@ module TSOS {
         // OP Codes
         loadAccWithConstant() {
             this.increasePC();
-            this.Acc = parseInt(_MemoryAccessor.read(this.PC), 16);
+            this.Acc = parseInt(_MemoryAccessor.read(this.PCB.segment, this.PC), 16);
         }
 
         loadAccFromMemory() {
             let address = this.getFullAddress();
-            this.Acc = parseInt(_MemoryAccessor.read(address), 16);
+            this.Acc = parseInt(_MemoryAccessor.read(this.PCB.segment, address), 16);
         }
 
         storeAccInMemory() {
             let address = this.getFullAddress();
-            _MemoryAccessor.write(address, this.Acc.toString(16));
+            _MemoryAccessor.write(this.PCB.segment, address, this.Acc.toString(16));
         }
 
         addWithCarry() {
             let address = this.getFullAddress();
-            this.Acc += parseInt(_MemoryAccessor.read(address), 16);
+            this.Acc += parseInt(_MemoryAccessor.read(this.PCB.segment, address), 16);
         }
 
         loadXRegWithConstant() {
             this.increasePC();
-            this.Xreg = parseInt(_MemoryAccessor.read(this.PC), 16);
+            this.Xreg = parseInt(_MemoryAccessor.read(this.PCB.segment, this.PC), 16);
         }
 
         loadXRegFromMemory() {
             let address = this.getFullAddress();
-            this.Xreg = parseInt(_MemoryAccessor.read(address), 16);
+            this.Xreg = parseInt(_MemoryAccessor.read(this.PCB.segment, address), 16);
         }
 
         loadYRegWithConstant() {
             this.increasePC();
-            this.Yreg = parseInt(_MemoryAccessor.read(this.PC), 16);
+            this.Yreg = parseInt(_MemoryAccessor.read(this.PCB.segment, this.PC), 16);
         }
 
         loadYRegFromMemory() {
             let address = this.getFullAddress();
-            this.Yreg = parseInt(_MemoryAccessor.read(address), 16);
+            this.Yreg = parseInt(_MemoryAccessor.read(this.PCB.segment, address), 16);
         }
 
         compareToXreg() {
             let address = this.getFullAddress();
-            let value = parseInt(_MemoryAccessor.read(address), 16);
+            let value = parseInt(_MemoryAccessor.read(this.PCB.segment, address), 16);
 
             // Update CPU Zflag accordingly
             if (value === this.Xreg) {
@@ -209,14 +209,14 @@ module TSOS {
         branchOnBytes() {
             // Get Byte Value
             this.increasePC();
-            let bytes = parseInt(_MemoryAccessor.read(this.PC), 16);
+            let bytes = parseInt(_MemoryAccessor.read(this.PCB.segment, this.PC), 16);
 
             if (this.Zflag === 0) {
                 this.PC = this.PC + bytes;
 
                 // Check if PC is greater than Total Size
-                if (this.PC > _MemoryAccessor.getTotalSize()) {
-                    this.PC %= _MemoryAccessor.getTotalSize();
+                if (this.PC > _MemoryAccessor.getSegmentSize()) {
+                    this.PC %= _MemoryAccessor.getSegmentSize();
                 }
             } 
         }
@@ -226,11 +226,11 @@ module TSOS {
             let address = this.getFullAddress();
 
             // Get Value
-            let value = parseInt(_MemoryAccessor.read(address), 16);
+            let value = parseInt(_MemoryAccessor.read(this.PCB.segment, address), 16);
             value++;
 
             // Update Memory
-            _MemoryAccessor.write(address, value.toString());
+            _MemoryAccessor.write(this.PCB.segment, address, value.toString());
         }
 
         systemCall() {

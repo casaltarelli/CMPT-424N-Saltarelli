@@ -59,22 +59,35 @@ var TSOS;
             // TODO in the future: Optionally update a log database or some streaming service.
         };
         // Display Updates
-        Control.updatePCBDisplay = function () {
-            // Get Elements
-            var table = document.getElementById("tablePCB");
-            var newTBody = document.createElement("tbody");
-            table.style.display = "block";
-            // Create + Update Row w/ PCB Data
-            var row;
-            row = newTBody.insertRow(-1);
-            row.insertCell(-1).innerHTML = _PCB.state.toLocaleUpperCase();
-            row.insertCell(-1).innerHTML = _PCB.PC;
-            row.insertCell(-1).innerHTML = _PCB.Acc.toString(16).toLocaleUpperCase();
-            row.insertCell(-1).innerHTML = _PCB.Xreg.toString(16).toLocaleUpperCase();
-            row.insertCell(-1).innerHTML = _PCB.Yreg.toString(16).toLocaleUpperCase();
-            row.insertCell(-1).innerHTML = _PCB.Zflag.toString(16).toLocaleUpperCase();
-            // Replace Old TBody
-            table.replaceChild(newTBody, table.childNodes[0]);
+        Control.updateProcessDisplay = function () {
+            // Declare Variable References
+            var table = document.getElementById("tableP");
+            var newTBody;
+            // No Processes Check
+            if (_ResidentList.length == 0) {
+                // Create new table to remove terminated processes
+                newTBody = document.createElement("tbody");
+                table.replaceChild(newTBody, table.childNodes[0]);
+            }
+            else {
+                // Create new table for current processes
+                newTBody = document.createElement("tbody");
+                for (var _i = 0, _ResidentList_1 = _ResidentList; _i < _ResidentList_1.length; _i++) {
+                    var process = _ResidentList_1[_i];
+                    // Create + Update Row w/ PCB Data
+                    var row = void 0;
+                    row = newTBody.insertRow();
+                    row.insertCell(-1).innerHTML = process.pid;
+                    row.insertCell(-1).innerHTML = process.state.toLocaleUpperCase();
+                    row.insertCell(-1).innerHTML = process.PC;
+                    row.insertCell(-1).innerHTML = process.Acc.toString(16).toLocaleUpperCase();
+                    row.insertCell(-1).innerHTML = process.Xreg.toString(16).toLocaleUpperCase();
+                    row.insertCell(-1).innerHTML = process.Yreg.toString(16).toLocaleUpperCase();
+                    row.insertCell(-1).innerHTML = process.Zflag.toString(16).toLocaleUpperCase();
+                }
+                // Replace Old TBody
+                table.replaceChild(newTBody, table.childNodes[0]);
+            }
         };
         Control.updateCPUDisplay = function () {
             var opCodeInfo = { "A9": { "operandNumber": 1 },
@@ -124,72 +137,95 @@ var TSOS;
                 "EE": { "operandNumber": 2 },
                 "FF": { "operandNumber": 0 }
             };
-            // Update Display
-            var table = document.getElementById("tableMemory");
-            var newTBody = document.createElement("tbody");
-            table.style.display = "block";
-            // Add Memory
+            // Create List for each of our Memory Segment Buttons
+            var segmentBtns = [];
+            segmentBtns.push(document.getElementById("btnOne"));
+            segmentBtns.push(document.getElementById("btnTwo"));
+            segmentBtns.push(document.getElementById("btnThree"));
+            // Create List for each of our Memory Segment Elements
+            var segments = [];
+            segments.push(document.getElementById("tbOne"));
+            segments.push(document.getElementById("tbTwo"));
+            segments.push(document.getElementById("tbThree"));
+            // Create References
             var row;
-            var rowLabel = "0x00";
+            var newTBody;
+            var rowLabel = "0x0";
             var rowNumber = 0;
             var placeNumber = 0;
             var physicalAddress = 0;
             var memory = _MemoryAccessor.dump();
             var highlightedCell;
-            for (var i = 0; i < _MemoryAccessor.getTotalSize() / 8; i++) {
-                // Create Row
-                row = newTBody.insertRow(-1);
-                rowNumber = 8 * i;
-                if (rowNumber > 255) {
-                    placeNumber = 2;
-                }
-                else if (rowNumber > 15) {
-                    placeNumber = 3;
-                }
-                else {
-                    placeNumber = 4;
-                }
-                row.insertCell(-1).innerHTML = rowLabel.slice(0, placeNumber) + rowNumber.toString(16).toLocaleUpperCase();
-                // Populate respective Row with cells
-                var cell = void 0;
-                var currentInstruction = void 0;
-                var operandHighlights = [];
-                for (var j = 0; j < 8; j++) {
-                    cell = row.insertCell(-1);
-                    cell.innerHTML = memory[physicalAddress].toLocaleUpperCase();
-                    cell.id = "border-cell";
-                    currentInstruction = TSOS.Utils.padHexValue(_CPU.IR.toString(16).toLocaleUpperCase());
-                    // Add Hover being read in the Display
-                    if (_CPU.PCB && _CPU.isExecuting && opCodeInfo[currentInstruction]) {
-                        if (_MemoryManager.baseRegister + _CPU.PC - opCodeInfo[currentInstruction].operandNumber - 1 == physicalAddress) {
-                            cell.style.backgroundColor = "#CCCDCF";
-                            cell.style.borderColor = "#89B0AE";
-                            highlightedCell = cell;
-                            operandHighlights[0] = opCodeInfo[currentInstruction].operandNumber;
-                            operandHighlights[1] = false;
-                            // Check for D0 Branch
-                            if (currentInstruction == "D0") {
-                                operandHighlights[0] = 0;
-                            }
-                        }
-                        // Highlight Operands
-                        if (operandHighlights[0] > 0 && operandHighlights[1]) {
-                            //cell.style.borderColor = "#57CC99";
-                            cell.style.backgroundColor = "#CCCDCF";
-                            highlightedCell = cell;
-                            operandHighlights[0]--;
-                        }
-                        // Skip Highlight Operands for Current Instruction
-                        if (operandHighlights[0] > 0 && !operandHighlights[1]) {
-                            operandHighlights[1] = true;
+            for (var i = 0; i < segments.length; i++) {
+                // Update Current Display based on current process being executed by CPU
+                if (_CPU.isExecuting && _CPU.PCB) {
+                    if (_CPU.PCB.segment.index == i) {
+                        if (segments[i].style.display == "none") {
+                            ;
+                            // Imitate HostBtn_Click to display proper Segment
+                            this.hostBtnMemory_click(segmentBtns[i]);
                         }
                     }
-                    physicalAddress++;
                 }
-                // Update TBody
-                table.replaceChild(newTBody, table.childNodes[0]);
-                if (highlightedCell) {
-                    highlightedCell.scrollIntoView({ block: "nearest" });
+                // Create new tbody element
+                newTBody = document.createElement("tbody");
+                for (var j = 0; j < _MemoryAccessor.getSegmentSize() / 8; j++) {
+                    // Create Row
+                    row = newTBody.insertRow(-1);
+                    // Row Label Value
+                    rowNumber = 8 * j;
+                    var segID = i.toString();
+                    if (rowNumber > 255) {
+                        placeNumber = 0;
+                    }
+                    else if (rowNumber > 15) {
+                        placeNumber = 2;
+                    }
+                    else {
+                        placeNumber = 2;
+                        // Special Case Add "0" after
+                        segID = segID + "0";
+                    }
+                    // Row Label Cell
+                    row.insertCell(-1).innerHTML = rowLabel.slice(0, placeNumber) + segID + rowNumber.toString(16).toLocaleUpperCase();
+                    // Populate respective Row with Memory Cells
+                    var cell = void 0;
+                    var currentInstruction = void 0;
+                    var operandHighlights = [];
+                    for (var j_1 = 0; j_1 < 8; j_1++) {
+                        cell = row.insertCell(-1);
+                        cell.innerHTML = memory[physicalAddress].toLocaleUpperCase();
+                        cell.id = "border-cell";
+                        currentInstruction = TSOS.Utils.padHexValue(_CPU.IR.toString(16).toLocaleUpperCase());
+                        // Add Hover being read in the Display
+                        if (_CPU.PCB && _CPU.isExecuting && opCodeInfo[currentInstruction]) {
+                            if (_CPU.PCB.segment.baseRegister + _CPU.PC - opCodeInfo[currentInstruction].operandNumber - 1 == physicalAddress) {
+                                cell.style.backgroundColor = "#CCCDCF";
+                                cell.style.borderColor = "#89B0AE";
+                                highlightedCell = cell;
+                                operandHighlights[0] = opCodeInfo[currentInstruction].operandNumber;
+                                operandHighlights[1] = false;
+                                // Check for D0 Branch
+                                if (currentInstruction == "D0") {
+                                    operandHighlights[0] = 0;
+                                }
+                            }
+                            // Highlight Operands
+                            if (operandHighlights[0] > 0 && operandHighlights[1]) {
+                                cell.style.backgroundColor = "#CCCDCF";
+                                highlightedCell = cell;
+                                operandHighlights[0]--;
+                            }
+                            // Skip Highlight Operands for Current Instruction
+                            if (operandHighlights[0] > 0 && !operandHighlights[1]) {
+                                operandHighlights[1] = true;
+                            }
+                        }
+                        physicalAddress++;
+                    }
+                    // Update TBody
+                    segments[i].replaceChild(newTBody, segments[i].childNodes[0]);
+                    //TODO: Possibly Implement Updating Showing Segment Depending on Current Running Process
                 }
             }
         };
@@ -199,20 +235,29 @@ var TSOS;
         Control.hostBtnStartOS_click = function (btn) {
             // Disable the (passed-in) start button...
             btn.disabled = true;
-            // .. enable the Halt + Reset + Step buttons ...
+            // .. enable the Halt + Reset + Step + Memory Segment buttons ...
             document.getElementById("btnHaltOS").disabled = false;
             document.getElementById("btnReset").disabled = false;
             document.getElementById("btnStep").disabled = false;
             document.getElementById("btnNext").disabled = false;
+            document.getElementById("btn-segments").style.visibility = "visible";
+            // .. Update CSS to symbolize viewing segment one ...
+            document.getElementById("btnOne").style.backgroundColor = "#46494C";
+            document.getElementById("btnOne").style.color = "#FFFFFF";
+            // .. Display Segment One of Main Memory ...
+            document.getElementById("tbOne").style.display = "block";
             // .. set focus on the OS console display ...
             document.getElementById("display").focus();
             // ... Create and initialize the CPU (because it's part of the hardware)  ...
             _CPU = new TSOS.Cpu(); // Note: We could simulate multi-core systems by instantiating more than one instance of the CPU here.
             _CPU.init(); //       There's more to do, like dealing with scheduling and such, but this would be a start. Pretty cool.
-            // ... Create and initialize Main Memory 
+            // ... Create and initialize Main Memory ...
             _Memory = new TSOS.Memory();
             _Memory.init();
             _MemoryAccessor = new TSOS.MemoryAccessor();
+            // ... Create our Dispatcher + Scheduler ...
+            _Dispatcher = new TSOS.Dispatcher();
+            _Schedular = new TSOS.Scheduler();
             // ... then set the host clock pulse ...
             _hardwareClockID = setInterval(TSOS.Devices.hostClockPulse, CPU_CLOCK_INTERVAL);
             // .. and call the OS Kernel Bootstrap routine.
@@ -249,18 +294,36 @@ var TSOS;
                 btnStart.style.marginRight = "30px";
                 btnHalt.style.marginRight = "30px";
                 btnReset.style.marginRight = "30px";
-                //btn.style.marginRight = "5px !important";
             }
             else {
                 btnStart.style.marginRight = "43.5px";
                 btnHalt.style.marginRight = "43.5px";
                 btnReset.style.marginRight = "43.5px";
-                //btn.style.marginRight = "5px !important";
             }
         };
         Control.hostBtnNext_click = function (btn) {
             if (_Step) {
                 _NextStep = true;
+            }
+        };
+        Control.hostBtnMemory_click = function (btn) {
+            var btns = ["One", "Two", "Three"];
+            for (var _i = 0, btns_1 = btns; _i < btns_1.length; _i++) {
+                var b = btns_1[_i];
+                if (btn.id == ("btn" + b)) {
+                    console.log("Host Btn ID Recognized");
+                    // Update Current Btn Background
+                    btn.style.backgroundColor = "#46494C";
+                    btn.style.color = "#FFFFFF";
+                    // Update Visibility for Respective Memory Segment
+                    var currentSegment = document.getElementById("tb" + b);
+                    currentSegment.style.display = "block";
+                }
+                else {
+                    document.getElementById("btn" + b).style.backgroundColor = "#FFFFFF";
+                    document.getElementById("btn" + b).style.color = "#46494C";
+                    document.getElementById("tb" + b).style.display = "none";
+                }
             }
         };
         return Control;
