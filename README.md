@@ -38,7 +38,7 @@ A Few Notes
 ===========
 
 **Prof. Labouseur**
-Please grade for iProject II the master branch of this project.
+Please grade for iProject III the master branch of this project.
 
 **TypeScript Resources**
 [Right this way!](http://www.typescriptlang.org/)
