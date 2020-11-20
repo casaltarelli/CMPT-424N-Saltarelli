@@ -10,6 +10,7 @@ module TSOS {
         constructor(public state = "new",
                     public PC = 0,
                     public pid = _PIDCounter++,
+                    public priority = 0,
                     public Acc = 0,
                     public Xreg = 0,
                     public Yreg = 0,

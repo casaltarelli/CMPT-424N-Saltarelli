@@ -91,6 +91,7 @@ module TSOS {
                     row = newTBody.insertRow();
     
                     row.insertCell(-1).innerHTML = process.pid;
+                    row.insertCell(-1).innerHTML = process.priority;
                     row.insertCell(-1).innerHTML = process.state.toLocaleUpperCase();
                     row.insertCell(-1).innerHTML = process.PC;
                     row.insertCell(-1).innerHTML = process.Acc.toString(16).toLocaleUpperCase();
@@ -366,7 +367,6 @@ module TSOS {
 
             for (let b of btns) {
                 if (btn.id == ("btn" + b)) {
-                    console.log("Host Btn ID Recognized");
                     // Update Current Btn Background
                     btn.style.backgroundColor = "#46494C"; 
                     btn.style.color = "#FFFFFF";

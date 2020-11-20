@@ -78,6 +78,7 @@ var TSOS;
                     var row = void 0;
                     row = newTBody.insertRow();
                     row.insertCell(-1).innerHTML = process.pid;
+                    row.insertCell(-1).innerHTML = process.priority;
                     row.insertCell(-1).innerHTML = process.state.toLocaleUpperCase();
                     row.insertCell(-1).innerHTML = process.PC;
                     row.insertCell(-1).innerHTML = process.Acc.toString(16).toLocaleUpperCase();
@@ -311,7 +312,6 @@ var TSOS;
             for (var _i = 0, btns_1 = btns; _i < btns_1.length; _i++) {
                 var b = btns_1[_i];
                 if (btn.id == ("btn" + b)) {
-                    console.log("Host Btn ID Recognized");
                     // Update Current Btn Background
                     btn.style.backgroundColor = "#46494C";
                     btn.style.color = "#FFFFFF";

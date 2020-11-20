@@ -261,6 +261,9 @@ module TSOS {
             _StdOut.advanceLine();
             _StdOut.putText("Process " + process.pid + " terminated.");
 
+            // Output Wait Time + Turnaround Time for process in our kernel
+            this.krnTrace("Process " + process.pid + " terminated. Wait Time: " + process.waitTime + "s Turnaround Time: " + process.turnaroundTime + "s");
+
             // Check if Killall Command
             if (!killall) {
                 // Display Prompt

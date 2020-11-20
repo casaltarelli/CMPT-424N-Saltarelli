@@ -157,6 +157,18 @@ module TSOS {
                                     " - killall terminates all processes in main memory.");
             this.commandList[this.commandList.length] = sc;
 
+            // getschedule
+            sc = new ShellCommand(this.shellGetSchedule,
+                                    "getschedule",
+                                    " - getschedule returns the current scheduling algorithm");
+            this.commandList[this.commandList.length] = sc;
+            
+            // setschedule [rr, fcfs, p]
+            sc = new ShellCommand(this.shellSetSchedule,
+                                    "setschedule",
+                                    " - setschedule sets the current scheduling algorithm for the CPU");
+            this.commandList[this.commandList.length] = sc;
+
             // quantum <int>
             sc = new ShellCommand(this.shellQuantum,
                                     "quantum",
@@ -461,21 +473,29 @@ module TSOS {
             // Validate Input via RegEx + Output to Canvas
             let regex = /^[A-Fa-f0-9]+$/;
 
-            if (regex.test(userInput)) {
-                let input = userInput.match(/.{2}/g);
-                let pcb = _MemoryManager.load(input);
+            // Verify Valid Priority was given
+            if (parseInt(args[0]) > 0) {
+                if (regex.test(userInput)) {
+                    let input = userInput.match(/.{2}/g);
+                    let pcb = _MemoryManager.load(input);
+    
+                    // Test Load Success
+                    if (pcb) {
+                        // Add Priority to pcb
+                        pcb.priority = parseInt(args[0]);
 
-                // Test Load Success
-                if (pcb) {
-                    let segment;
-                    segment = pcb.segment;
-                    _StdOut.putText("Program with PID " + pcb.pid + " loaded into memory segment " + segment.index + ".");
+                        let segment;
+                        segment = pcb.segment;
+                        _StdOut.putText("Program with PID " + pcb.pid + " loaded into memory segment " + segment.index + ".");
+                    } else {
+                        _StdOut.putText("Memory is full. Please clear before loading new process.");
+                    }
+    
                 } else {
-                    _StdOut.putText("Memory is full. Please clear before loading new process.");
+                    _StdOut.putText("Hex Code could not be validated. Please try again.");
                 }
-
             } else {
-                _StdOut.putText("Hex Code could not be validated. Please try again.");
+                _StdOut.putText("Please provide a priority for the requested process.");
             }
         }
 
@@ -525,6 +545,15 @@ module TSOS {
                     if (_ReadyQueue.indexOf(process) == -1) {
                         _Schedular.addReadyQueue(process);
                     }
+                }
+
+                // Check current schedule for Priority
+                console.log("Current Alg: " + _Schedular.currentAlgorithm);
+
+                if (_Schedular.currentAlgorithm == "p") {
+                    console.log("Priority Scheduling Caught");
+                    // Filter accordingly
+                    _ReadyQueue.sort((a, b) => (a.priority > b.priority) ? 1 : -1);
                 }
 
                 // Check if CPU needs to be assigned Process
@@ -605,15 +634,14 @@ module TSOS {
                         _StdOut.putText("Memory segment " + segment.index + " is already empty.")
                     }
                 } else {
-                    _StdOut.putText("Memory segment " + segment.index + " does not exist");
+                    _StdOut.putText("Memory segment " + args[0] + " does not exist.");
                 }
             } else {
-                _StdOut.putText("Usage: clear <index> please provide a segment id.");
+                _StdOut.putText("Usage: clear <index> please provide a segment index.");
             }
         }
 
         public shellClearmem(args: string[]) {
-            let last = false;   // Trigger for last process
             // Iterate through Memory Segments
             for(let segment of _MemoryManager.memoryRegisters) {
                 // Check Segment for containing process
@@ -692,41 +720,66 @@ module TSOS {
         public shellKillAll(args: string[]) {
             let last = false;
             // Terminate all Proccesses Resident
-            for (let process of _ResidentList) {
-                if (process.state == "terminated") {
-                    _StdOut.putText("Process " + process.pid + " is already terminated.");
-                    _StdOut.advanceLine();
-                    continue;   // No need to send interrupt
-                } else {
-                    // Check if current process is last in ResidentList
-                    if (!last) {
-                        console.log("NEW CYCLE FOR NEW PROCESS")
-                        for (let i = 0; i < _ResidentList.length; i++) {
-                            console.log("Index of Current Process: " + _ResidentList.indexOf(_ResidentList[i]));
-                            if (i != _ResidentList.indexOf(process)) {
-                                if (_ResidentList[i].state != "terminated") {
-                                    console.log("Last set to false");
-                                    last = false;
-                                } else {
-                                    console.log("Last set to true");
-                                    last = true;
+            if (_ResidentList.length > 0) {
+                for (let process of _ResidentList) {
+                    if (process.state == "terminated") {
+                        _StdOut.putText("Process " + process.pid + " is already terminated.");
+                        _StdOut.advanceLine();
+                        continue;   // No need to send interrupt
+                    } else {
+                        // Check if current process is last in ResidentList
+                        if (!last) {
+                            for (let i = 0; i < _ResidentList.length; i++) {
+                                if (i != _ResidentList.indexOf(process)) {
+                                    if (_ResidentList[i].state != "terminated") {
+                                        last = false;
+                                    } else {
+                                        last = true;
+                                    }
                                 }
                             }
                         }
-                    }
-
-                    // Execute Terminate Interrupt
-                    if (last) {
-                        _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, process));    
-                    } else {
-                        var params = [process, true];
-
-                        // Hard State Update to process before next loop to prevent late Interrupt update
-                        process.state = "terminated"; 
-
-                        _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, params));
+    
+                        // Execute Terminate Interrupt
+                        if (last) {
+                            _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, process));    
+                        } else {
+                            var params = [process, true];
+    
+                            // Hard State Update to process before next loop to prevent late Interrupt update
+                            process.state = "terminated"; 
+    
+                            _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, params));
+                        }
                     }
                 }
+            } else {
+                _StdOut.putText("Main Memory is currently empty.");
+            }
+        }
+        public shellGetSchedule(args: string[]) {
+            _StdOut.putText("Current Scheduling Algorithm: " + _Schedular.currentAlgorithm + ".");
+        }
+
+        public shellSetSchedule(args: string[]) {
+            var valid = false;
+            var algorithms = ["rr", "fcfs", "p"];
+
+            if (args.length > 0) {
+                for (let a of algorithms) {
+                    if (args[0] == a) { // Correct format check
+                        _Schedular.setAlgorithm(a);
+                        valid = true; 
+                        _StdOut.putText("Scheduling algorithm set to: " + a + ".");
+                    }
+                }
+
+                // Non-valid input
+                if (!valid) {
+                    _StdOut.putText("Please provide a valid input [rr, fcfs, p].");
+                }
+            } else {
+                _StdOut.putText("Usage: setschedule <algorithm> please provide one [rr, fcfs, p].");
             }
         }
 
@@ -737,8 +790,12 @@ module TSOS {
 
                 // Verify value given is a number
                 if (!isNaN(num)) {
-                    _Schedular.setQuantum(num);
-                    _StdOut.putText("Quantum set to: " + num);
+                    if (num > 0) {
+                        _Schedular.setQuantum(num);
+                        _StdOut.putText("Quantum set to: " + num);
+                    } else {
+                        _StdOut.putText("Quantum must be greater than 0.");
+                    }
                 } else {
                     _StdOut.putText("Given value " + args[0] + " is not a integer.");
                 }

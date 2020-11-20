@@ -304,6 +304,8 @@ tbody {
   text-align: center;
   list-style: none;
   padding-left: 0;
+  padding-top: 25px;
+  padding-bottom: 25px;
   margin: 0 auto;
 }
 
@@ -326,23 +328,4 @@ tbody {
 .footer-link:hover {
   color: #A0A0A0;
   transition: all 0.4s ease 0s; 
-}
-
-.hand-wave {
-  padding-right: 1em;
-  display: inline-block;
-  animation: wave-animation 0.3s infinite;  
-}
-
-@keyframes wave-animation {
-  0%,
-  100% {
-    transform: rotate(0deg);
-  }
-  25% {
-    transform: rotate(20deg);
-  }
-  75% {
-    transform: rotate(-15deg);
-  }
 }
