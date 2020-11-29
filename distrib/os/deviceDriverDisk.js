@@ -25,8 +25,8 @@ var TSOS;
             if (formatted === void 0) { formatted = false; }
             if (hidden === void 0) { hidden = "."; }
             if (masterBootrecord === void 0) { masterBootrecord = '0:0:0'; }
-            if (directory === void 0) { directory = { 'type': 'directory', 'start': '0:0:1', 'end': '0:7:6:' }; }
-            if (file === void 0) { file = { 'type': 'file', 'start:': '1:0:0', 'end': '3:7:6' }; }
+            if (directory === void 0) { directory = { 'type': 'directory', 'start': { 't': 0, 's': 0, 'b': 1 }, 'end': { 't': 0, 's': 7, 'b': 6 } }; }
+            if (file === void 0) { file = { 'type': 'file', 'start:': { 't': 1, 's': 0, 'b': 0 }, 'end': { 't': 3, 's': 7, 'b': 6 } }; }
             var _this = 
             // The code below cannot run because "this" can only be
             // accessed after calling super.
@@ -47,11 +47,13 @@ var TSOS;
             // Only Load Dsk Definition if User's browser supports it.
             if (this.krnDskBrowserSupport) {
                 this.status = "loaded";
+                // Clear Session Storage -- TESTING
+                sessionStorage.clear();
             }
         };
         /**
          * krnDskBrowserSupport()
-         * - Validates if the users browser
+         * - Validates if the users' browser
          *   supports session storage.
          */
         DeviceDriverDisk.prototype.krnDskBrowserSupport = function () {
@@ -67,37 +69,28 @@ var TSOS;
          * - Primary Dispatcher for
          *   all File System operations.
          */
-        DeviceDriverDisk.prototype.krnDskDispatcher = function (action, data) {
-            // TODO: Implement Ability to breakdown Dispatcher Parameters
-            var flag = false;
-            // Update Flag if any was given
-            if (data) {
-                if (data[0] == '-') { // Check for Flag Option
-                    flag = true;
-                }
-            }
+        DeviceDriverDisk.prototype.krnDskDispatcher = function (params) {
             var status;
-            if (action == "format") {
-                if (flag) {
-                    status = this.format(flag);
-                    _StdOut.putText(status.msg);
-                }
-                else {
-                    status = this.format();
-                    _StdOut.putText(status.msg);
-                }
+            if (params.action == 'format') {
+                status = this.format(params.flag);
+                _StdOut.putText(status.msg);
             }
             else {
-                // TODO: Implement File System Actions Here
-                switch (action) {
-                    case 'create':
-                        status = this.create(data);
-                        break;
-                    case 'write':
-                        //this.write(name, data)
-                        break;
-                    default:
-                        _Kernel.krnTrapError("File System exception: Invalid action " + action);
+                if (this.formatted) {
+                    switch (params.action) {
+                        case 'create':
+                            status = this.create(params.name, params.flag);
+                            _StdOut.putText(status.msg);
+                            break;
+                        case 'write':
+                            //this.write(name, data)
+                            break;
+                        default:
+                            _Kernel.krnTrapError("File System exception: Invalid action " + params.action + ".");
+                    }
+                }
+                else {
+                    _StdOut.putText("File System exception. Must format Hard Drive first.");
                 }
             }
         };
@@ -105,18 +98,13 @@ var TSOS;
          * format(flag?)
          * - Initializes our Disk
          *   definition, type is a boolean
-         *   flag used to determine half or full
+         *   flag used to determine half or full.
          */
         DeviceDriverDisk.prototype.format = function (flag) {
+            // Verify Disk isn't already formatted
             if (!this.formatted) {
-                if (flag) {
-                    // TODO: Implement Quick Format Functionality
-                }
-                else {
-                    // Init Disk
-                    _Disk.init();
-                    this.formatted = true;
-                }
+                _Disk.init(flag);
+                this.formatted = true;
                 // Output Success
                 return { status: 0, msg: "Hard drive fully formatted." };
             }
@@ -125,28 +113,33 @@ var TSOS;
             }
         };
         /**
-         * create(name)
+         * create(name, flag?)
          * - Creates a file with a given
-         *   name within our File System
+         *   name within our File System.
+         *   Flag is used for Copy Functionality
          */
-        DeviceDriverDisk.prototype.create = function (name) {
+        DeviceDriverDisk.prototype.create = function (name, flag) {
             // Validate Length of File Name
             if (name.length > _Disk.getDataSize()) {
                 _StdOut.putText('File name ' + name + ' is too big.');
             }
             else {
-                // Validate New File doesn't already exist
+                // Validate New File doesn't already exist within our directory
                 if (!this.find(name, this.directory)) {
                     // Get Available Directory Keys
                     var availableKeys = this.getKeys(this.directory, 1);
-                    if (availableKeys) {
+                    if (availableKeys.length > 0) {
+                        // Get Current Key
+                        var key = availableKeys[0];
                         // Create Header + File Name
-                        var header = this.buildHeader().toString;
-                        sessionStorage.setItem(availableKeys[0], header + name);
+                        var header = this.buildHeader();
+                        header.push(name);
+                        console.log("Header Created: " + header.toString());
+                        sessionStorage.setItem(key, header.join(''));
                         return { status: 0, msg: "File " + name + " created." };
                     }
                     else {
-                        return { status: 1, msg: "File " + name + " could not be created." };
+                        return { status: 1, msg: "File " + name + " could not be created. No available space." };
                     }
                 }
                 else {
@@ -157,7 +150,7 @@ var TSOS;
         /**
          * read(name)
          * - Reads a file with a given
-         *   name from our File System
+         *   name from our File System.
          */
         DeviceDriverDisk.prototype.read = function (name) {
             // Validate File Exists
@@ -185,7 +178,7 @@ var TSOS;
         /**
          * write(name, data)
          * - Writes to a file with a
-         *   given name in our File System
+         *   given name in our File System.
          */
         DeviceDriverDisk.prototype.write = function (name, data) {
             // Validate File Exists
@@ -206,41 +199,40 @@ var TSOS;
         /**
          * delete(name)
          * - Deltes a file with a
-         *   given name in our File System
+         *   given name in our File System.
          */
         DeviceDriverDisk.prototype["delete"] = function (name) { };
         /**
-         * onvertBlock(key)
-         * - Creates a Block Object based
-         *   on a key used within SessionStorage
+         * find(name, source, flag?)
+         * - Used to test if a given name
+         *   within a source exists. Can return
+         *   boolean or the found object dependent on flag.
          */
-        DeviceDriverDisk.prototype.convertBlock = function (key) {
-            if (typeof key == 'object') {
-                key = this.convertKey(key);
+        DeviceDriverDisk.prototype.find = function (name, source, flag) {
+            var block;
+            var found = false;
+            var start = source.start;
+            var end = source.end;
+            out: for (var t = start.t; t <= end.t; t++) {
+                for (var s = start.s; s <= end.s; s++) {
+                    for (var b = start.b; b <= end.b; b++) {
+                        block = this.convertBlock({ t: t, s: s, b: b });
+                        // Only Check Filled Blocks
+                        if (block.filled) {
+                            if (block.data == name) {
+                                found = true;
+                                break out; // Break out to prevent block overwrite
+                            }
+                        }
+                    }
+                }
             }
-            // Create Block Object
-            var block = sessionStorage.getItem(key);
-            var filled = false;
-            if (parseInt[0] == "1") {
-                filled = true;
+            // Flag used to determine if boolean or object return type
+            if (flag) {
+                return block;
             }
-            var blockO = { 'filled': filled,
-                'pointer:': this.convertKey(block.substring(1, 4)),
-                'data': block.substring(_Disk.getHeaderSize()) };
-            return blockO;
-        };
-        /**
-         * buildBlock(key, data)
-         * - Constructs a Data Block to be
-         *   concatendated with out data header
-         */
-        DeviceDriverDisk.prototype.buildBlock = function (data) {
-            // Convert String into Array
-            data = data.split('');
-            // Populate Block
-            var dataBlock;
-            for (var i = 0; i < _Disk.getDataSize(); i++) {
-                dataBlock.push(data[i]);
+            else {
+                return found;
             }
         };
         /**
@@ -249,12 +241,45 @@ var TSOS;
          *   to concatenated with our data block.
          */
         DeviceDriverDisk.prototype.buildHeader = function (key) {
+            var header;
             if (key) {
-                return ['1', key.t, key.s, key.b];
+                header = ['1', key.t, key.s, key.b];
             }
             else {
-                return ['1', '-', '-', '-'];
+                header = ['1', '-', '-', '-'];
             }
+            return header;
+        };
+        /**
+         * getKeys(source, size)
+         * - Returns a list of String Keys
+         *   for segments of our disk that
+         *   are not filled.
+         */
+        DeviceDriverDisk.prototype.getKeys = function (source, size) {
+            // Break Down Params
+            var start = source.start;
+            var end = source.end;
+            var count = 0;
+            var availableKeys = [];
+            out: for (var t = start.t; t <= end.t; t++) {
+                for (var s = start.s; s <= end.s; s++) {
+                    for (var b = start.b; b <= end.b; b++) {
+                        var block = this.convertBlock({ 't': t, 's': s, 'b': b });
+                        // Check if filled
+                        if (!block.filled) {
+                            // Add valid key to list
+                            availableKeys.push(this.convertKey({ 't': t, 's': s, 'b': b }));
+                            count++;
+                        }
+                        // Check if needed keys have been found
+                        if (count == size) {
+                            break out;
+                        }
+                    }
+                }
+            }
+            return availableKeys;
         };
         /**
          * convertKey(key)
@@ -279,68 +304,25 @@ var TSOS;
             }
         };
         /**
-         * getKeys(source, size)
-         * - Returns a list of String Keys
-         *   for segments of our disk that
-         *   are not filled.
+         * ConvertBlock(key)
+         * - Creates a Block Object based
+         *   on a key used within SessionStorage
          */
-        DeviceDriverDisk.prototype.getKeys = function (size, source) {
-            // Break Down Params
-            var start = source.start;
-            var end = source.end;
-            var count = 0;
-            var availableKeys = [];
-            out: for (var t = start.t; t < end.t; t++) {
-                for (var s = start.s; s < end.s; s++) {
-                    for (var b = start.b; b < end.b; b++) {
-                        var block = this.convertBlock({ t: t, s: s, b: b });
-                        // Check if filled
-                        if (!block.filled) {
-                            // Add block to list
-                            availableKeys.push(this.convertKey({ t: t, s: s, b: b }));
-                            count++;
-                        }
-                        // Check if needed keys have been found
-                        if (count == size) {
-                            break out;
-                        }
-                    }
-                }
+        DeviceDriverDisk.prototype.convertBlock = function (key) {
+            if (typeof (key) == 'object') {
+                key = this.convertKey(key);
+                console.log(key);
             }
-            return availableKeys;
-        };
-        /**
-         * find(name, source, flag?)
-         * - Used to test if a given name
-         *   within a source exists. Can return
-         *   boolean or the found object dependent on flag.
-         */
-        DeviceDriverDisk.prototype.find = function (name, source, flag) {
-            var block;
-            var found = false;
-            var start = source.start;
-            var end = source.end;
-            out: for (var t = start.t; t < end.t; t++) {
-                for (var s = start.s; s < end.s; s++) {
-                    for (var b = start.b; b < end.b; b++) {
-                        block = this.convertBlock({ t: t, s: s, b: b });
-                        // Only Check Filled Blocks
-                        if (block.filled) {
-                            if (block.data == name) {
-                                found = true;
-                                break out; // Break out to prevent block overwrite
-                            }
-                        }
-                    }
-                }
+            // Create Block Object
+            var block = sessionStorage.getItem(key);
+            var filled = false;
+            if (block[0] == "1") {
+                filled = true;
             }
-            // Flag used to determine if boolean or object return type
-            if (flag) {
-                return block;
-            }
-            else {
-                return found;
-            }
+            var blockO = { 'filled': filled,
+                'pointer:': block.substring(1, 4),
+                'data': block.substring(_Disk.getHeaderSize()) };
+            return blockO;
         };
         /**
          * clearBlock(key)

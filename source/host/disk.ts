@@ -13,25 +13,22 @@
                         public dataSize = 60,
                         public full = true) {}
 
-            init(flag?) : void {
-                if (flag) {
-                    this.full = false;
-                }
+            init(flag) : void {
+                // Update Full Value 
+                this.full = flag;
 
                 // Create Disk Segments
-                for (let t = 0; t < this.trackSize; t++) {
-                    for (let s = 0; s < this.sectorSize; s++){
-                        for (let b = 0; b < this.blockSize; b++) {
-                            // TODO: Create Block Segment
+                for (let t = 0; t <= this.trackSize; t++) {
+                    for (let s = 0; s <= this.sectorSize; s++){
+                        for (let b = 0; b <= this.blockSize; b++) {
+                            // Load individual block
                             this.loadBlock(t + ':' + s + ':' + b);
                         }
                     }
                 }
 
                 // TODO: Create Master Boot Record
-                this.loadBlock("0:0:0");
-
-
+                //this.loadBlock("0:0:0");
             }
 
             public loadBlock(key) {

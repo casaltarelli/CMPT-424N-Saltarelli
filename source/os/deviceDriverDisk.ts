@@ -9,8 +9,8 @@
             constructor(public formatted = false, 
                         public hidden = ".", 
                         public masterBootrecord = '0:0:0',
-                        public directory = { 'type': 'directory', 'start': '0:0:1', 'end': '0:7:6:'},
-                        public file = {'type': 'file', 'start:': '1:0:0', 'end': '3:7:6'}) {
+                        public directory = { 'type': 'directory', 'start': {'t': 0, 's': 0, 'b': 1}, 'end': {'t': 0, 's': 7, 'b': 6}},
+                        public file = {'type': 'file', 'start:': {'t': 1, 's': 0, 'b': 0}, 'end': {'t': 3, 's': 7, 'b': 6}}) {
                 // Override the base method pointers.
 
                 // The code below cannot run because "this" can only be
@@ -27,6 +27,9 @@
                 // Only Load Dsk Definition if User's browser supports it.
                 if (this.krnDskBrowserSupport) {
                     this.status = "loaded";
+
+                    // Clear Session Storage -- TESTING
+                    sessionStorage.clear();
                 }
             }
 
@@ -52,29 +55,26 @@
                 let status;
 
                 if (params.action == 'format') {
-                    if (params.flag) {
-                        status = this.format(params.flag); 
-                        _StdOut.putText(status.msg);
-                    } else {
-                        status = this.format();
-                        _StdOut.putText(status.msg);
-                    }
+                    status = this.format(params.flag); 
+                    _StdOut.putText(status.msg);
+                    
                 } else {
-                    // TODO: Implement File System Actions Here
-                    switch(params.action) {
-                        case 'create':
-                            if (params.flag) {
-                                status = this.create(params.data, params.flag);
-                            }
-                            status = this.create(params.data);
-                            break;
-
-                        case 'write':
-                            //this.write(name, data)
-                            break;
-
-                        default:
-                            _Kernel.krnTrapError("File System exception: Invalid action " + params.action);
+                    if (this.formatted) {
+                        switch(params.action) {
+                            case 'create':
+                                status = this.create(params.name, params.flag);
+                                _StdOut.putText(status.msg);
+                                break;
+    
+                            case 'write':
+                                //this.write(name, data)
+                                break;
+    
+                            default:
+                                _Kernel.krnTrapError("File System exception: Invalid action " + params.action + ".");
+                        }
+                    } else {
+                        _StdOut.putText("File System exception. Must format Hard Drive first.");
                     }
                 }
             }
@@ -85,15 +85,10 @@
              *   definition, type is a boolean
              *   flag used to determine half or full.
              */
-            public format(flag?) {
+            public format(flag) {
                 // Verify Disk isn't already formatted
                 if (!this.formatted) {
-                    if (flag) {
-                        _Disk.init(flag);
-                    } else {
-                        _Disk.init();
-                    }
-
+                    _Disk.init(flag);
                     this.formatted = true;
 
                     // Output Success
@@ -114,19 +109,25 @@
                 if (name.length > _Disk.getDataSize()) {
                     _StdOut.putText('File name ' + name + ' is too big.');
                 } else {
-                    // Validate New File doesn't already exist
+                    // Validate New File doesn't already exist within our directory
                     if (!this.find(name, this.directory)) {
                         // Get Available Directory Keys
                         let availableKeys = this.getKeys(this.directory, 1);
 
-                        if (availableKeys) {
+                        if (availableKeys.length > 0) {
+                            // Get Current Key
+                            let key = availableKeys[0];
+
                             // Create Header + File Name
-                            let header = this.buildHeader().toString;
-                            sessionStorage.setItem(availableKeys[0], header + name);
+                            let header = this.buildHeader();
+                            header.push(name);
+                            console.log("Header Created: " + header.toString());
+
+                            sessionStorage.setItem(key, header.join(''));
 
                             return { status: 0, msg: "File " + name + " created."};
                         } else {
-                            return { status: 1, msg: "File " + name + " could not be created."};
+                            return { status: 1, msg: "File " + name + " could not be created. No available space."};
                         }
                     } else {
                         return { status: 1, msg: "File " + name + " already exists."};
@@ -194,44 +195,39 @@
             public delete(name) {}
 
             /**
-             * onvertBlock(key)
-             * - Creates a Block Object based
-             *   on a key used within SessionStorage
+             * find(name, source, flag?)
+             * - Used to test if a given name
+             *   within a source exists. Can return
+             *   boolean or the found object dependent on flag.
              */
-            public convertBlock(key) {
-                if (typeof key == 'object') {
-                    key = this.convertKey(key);
+            public find(name, source, flag?) {
+                let block; 
+                let found = false; 
+                let start = source.start;
+                let end = source.end;
+
+                out:
+                for (let t = start.t; t <= end.t; t++) {
+                    for (let s = start.s; s <= end.s; s++) {
+                        for (let b = start.b; b <= end.b; b++) {
+                            block = this.convertBlock({t, s, b});
+
+                            // Only Check Filled Blocks
+                            if (block.filled) {
+                                if (block.data == name) {
+                                    found = true;
+                                    break out;  // Break out to prevent block overwrite
+                                }
+                            }
+                        }
+                    }
                 }
 
-                // Create Block Object
-                let block = sessionStorage.getItem(key);
-                var filled = false;
-
-                if (parseInt[0] == "1") {
-                    filled = true;
-                }
-
-                let blockO = {'filled': filled,
-                            'pointer:': this.convertKey(block.substring(1, 4)),
-                            'data': block.substring(_Disk.getHeaderSize())}
-
-                return blockO;
-            }
-
-            /**
-             * buildBlock(key, data)
-             * - Constructs a Data Block to be
-             *   concatendated with out data header.
-             */
-            public buildBlock(data) {
-                // Convert String into Array
-                data = data.split('');
-
-                // Populate Block
-                let dataBlock;
-
-                for (let i = 0; i < _Disk.getDataSize(); i++) {
-                    dataBlock.push(data[i]);
+                // Flag used to determine if boolean or object return type
+                if (flag) {
+                    return block;
+                } else {
+                    return found;
                 }
             }
 
@@ -241,11 +237,53 @@
              *   to concatenated with our data block.
              */
             public buildHeader(key?) {
+                let header;
+
                 if (key) {
-                    return ['1', key.t, key.s, key.b];
+                    header = ['1', key.t, key.s, key.b];
                 } else {
-                    return ['1', '-', '-', '-'];
+                    header = ['1', '-', '-', '-'];
                 }
+
+                return header;
+            }
+
+            /**
+             * getKeys(source, size)
+             * - Returns a list of String Keys
+             *   for segments of our disk that
+             *   are not filled.
+             */
+            public getKeys(source, size) {
+                // Break Down Params
+                let start = source.start;
+                let end = source.end;
+                let count = 0;
+
+                let availableKeys = [];
+
+                out:
+                for (var t = start.t; t <= end.t; t++) {
+                    for (var s = start.s; s <= end.s; s++) {
+                        for (var b = start.b; b <= end.b; b++) {
+                            let block = this.convertBlock({'t': t, 's': s, 'b': b});
+
+                            // Check if filled
+                            if (!block.filled) {
+                                // Add valid key to list
+                                availableKeys.push(this.convertKey({'t': t, 's': s, 'b': b}));
+                                count++;
+                            }
+
+                            // Check if needed keys have been found
+                            if (count == size) {
+                                break out;
+                            }
+                        }
+                    }
+                }
+
+                return availableKeys;
             }
 
             /**
@@ -270,78 +308,29 @@
             }
 
             /**
-             * getKeys(source, size)
-             * - Returns a list of String Keys
-             *   for segments of our disk that
-             *   are not filled.
+             * ConvertBlock(key)
+             * - Creates a Block Object based
+             *   on a key used within SessionStorage
              */
-            public getKeys(size, source) {
-                // Break Down Params
-                let start = source.start;
-                let end = source.end;
-                var count = 0;
-
-                let availableKeys = [];
-
-                out:
-                for (let t = start.t; t < end.t; t++) {
-                    for (let s = start.s; s < end.s; s++) {
-                        for (let b = start.b; b < end.b; b++) {
-                            let block = this.convertBlock({t, s, b});
-
-                            // Check if filled
-                            if (!block.filled) {
-                                // Add block to list
-                                availableKeys.push(this.convertKey({t, s, b}));
-                                count++;
-                            }
-
-                            // Check if needed keys have been found
-                            if (count == size) {
-                                break out;
-                            }
-                        }
-                    }
+            public convertBlock(key) {
+                if (typeof(key) == 'object') {
+                    key = this.convertKey(key);
+                    console.log(key);
                 }
 
-                return availableKeys;
-            }
+                // Create Block Object
+                let block = sessionStorage.getItem(key);
+                var filled = false;
 
-            /**
-             * find(name, source, flag?)
-             * - Used to test if a given name
-             *   within a source exists. Can return
-             *   boolean or the found object dependent on flag.
-             */
-            public find(name, source, flag?) {
-                let block; 
-                let found = false; 
-                let start = source.start;
-                let end = source.end;
-
-                out:
-                for (let t = start.t; t < end.t; t++) {
-                    for (let s = start.s; s < end.s; s++) {
-                        for (let b = start.b; b < end.b; b++) {
-                            block = this.convertBlock({t, s, b});
-
-                            // Only Check Filled Blocks
-                            if (block.filled) {
-                                if (block.data == name) {
-                                    found = true;
-                                    break out;  // Break out to prevent block overwrite
-                                }
-                            }
-                        }
-                    }
+                if (block[0] == "1") {
+                    filled = true;
                 }
 
-                // Flag used to determine if boolean or object return type
-                if (flag) {
-                    return block;
-                } else {
-                    return found;
-                }
+                let blockO = {'filled': filled,
+                            'pointer:': block.substring(1, 4),
+                            'data': block.substring(_Disk.getHeaderSize())}
+
+                return blockO;
             }
 
             /**

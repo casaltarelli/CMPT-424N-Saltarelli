@@ -125,12 +125,6 @@ var TSOS;
                     this.krnTimerISR(); // Kernel built-in routine for timers (not the clock).
                     break;
                 case KEYBOARD_IRQ:
-                    if (params.length == 1) {
-                        _krnKeyboardDriver.isr(params[0]);
-                    }
-                    else {
-                        _krnKeyboardDriver.isr(params[0], params[1], params[2]);
-                    }
                     _krnKeyboardDriver.isr(params); // Kernel mode device driver
                     _StdIn.handleInput();
                     break;

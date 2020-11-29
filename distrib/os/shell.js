@@ -100,6 +100,9 @@ var TSOS;
             // format
             sc = new TSOS.ShellCommand(this.shellFormat, "format", " - format initilizes the Disk definition for our File System.");
             this.commandList[this.commandList.length] = sc;
+            // create
+            sc = new TSOS.ShellCommand(this.shellCreate, "create", ' - <filename> create a file with a provided name');
+            this.commandList[this.commandList.length] = sc;
             // Display the initial  prompt.
             this.putName();
             this.putPrompt();
@@ -164,8 +167,15 @@ var TSOS;
                 _StdOut.advanceLine();
             }
             // ... and finally write the name + prompt again.
-            this.putName();
-            this.putPrompt();
+            // Timeout used to provide ability for program to output command specific data before adding Prompt
+            setTimeout(function () {
+                if (_Console.currentXPosition > 0) {
+                    _StdOut.advanceLine();
+                }
+                // Display Prompt
+                _OsShell.putName();
+                _OsShell.putPrompt();
+            }, 100);
         };
         Shell.prototype.parseInput = function (buffer) {
             var retVal = new TSOS.UserCommand();
@@ -697,8 +707,49 @@ var TSOS;
             }
         };
         Shell.prototype.shellFormat = function (args) {
-            // TODO: Finalize Format Command
-            _KernelInterruptQueue.enqueue(new TSOS.Interrupt(FILE_SYSTEM_IRQ, ['format']));
+            var params;
+            // Check for Format Flag
+            if (args.length > 0) {
+                args[0] = args[0].toLowerCase();
+                // Validate -full or -quick
+                if (args[0].charAt(0) == "-") {
+                    if (args[0].substring(1) == "quick") {
+                        params = { 'action': 'format',
+                            'flag': false };
+                        _KernelInterruptQueue.enqueue(new TSOS.Interrupt(FILE_SYSTEM_IRQ, params));
+                    }
+                    else if (args[0].substring(1) == "full") {
+                        params = { 'action': 'format',
+                            'flag': true };
+                        _KernelInterruptQueue.enqueue(new TSOS.Interrupt(FILE_SYSTEM_IRQ, params));
+                    }
+                    else {
+                        _StdOut.putText("Please provide a valid flag [-quick, -full]");
+                    }
+                }
+                else {
+                    _StdOut.putText("Please provide a valid flag [-quick, -full]");
+                }
+            }
+            else {
+                // No Args given format Disk as full
+                params = { 'action': 'format',
+                    'flag': true };
+                _KernelInterruptQueue.enqueue(new TSOS.Interrupt(FILE_SYSTEM_IRQ, params));
+            }
+        };
+        Shell.prototype.shellCreate = function (args) {
+            var params;
+            // Check if filename given
+            if (args.length > 0) {
+                params = { 'action': 'create',
+                    'name': args[0],
+                    'flag': undefined };
+                _KernelInterruptQueue.enqueue(new TSOS.Interrupt(FILE_SYSTEM_IRQ, params));
+            }
+            else {
+                _StdOut.putText("Usage: create <filename> please provide a file name.");
+            }
         };
         return Shell;
     }());
