@@ -168,7 +168,6 @@ module TSOS {
             
             //Process Chr in Queue
             _KernelInputQueue.enqueue(chr);
-            
         }
     }
 }

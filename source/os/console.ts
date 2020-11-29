@@ -161,19 +161,25 @@ module TSOS {
             */
 
             if (text !== "") {
-                // Draw the text at the current X and Y coordinates.
-                _DrawingContext.drawText(this.currentFont, this.currentFontSize, this.currentXPosition, this.currentYPosition, text);
-                
-                // Move the current X position.
-                var offset = _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
-
-                // Check Before Printing next line
-                this.currentXPosition = this.currentXPosition + offset;
-
-                // Check XPosition is at End of Canvas
-                if (this.currentXPosition >= (_Canvas.width - _DefaultFontSize)) {
-                    this.advanceLine();
+                for (let ch of text) {
+                    this.putChar(ch);
                 }
+            }
+        }
+
+        public putChar(ch): void {
+            // Draw the character at the current X and Y coordinates
+            _DrawingContext.drawText(this.currentFont, this.currentFontSize, this.currentXPosition, this.currentYPosition, ch);
+
+            // Move the current X position.
+            var offset = _DrawingContext.measureText(this.currentFont, this.currentFontSize, ch);
+
+            // Check Before Printing next line
+            this.currentXPosition = this.currentXPosition + offset;
+
+            // Check XPosition is at End of Canvas
+            if (this.currentXPosition >= (_Canvas.width - _DefaultFontSize)) {
+                this.advanceLine();
             }
         }
 

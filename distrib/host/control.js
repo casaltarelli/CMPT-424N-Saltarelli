@@ -256,6 +256,8 @@ var TSOS;
             _Memory = new TSOS.Memory();
             _Memory.init();
             _MemoryAccessor = new TSOS.MemoryAccessor();
+            // ... Create our Disk ...
+            _Disk = new TSOS.Disk();
             // ... Create our Dispatcher + Scheduler ...
             _Dispatcher = new TSOS.Dispatcher();
             _Schedular = new TSOS.Scheduler();

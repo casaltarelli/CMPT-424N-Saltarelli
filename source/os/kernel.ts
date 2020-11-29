@@ -35,6 +35,12 @@ module TSOS {
             _krnKeyboardDriver.driverEntry();                    // Call the driverEntry() initialization routine.
             this.krnTrace(_krnKeyboardDriver.status);
 
+            // Load the File System Device Driver
+            this.krnTrace("Loading they disk device driver.");
+            _krnDiskDriver = new DeviceDriverDisk();            // Construct it.
+            _krnDiskDriver.driverEntry();                       // Call driverEntry() initialization routine.
+            this.krnTrace(_krnDiskDriver.status);
+
             // Initialize Memory Manager
             _MemoryManager = new MemoryManager();
             _MemoryManager.init();
@@ -60,6 +66,9 @@ module TSOS {
             // ... Disable the Interrupts.
             this.krnTrace("Disabling the interrupts.");
             this.krnDisableInterrupts();
+
+            // TODO: Implement Terminate on any running process
+
             //
             // Unload the Device Drivers?
             // More?
@@ -138,6 +147,10 @@ module TSOS {
                 case KEYBOARD_IRQ:
                     _krnKeyboardDriver.isr(params);   // Kernel mode device driver
                     _StdIn.handleInput();
+                    break;
+
+                case FILE_SYSTEM_IRQ:
+                    _krnDiskDriver.isr(params);
                     break;
 
                 case RUN_CURRENT_PROCESS_IRQ:

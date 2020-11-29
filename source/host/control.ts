@@ -303,6 +303,9 @@ module TSOS {
             _Memory.init();
             _MemoryAccessor = new MemoryAccessor();
 
+            // ... Create our Disk ...
+            _Disk = new Disk();
+
             // ... Create our Dispatcher + Scheduler ...
             _Dispatcher = new Dispatcher();
             _Schedular = new Scheduler();

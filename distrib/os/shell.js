@@ -97,6 +97,9 @@ var TSOS;
             // quantum <int>
             sc = new TSOS.ShellCommand(this.shellQuantum, "quantum", " - <int> set the quantum value for the CPU Schedular.");
             this.commandList[this.commandList.length] = sc;
+            // format
+            sc = new TSOS.ShellCommand(this.shellFormat, "format", " - format initilizes the Disk definition for our File System.");
+            this.commandList[this.commandList.length] = sc;
             // Display the initial  prompt.
             this.putName();
             this.putPrompt();
@@ -440,7 +443,6 @@ var TSOS;
                 // Check current schedule for Priority
                 console.log("Current Alg: " + _Schedular.currentAlgorithm);
                 if (_Schedular.currentAlgorithm == "p") {
-                    console.log("Priority Scheduling Caught");
                     // Filter accordingly
                     _ReadyQueue.sort(function (a, b) { return (a.priority > b.priority) ? 1 : -1; });
                 }
@@ -577,7 +579,7 @@ var TSOS;
                 }
                 else {
                     // Clear Current Memory Segment
-                    _MemoryAccessor.clear(segment);
+                    //_MemoryAccessor.clear(segment);
                     _StdOut.putText("Segment " + segment.index + " is already empty.");
                     _StdOut.advanceLine();
                 }
@@ -693,6 +695,10 @@ var TSOS;
             else {
                 _StdOut.putText("Usage: quantum <int> please provide a integer.");
             }
+        };
+        Shell.prototype.shellFormat = function (args) {
+            // TODO: Finalize Format Command
+            _KernelInterruptQueue.enqueue(new TSOS.Interrupt(FILE_SYSTEM_IRQ, ['format']));
         };
         return Shell;
     }());

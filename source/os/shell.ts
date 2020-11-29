@@ -175,6 +175,12 @@ module TSOS {
                                     " - <int> set the quantum value for the CPU Schedular.");
             this.commandList[this.commandList.length] = sc;
 
+            // format
+            sc = new ShellCommand(this.shellFormat,
+                                    "format",
+                                    " - format initilizes the Disk definition for our File System.");
+            this.commandList[this.commandList.length] = sc;
+
             // Display the initial  prompt.
             this.putName();
             this.putPrompt();
@@ -551,7 +557,6 @@ module TSOS {
                 console.log("Current Alg: " + _Schedular.currentAlgorithm);
 
                 if (_Schedular.currentAlgorithm == "p") {
-                    console.log("Priority Scheduling Caught");
                     // Filter accordingly
                     _ReadyQueue.sort((a, b) => (a.priority > b.priority) ? 1 : -1);
                 }
@@ -685,7 +690,7 @@ module TSOS {
                     }
                 } else {
                     // Clear Current Memory Segment
-                    _MemoryAccessor.clear(segment);
+                    //_MemoryAccessor.clear(segment);
                     _StdOut.putText("Segment " + segment.index + " is already empty.");
                     _StdOut.advanceLine();
                 }
@@ -748,7 +753,6 @@ module TSOS {
     
                             // Hard State Update to process before next loop to prevent late Interrupt update
                             process.state = "terminated"; 
-    
                             _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, params));
                         }
                     }
@@ -803,6 +807,37 @@ module TSOS {
             } else {
                 _StdOut.putText("Usage: quantum <int> please provide a integer.");
             }
+        }
+
+        public shellFormat(args: string[]) {
+            let params;
+            // Check for Format Flag
+            if (args.length > 0) {
+                args[0] = args[0].toLowerCase();
+
+                // Validate -full or -quick
+                if (args[0].charAt(0) == "-") {
+                    if (args[0].substring(1) == "quick") {
+                        params = {'action:': 'format',
+                                'flag': true};
+
+                    } else if (args[0].substring(1) == "full") {
+                        params = {'action:': 'format',
+                                'flag': null}; 
+                    }
+
+                    _KernelInterruptQueue.enqueue(new TSOS.Interrupt(FILE_SYSTEM_IRQ, params));
+                } else {
+                    _StdOut.putText("Please provide a valid flag [-quick, -full]");
+                }
+            } else {
+                // No Args given format Disk as full
+                params = {'action:': 'format',
+                        'flag': null}; 
+
+                _KernelInterruptQueue.enqueue(new TSOS.Interrupt(FILE_SYSTEM_IRQ, params));
+            }
+            
         }
     }
 }

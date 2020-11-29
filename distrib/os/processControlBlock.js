@@ -7,7 +7,7 @@
 var TSOS;
 (function (TSOS) {
     var processControlBlock = /** @class */ (function () {
-        function processControlBlock(state, PC, pid, priority, Acc, Xreg, Yreg, Zflag, segment, waitTime, turnaroundTime) {
+        function processControlBlock(state, PC, pid, priority, Acc, Xreg, Yreg, Zflag, segment, location, waitTime, turnaroundTime) {
             if (state === void 0) { state = "new"; }
             if (PC === void 0) { PC = 0; }
             if (pid === void 0) { pid = _PIDCounter++; }
@@ -17,6 +17,7 @@ var TSOS;
             if (Yreg === void 0) { Yreg = 0; }
             if (Zflag === void 0) { Zflag = 0; }
             if (segment === void 0) { segment = {}; }
+            if (location === void 0) { location = ""; }
             if (waitTime === void 0) { waitTime = 0; }
             if (turnaroundTime === void 0) { turnaroundTime = 0; }
             this.state = state;
@@ -28,6 +29,7 @@ var TSOS;
             this.Yreg = Yreg;
             this.Zflag = Zflag;
             this.segment = segment;
+            this.location = location;
             this.waitTime = waitTime;
             this.turnaroundTime = turnaroundTime;
         }

@@ -31,6 +31,11 @@ var TSOS;
             _krnKeyboardDriver = new TSOS.DeviceDriverKeyboard(); // Construct it.
             _krnKeyboardDriver.driverEntry(); // Call the driverEntry() initialization routine.
             this.krnTrace(_krnKeyboardDriver.status);
+            // Load the File System Device Driver
+            this.krnTrace("Loading they disk device driver.");
+            _krnDiskDriver = new TSOS.DeviceDriverDisk(); // Construct it.
+            _krnDiskDriver.driverEntry(); // Call driverEntry() initialization routine.
+            this.krnTrace(_krnDiskDriver.status);
             // Initialize Memory Manager
             _MemoryManager = new TSOS.MemoryManager();
             _MemoryManager.init();
@@ -52,6 +57,7 @@ var TSOS;
             // ... Disable the Interrupts.
             this.krnTrace("Disabling the interrupts.");
             this.krnDisableInterrupts();
+            // TODO: Implement Terminate on any running process
             //
             // Unload the Device Drivers?
             // More?
@@ -119,8 +125,17 @@ var TSOS;
                     this.krnTimerISR(); // Kernel built-in routine for timers (not the clock).
                     break;
                 case KEYBOARD_IRQ:
+                    if (params.length == 1) {
+                        _krnKeyboardDriver.isr(params[0]);
+                    }
+                    else {
+                        _krnKeyboardDriver.isr(params[0], params[1], params[2]);
+                    }
                     _krnKeyboardDriver.isr(params); // Kernel mode device driver
                     _StdIn.handleInput();
+                    break;
+                case FILE_SYSTEM_IRQ:
+                    _krnDiskDriver.isr(params);
                     break;
                 case RUN_CURRENT_PROCESS_IRQ:
                     _Dispatcher.runProcess(params);
