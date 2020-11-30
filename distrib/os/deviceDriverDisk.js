@@ -25,8 +25,8 @@ var TSOS;
             if (formatted === void 0) { formatted = false; }
             if (hidden === void 0) { hidden = "."; }
             if (masterBootrecord === void 0) { masterBootrecord = '0:0:0'; }
-            if (directory === void 0) { directory = { 'type': 'directory', 'start': { 't': 0, 's': 0, 'b': 1 }, 'end': { 't': 0, 's': 7, 'b': 6 } }; }
-            if (file === void 0) { file = { 'type': 'file', 'start:': { 't': 1, 's': 0, 'b': 0 }, 'end': { 't': 3, 's': 7, 'b': 6 } }; }
+            if (directory === void 0) { directory = { 'start': { 't': 0, 's': 0, 'b': 1 }, 'end': { 't': 0, 's': 7, 'b': 6 } }; }
+            if (file === void 0) { file = { 'start': { 't': 1, 's': 0, 'b': 0 }, 'end': { 't': 3, 's': 7, 'b': 6 } }; }
             var _this = 
             // The code below cannot run because "this" can only be
             // accessed after calling super.
@@ -83,7 +83,8 @@ var TSOS;
                             _StdOut.putText(status.msg);
                             break;
                         case 'write':
-                            //this.write(name, data)
+                            status = this.write(params.name, params.data);
+                            _StdOut.putText(status.msg);
                             break;
                         default:
                             _Kernel.krnTrapError("File System exception: Invalid action " + params.action + ".");
@@ -131,11 +132,10 @@ var TSOS;
                     if (availableKeys.length > 0) {
                         // Get Current Key
                         var key = availableKeys[0];
-                        // Create Header + File Name
-                        var header = this.buildHeader();
-                        header.push(name);
-                        console.log("Header Created: " + header.toString());
-                        sessionStorage.setItem(key, header.join(''));
+                        // Create Header + File Name Block
+                        var block = this.buildBlock(name);
+                        // Set Item in Session Storage
+                        sessionStorage.setItem(key, block.join(''));
                         return { status: 0, msg: "File " + name + " created." };
                     }
                     else {
@@ -145,6 +145,56 @@ var TSOS;
                 else {
                     return { status: 1, msg: "File " + name + " already exists." };
                 }
+            }
+        };
+        /**
+         * write(name, data)
+         * - Writes to a file with a
+         *   given name in our File System.
+         */
+        DeviceDriverDisk.prototype.write = function (name, data) {
+            // Validate File Exists
+            if (this.find(name, this.directory)) {
+                // Get Needed Block Size
+                var size = Math.floor(data.length / _Disk.getDataSize());
+                if (data.length % _Disk.getDataSize() != 0) {
+                    size++; // Additonal Block for leftovers
+                }
+                // Find all needed keys
+                console.log("Call From Write");
+                var availableKeys = this.getKeys(this.file, size);
+                // Verify needed all keys found
+                if (availableKeys.length > 0) {
+                    // Get Directory Block Reference
+                    var directoryBlock = this.find(name, this.directory, true);
+                    // Updated Directory Block w/ Pointer
+                    var block = this.buildBlock(name, availableKeys[0]);
+                    console.log("New Header: " + block.toString());
+                    sessionStorage.setItem(directoryBlock.key, block.join(''));
+                    // Populate Files
+                    for (var i = 0; i < availableKeys.length; i++) {
+                        // Get Data Segment + Updated Data Reference;
+                        var dataSegment = this.getDataBlock(data);
+                        data = dataSegment.data;
+                        // Check for pointer
+                        var block_1 = void 0;
+                        if (availableKeys[i + 1]) {
+                            block_1 = this.buildBlock(dataSegment.segment, availableKeys[i + 1]);
+                        }
+                        else {
+                            block_1 = this.buildBlock(dataSegment.segment);
+                        }
+                        // Update Item in Session Storage
+                        sessionStorage.setItem(availableKeys[i], block_1);
+                    }
+                    return { msg: "File write to " + name + " done." };
+                }
+                else {
+                    return { msg: "Cannot write data to " + name + ". No available space." };
+                }
+            }
+            else {
+                return { msg: "File " + name + " does not exist." };
             }
         };
         /**
@@ -173,27 +223,6 @@ var TSOS;
             }
             else {
                 return { status: 1, msg: "File " + name + " does not exist " };
-            }
-        };
-        /**
-         * write(name, data)
-         * - Writes to a file with a
-         *   given name in our File System.
-         */
-        DeviceDriverDisk.prototype.write = function (name, data) {
-            // Validate File Exists
-            if (this.find(name, this.directory)) {
-                // Get Needed Block Size
-                var size = data / _Disk.getDataSize();
-                // Find all needed keys
-                var availableKeys = this.getKeys(size, this.file);
-                var blockData = void 0;
-                for (var _i = 0, availableKeys_1 = availableKeys; _i < availableKeys_1.length; _i++) {
-                    var k = availableKeys_1[_i];
-                    for (var i = 0; i < _Disk.getDataSize(); i++) {
-                        blockData = blockData;
-                    }
-                }
             }
         };
         /**
@@ -236,19 +265,52 @@ var TSOS;
             }
         };
         /**
-         * buildHeader(key)
+         * buildBlock(data, pointer?)
          * - Used to construct our header array
          *   to concatenated with our data block.
          */
-        DeviceDriverDisk.prototype.buildHeader = function (key) {
-            var header;
-            if (key) {
-                header = ['1', key.t, key.s, key.b];
+        DeviceDriverDisk.prototype.buildBlock = function (data, pointer) {
+            var block;
+            // Create Reserved Header
+            if (pointer) {
+                // Convert to Object
+                pointer = this.convertKey(pointer);
+                block = ['1', pointer.t, pointer.s, pointer.b];
             }
             else {
-                header = ['1', '-', '-', '-'];
+                block = ['1', '-', '-', '-'];
             }
-            return header;
+            // Add Data
+            block.push(data);
+            return block;
+        };
+        /**
+         * getDataBlock(data)
+         * - Creates a string segment from
+         *   the given data string. Returns
+         *   object containing segment + updated
+         *   data.
+         */
+        DeviceDriverDisk.prototype.getDataBlock = function (data) {
+            // Check if Data Type
+            if (typeof (data) == 'string') {
+                // Convert to Array of two char strings
+                data = data.match(/.{2}/g);
+            }
+            // Populate Data Segment
+            var segment = [];
+            for (var i = 0; i < _Disk.getDataSize(); i++) {
+                // Check for leftover padding
+                if (i > data.length) {
+                    segment.push('--');
+                }
+                else {
+                    segment.push(data[i]);
+                }
+            }
+            // Convert Data back to String
+            data = data.join('');
+            return { 'segment': segment.join(''), 'data': data.substring(_Disk.getDataSize()) };
         };
         /**
          * getKeys(source, size)
@@ -271,6 +333,7 @@ var TSOS;
                             // Add valid key to list
                             availableKeys.push(this.convertKey({ 't': t, 's': s, 'b': b }));
                             count++;
+                            console.log("Valid Key Found!");
                         }
                         // Check if needed keys have been found
                         if (count == size) {
@@ -279,7 +342,12 @@ var TSOS;
                     }
                 }
             }
-            return availableKeys;
+            if (count == size) {
+                return availableKeys;
+            }
+            else {
+                return []; // No Available Space
+            }
         };
         /**
          * convertKey(key)
@@ -311,7 +379,6 @@ var TSOS;
         DeviceDriverDisk.prototype.convertBlock = function (key) {
             if (typeof (key) == 'object') {
                 key = this.convertKey(key);
-                console.log(key);
             }
             // Create Block Object
             var block = sessionStorage.getItem(key);
@@ -319,10 +386,11 @@ var TSOS;
             if (block[0] == "1") {
                 filled = true;
             }
-            var blockO = { 'filled': filled,
+            var object = { 'key': key,
+                'filled': filled,
                 'pointer:': block.substring(1, 4),
                 'data': block.substring(_Disk.getHeaderSize()) };
-            return blockO;
+            return object;
         };
         /**
          * clearBlock(key)

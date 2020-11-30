@@ -101,7 +101,10 @@ var TSOS;
             sc = new TSOS.ShellCommand(this.shellFormat, "format", " - format initilizes the Disk definition for our File System.");
             this.commandList[this.commandList.length] = sc;
             // create
-            sc = new TSOS.ShellCommand(this.shellCreate, "create", ' - <filename> create a file with a provided name');
+            sc = new TSOS.ShellCommand(this.shellCreate, "create", " - <filename> create a file with a provided name");
+            this.commandList[this.commandList.length] = sc;
+            // write
+            sc = new TSOS.ShellCommand(this.shellWrite, "write", ' - <filename> "data" writes data to file with a provided name');
             this.commandList[this.commandList.length] = sc;
             // Display the initial  prompt.
             this.putName();
@@ -740,7 +743,7 @@ var TSOS;
         };
         Shell.prototype.shellCreate = function (args) {
             var params;
-            // Check if filename given
+            // Validate filename given
             if (args.length > 0) {
                 params = { 'action': 'create',
                     'name': args[0],
@@ -749,6 +752,24 @@ var TSOS;
             }
             else {
                 _StdOut.putText("Usage: create <filename> please provide a file name.");
+            }
+        };
+        Shell.prototype.shellWrite = function (args) {
+            var params;
+            // Validate filename + data
+            if (args.length >= 2) {
+                // Combine all elements after filename
+                var data = [];
+                for (var i = 1; i < args.length; i++) {
+                    data.push(args[i]);
+                }
+                params = { 'action': 'write',
+                    'name': args[0],
+                    'data': data.join(' ') };
+                _KernelInterruptQueue.enqueue(new TSOS.Interrupt(FILE_SYSTEM_IRQ, params));
+            }
+            else {
+                _StdOut.putText('Usage: write <filename> "data" please provide both a file name and data to write');
             }
         };
         return Shell;
