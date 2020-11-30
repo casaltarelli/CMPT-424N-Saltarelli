@@ -101,10 +101,13 @@ var TSOS;
             sc = new TSOS.ShellCommand(this.shellFormat, "format", " - format initilizes the Disk definition for our File System.");
             this.commandList[this.commandList.length] = sc;
             // create
-            sc = new TSOS.ShellCommand(this.shellCreate, "create", " - <filename> create a file with a provided name");
+            sc = new TSOS.ShellCommand(this.shellCreate, "create", " - <filename> create a file with a provided name.");
             this.commandList[this.commandList.length] = sc;
             // write
-            sc = new TSOS.ShellCommand(this.shellWrite, "write", ' - <filename> "data" writes data to file with a provided name');
+            sc = new TSOS.ShellCommand(this.shellWrite, "write", ' - <filename> "data" writes data to file with a provided name.');
+            this.commandList[this.commandList.length] = sc;
+            // read
+            sc = new TSOS.ShellCommand(this.shellRead, "read", " - <filename> reads a file with a provided name.");
             this.commandList[this.commandList.length] = sc;
             // Display the initial  prompt.
             this.putName();
@@ -770,6 +773,18 @@ var TSOS;
             }
             else {
                 _StdOut.putText('Usage: write <filename> "data" please provide both a file name and data to write');
+            }
+        };
+        Shell.prototype.shellRead = function (args) {
+            var params;
+            // Validate filename
+            if (args.length > 0) {
+                params = { 'action': 'read',
+                    'name': args[0] };
+                _KernelInterruptQueue.enqueue(new TSOS.Interrupt(FILE_SYSTEM_IRQ, params));
+            }
+            else {
+                _StdOut.putText("Usage: read <filename> please provide a file name.");
             }
         };
         return Shell;

@@ -184,13 +184,19 @@ module TSOS {
             // create
             sc = new ShellCommand(this.shellCreate,
                                     "create",
-                                    " - <filename> create a file with a provided name");
+                                    " - <filename> create a file with a provided name.");
             this.commandList[this.commandList.length] = sc;
 
             // write
             sc = new ShellCommand(this.shellWrite,
                                     "write",
-                                    ' - <filename> "data" writes data to file with a provided name');
+                                    ' - <filename> "data" writes data to file with a provided name.');
+            this.commandList[this.commandList.length] = sc;
+
+            // read
+            sc = new ShellCommand(this.shellRead,
+                                    "read",
+                                    " - <filename> reads a file with a provided name.");
             this.commandList[this.commandList.length] = sc;
 
             // Display the initial  prompt.
@@ -892,12 +898,26 @@ module TSOS {
                 }
 
                 params = {'action': 'write',
-                'name': args[0],
-                'data': data.join(' ')};
+                    'name': args[0],
+                    'data': data.join(' ')};
 
                 _KernelInterruptQueue.enqueue(new TSOS.Interrupt(FILE_SYSTEM_IRQ, params));
             } else {
                 _StdOut.putText('Usage: write <filename> "data" please provide both a file name and data to write');
+            }
+        }
+
+        public shellRead(args: string[]) {
+            let params;
+
+            // Validate filename
+            if (args.length > 0) {
+                params = {'action': 'read',
+                    'name': args[0]};
+
+                _KernelInterruptQueue.enqueue(new TSOS.Interrupt(FILE_SYSTEM_IRQ, params));
+            } else {
+                _StdOut.putText("Usage: read <filename> please provide a file name.");
             }
         }
     }

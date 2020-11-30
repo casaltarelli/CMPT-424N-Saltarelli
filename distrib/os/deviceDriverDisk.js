@@ -73,18 +73,22 @@ var TSOS;
             var status;
             if (params.action == 'format') {
                 status = this.format(params.flag);
-                _StdOut.putText(status.msg);
+                _StdOut.putText(status);
             }
             else {
                 if (this.formatted) {
                     switch (params.action) {
                         case 'create':
                             status = this.create(params.name, params.flag);
-                            _StdOut.putText(status.msg);
+                            _StdOut.putText(status);
                             break;
                         case 'write':
                             status = this.write(params.name, params.data);
-                            _StdOut.putText(status.msg);
+                            _StdOut.putText(status);
+                            break;
+                        case 'read':
+                            status = this.read(params.name);
+                            _StdOut.putText(status);
                             break;
                         default:
                             _Kernel.krnTrapError("File System exception: Invalid action " + params.action + ".");
@@ -107,10 +111,10 @@ var TSOS;
                 _Disk.init(flag);
                 this.formatted = true;
                 // Output Success
-                return { status: 0, msg: "Hard drive fully formatted." };
+                return "Hard drive fully formatted.";
             }
             else {
-                return { status: 1, msg: "Hard drive has already been fully formatted" };
+                return "Hard drive has already been fully formatted";
             }
         };
         /**
@@ -122,7 +126,7 @@ var TSOS;
         DeviceDriverDisk.prototype.create = function (name, flag) {
             // Validate Length of File Name
             if (name.length > _Disk.getDataSize()) {
-                _StdOut.putText('File name ' + name + ' is too big.');
+                return 'File name ' + name + ' is too big.';
             }
             else {
                 // Validate New File doesn't already exist within our directory
@@ -136,14 +140,14 @@ var TSOS;
                         var block = this.buildBlock(name);
                         // Set Item in Session Storage
                         sessionStorage.setItem(key, block.join(''));
-                        return { status: 0, msg: "File " + name + " created." };
+                        return "File " + name + " created.";
                     }
                     else {
-                        return { status: 1, msg: "File " + name + " could not be created. No available space." };
+                        return "File " + name + " could not be created. No available space.";
                     }
                 }
                 else {
-                    return { status: 1, msg: "File " + name + " already exists." };
+                    return "File " + name + " already exists.";
                 }
             }
         };
@@ -161,7 +165,6 @@ var TSOS;
                     size++; // Additonal Block for leftovers
                 }
                 // Find all needed keys
-                console.log("Call From Write");
                 var availableKeys = this.getKeys(this.file, size);
                 // Verify needed all keys found
                 if (availableKeys.length > 0) {
@@ -169,7 +172,6 @@ var TSOS;
                     var directoryBlock = this.find(name, this.directory, true);
                     // Updated Directory Block w/ Pointer
                     var block = this.buildBlock(name, availableKeys[0]);
-                    console.log("New Header: " + block.toString());
                     sessionStorage.setItem(directoryBlock.key, block.join(''));
                     // Populate Files
                     for (var i = 0; i < availableKeys.length; i++) {
@@ -185,16 +187,16 @@ var TSOS;
                             block_1 = this.buildBlock(dataSegment.segment);
                         }
                         // Update Item in Session Storage
-                        sessionStorage.setItem(availableKeys[i], block_1);
+                        sessionStorage.setItem(availableKeys[i], block_1.join(''));
                     }
-                    return { msg: "File write to " + name + " done." };
+                    return "File write to " + name + " done.";
                 }
                 else {
-                    return { msg: "Cannot write data to " + name + ". No available space." };
+                    return "Cannot write data to " + name + ". No available space.";
                 }
             }
             else {
-                return { msg: "File " + name + " does not exist." };
+                return "File " + name + " does not exist.";
             }
         };
         /**
@@ -207,27 +209,40 @@ var TSOS;
             if (this.find(name, this.directory)) {
                 // Get Block Object
                 var block = this.find(name, this.directory, true);
-                var collecting = true;
-                var data = block.data;
-                while (collecting) {
-                    // Validate Pointer to Data
-                    if (block.pointer.indexOf('-') == -1) {
-                        block = this.convertBlock(block.pointer);
-                        // Concat String Data
-                        data = data + block.data;
+                // Validate Directory Pointer to Data
+                if (block.pointer.indexOf('-') !== -1) {
+                    return "No data to read. File is empty.";
+                }
+                else {
+                    var collecting = true;
+                    var data = "";
+                    while (collecting) {
+                        // Check for next Pointer to Data
+                        if (block.pointer.indexOf('-') == -1) {
+                            // Convert Pointer + Create Block
+                            var pointerKey = this.convertKey(block.pointer);
+                            block = this.convertBlock(pointerKey);
+                            // Add Data Block
+                            data = data + block.data;
+                        }
+                        else {
+                            collecting = false;
+                        }
                     }
-                    else {
-                        collecting = false;
-                    }
+                    // Remove Empty Space Markers
+                    var markerStart = data.indexOf("--");
+                    data = data.substring(0, markerStart);
+                    // Return File Data
+                    return data;
                 }
             }
             else {
-                return { status: 1, msg: "File " + name + " does not exist " };
+                return "File " + name + " does not exist ";
             }
         };
         /**
          * delete(name)
-         * - Deltes a file with a
+         * - Deletes a file with a
          *   given name in our File System.
          */
         DeviceDriverDisk.prototype["delete"] = function (name) { };
@@ -280,7 +295,7 @@ var TSOS;
             else {
                 block = ['1', '-', '-', '-'];
             }
-            // Add Data
+            // Add Data to Block
             block.push(data);
             return block;
         };
@@ -333,7 +348,6 @@ var TSOS;
                             // Add valid key to list
                             availableKeys.push(this.convertKey({ 't': t, 's': s, 'b': b }));
                             count++;
-                            console.log("Valid Key Found!");
                         }
                         // Check if needed keys have been found
                         if (count == size) {
@@ -380,15 +394,16 @@ var TSOS;
             if (typeof (key) == 'object') {
                 key = this.convertKey(key);
             }
-            // Create Block Object
+            // Get Item in Session Storage
             var block = sessionStorage.getItem(key);
             var filled = false;
             if (block[0] == "1") {
                 filled = true;
             }
+            // Create Block Object
             var object = { 'key': key,
                 'filled': filled,
-                'pointer:': block.substring(1, 4),
+                'pointer': block.substring(1, 4),
                 'data': block.substring(_Disk.getHeaderSize()) };
             return object;
         };
