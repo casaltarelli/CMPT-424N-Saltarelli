@@ -47,7 +47,7 @@ var TSOS;
             // Only Load Dsk Definition if User's browser supports it.
             if (this.krnDskBrowserSupport) {
                 this.status = "loaded";
-                // Clear Session Storage -- TESTING
+                // Clear Session Storage -- TESTING PURPOSES ONLY
                 sessionStorage.clear();
             }
         };
@@ -125,7 +125,7 @@ var TSOS;
          */
         DeviceDriverDisk.prototype.create = function (name, flag) {
             // Validate Length of File Name
-            if (name.length > _Disk.getDataSize()) {
+            if (name.length > _Disk.getDataSize() - 8) { // Subtract 8 for Date String
                 return 'File name ' + name + ' is too big.';
             }
             else {
@@ -136,10 +136,13 @@ var TSOS;
                     if (availableKeys.length > 0) {
                         // Get Current Key
                         var key = availableKeys[0];
-                        // Create Header + File Name Block
-                        var block = this.buildBlock(name);
+                        // Get Timestamp for Entry
+                        var timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+                        // Create Block for Directory Entry
+                        var block = this.buildBlock(this.convertHex(name + timestamp, 'hex'));
+                        console.log("New BLOCK from buildBlock(): " + block);
                         // Set Item in Session Storage
-                        sessionStorage.setItem(key, block.join(''));
+                        sessionStorage.setItem(key, block);
                         return "File " + name + " created.";
                     }
                     else {
@@ -159,24 +162,28 @@ var TSOS;
         DeviceDriverDisk.prototype.write = function (name, data) {
             // Validate File Exists
             if (this.find(name, this.directory)) {
+                // Encode Data to Hex for accurate size
+                var dataSize = this.convertHex(data, 'hex').length;
                 // Get Needed Block Size
-                var size = Math.floor(data.length / _Disk.getDataSize());
-                if (data.length % _Disk.getDataSize() != 0) {
+                var size = Math.floor(dataSize / _Disk.getDataSize());
+                if (dataSize % _Disk.getDataSize() != 0) {
                     size++; // Additonal Block for leftovers
                 }
                 // Find all needed keys
                 var availableKeys = this.getKeys(this.file, size);
-                // Verify needed all keys found
+                // Verify all needed keys found
                 if (availableKeys.length > 0) {
                     // Get Directory Block Reference
                     var directoryBlock = this.find(name, this.directory, true);
                     // Updated Directory Block w/ Pointer
-                    var block = this.buildBlock(name, availableKeys[0]);
-                    sessionStorage.setItem(directoryBlock.key, block.join(''));
+                    var block = this.buildBlock(this.convertHex(directoryBlock.data, 'hex'), availableKeys[0]);
+                    sessionStorage.setItem(directoryBlock.key, block);
+                    // Convert Data to Hex before Allocating
+                    data = this.convertHex(data, 'hex');
                     // Populate Files
                     for (var i = 0; i < availableKeys.length; i++) {
                         // Get Data Segment + Updated Data Reference;
-                        var dataSegment = this.getDataBlock(data);
+                        var dataSegment = this.getDataSegment(data);
                         data = dataSegment.data;
                         // Check for pointer
                         var block_1 = void 0;
@@ -187,7 +194,7 @@ var TSOS;
                             block_1 = this.buildBlock(dataSegment.segment);
                         }
                         // Update Item in Session Storage
-                        sessionStorage.setItem(availableKeys[i], block_1.join(''));
+                        sessionStorage.setItem(availableKeys[i], block_1);
                     }
                     return "File write to " + name + " done.";
                 }
@@ -210,7 +217,7 @@ var TSOS;
                 // Get Block Object
                 var block = this.find(name, this.directory, true);
                 // Validate Directory Pointer to Data
-                if (block.pointer.indexOf('-') !== -1) {
+                if (block.pointer.indexOf('F') !== -1) {
                     return "No data to read. File is empty.";
                 }
                 else {
@@ -218,20 +225,17 @@ var TSOS;
                     var data = "";
                     while (collecting) {
                         // Check for next Pointer to Data
-                        if (block.pointer.indexOf('-') == -1) {
+                        if (block.pointer.indexOf('F') == -1) {
                             // Convert Pointer + Create Block
                             var pointerKey = this.convertKey(block.pointer);
                             block = this.convertBlock(pointerKey);
-                            // Add Data Block
+                            // Decode Data to Char Codes + Concat for output
                             data = data + block.data;
                         }
                         else {
                             collecting = false;
                         }
                     }
-                    // Remove Empty Space Markers
-                    var markerStart = data.indexOf("--");
-                    data = data.substring(0, markerStart);
                     // Return File Data
                     return data;
                 }
@@ -263,7 +267,7 @@ var TSOS;
                         block = this.convertBlock({ t: t, s: s, b: b });
                         // Only Check Filled Blocks
                         if (block.filled) {
-                            if (block.data == name) {
+                            if (block.data.substr(0, name.length) == name) {
                                 found = true;
                                 break out; // Break out to prevent block overwrite
                             }
@@ -280,9 +284,9 @@ var TSOS;
             }
         };
         /**
-         * buildBlock(data, pointer?)
-         * - Used to construct our header array
-         *   to concatenated with our data block.
+         * buildBlock(data, type, pointer?)
+         * - Used to construct our data block
+         *   for both directory and file entries.
          */
         DeviceDriverDisk.prototype.buildBlock = function (data, pointer) {
             var block;
@@ -293,10 +297,16 @@ var TSOS;
                 block = ['1', pointer.t, pointer.s, pointer.b];
             }
             else {
-                block = ['1', '-', '-', '-'];
+                block = ['1', 'F', 'F', 'F']; // Null Pointer
             }
             // Add Data to Block
             block.push(data);
+            // Convert to String Before Proceeding
+            block = block.join('');
+            // Pad Data Block if needed
+            for (var i = block.length; i < _Disk.getDataSize(); i += 2) {
+                block += '00';
+            }
             return block;
         };
         /**
@@ -306,7 +316,7 @@ var TSOS;
          *   object containing segment + updated
          *   data.
          */
-        DeviceDriverDisk.prototype.getDataBlock = function (data) {
+        DeviceDriverDisk.prototype.getDataSegment = function (data) {
             // Check if Data Type
             if (typeof (data) == 'string') {
                 // Convert to Array of two char strings
@@ -315,12 +325,11 @@ var TSOS;
             // Populate Data Segment
             var segment = [];
             for (var i = 0; i < _Disk.getDataSize(); i++) {
-                // Check for leftover padding
-                if (i > data.length) {
-                    segment.push('--');
-                }
-                else {
-                    segment.push(data[i]);
+                segment.push(data[i]);
+            }
+            if (segment.length < _Disk.getDataSize()) {
+                for (var j = segment.length; j < _Disk.getDataSize(); j += 2) {
+                    segment.push('00');
                 }
             }
             // Convert Data back to String
@@ -396,6 +405,8 @@ var TSOS;
             }
             // Get Item in Session Storage
             var block = sessionStorage.getItem(key);
+            // Convert Data Block to Char Data
+            block = this.convertHex(block, 'char');
             var filled = false;
             if (block[0] == "1") {
                 filled = true;
@@ -406,6 +417,33 @@ var TSOS;
                 'pointer': block.substring(1, 4),
                 'data': block.substring(_Disk.getHeaderSize()) };
             return object;
+        };
+        /**
+         * convertHex(data, type)
+         * - Converts a given string between
+         *   Hex and Char.
+         */
+        DeviceDriverDisk.prototype.convertHex = function (data, type) {
+            var newData = '';
+            if (type == 'hex') {
+                // Convert Data into String
+                if (typeof (data) == 'object') {
+                    data = data.join('');
+                }
+                for (var c in data) {
+                    var hex = data[c].charCodeAt().toString(16);
+                    newData += hex;
+                }
+            }
+            else if (type == 'char') {
+                // Add Header before Converting
+                newData += data.substr(0, _Disk.getHeaderSize());
+                // Iterate over entire string until end is reached
+                for (var i = _Disk.getHeaderSize(); (i < data.length && data.substr(i, 2) !== '00'); i += 2) {
+                    newData += String.fromCharCode(parseInt(data.substr(i, 2), 16));
+                }
+            }
+            return newData;
         };
         /**
          * clearBlock(key)

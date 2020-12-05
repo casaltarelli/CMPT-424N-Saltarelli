@@ -28,7 +28,7 @@
                 if (this.krnDskBrowserSupport) {
                     this.status = "loaded";
 
-                    // Clear Session Storage -- TESTING
+                    // Clear Session Storage -- TESTING PURPOSES ONLY
                     sessionStorage.clear();
                 }
             }
@@ -112,7 +112,7 @@
              */
             public create(name, flag?) {
                 // Validate Length of File Name
-                if (name.length > _Disk.getDataSize()) {
+                if (name.length > _Disk.getDataSize() - 8) {    // Subtract 8 for Date String
                     return 'File name ' + name + ' is too big.';
                 } else {
                     // Validate New File doesn't already exist within our directory
@@ -124,11 +124,15 @@
                             // Get Current Key
                             let key = availableKeys[0];
 
-                            // Create Header + File Name Block
-                            let block = this.buildBlock(name);
+                            // Get Timestamp for Entry
+                            let timestamp = new Date().toISOString().slice(0,10).replace(/-/g,"");
+
+                            // Create Block for Directory Entry
+                            let block = this.buildBlock(this.convertHex(name + timestamp, 'hex'));
+                            console.log("New BLOCK from buildBlock(): " + block);
 
                             // Set Item in Session Storage
-                            sessionStorage.setItem(key, block.join(''));
+                            sessionStorage.setItem(key, block);
 
                             return "File " + name + " created.";
                         } else {
@@ -148,29 +152,35 @@
             public write(name, data) {
                 // Validate File Exists
                 if (this.find(name, this.directory)) {
-                    // Get Needed Block Size
-                    let size = Math.floor(data.length / _Disk.getDataSize());
+                    // Encode Data to Hex for accurate size
+                    let dataSize = this.convertHex(data, 'hex').length;
 
-                    if (data.length % _Disk.getDataSize() != 0) {
+                    // Get Needed Block Size
+                    let size = Math.floor(dataSize / _Disk.getDataSize());
+
+                    if (dataSize % _Disk.getDataSize() != 0) {
                         size++; // Additonal Block for leftovers
                     }
 
                     // Find all needed keys
                     let availableKeys = this.getKeys(this.file, size);
 
-                    // Verify needed all keys found
+                    // Verify all needed keys found
                     if (availableKeys.length > 0) {
                         // Get Directory Block Reference
                         let directoryBlock = this.find(name, this.directory, true);
 
                         // Updated Directory Block w/ Pointer
-                        let block = this.buildBlock(name, availableKeys[0]);
-                        sessionStorage.setItem(directoryBlock.key, block.join(''));
+                        let block = this.buildBlock(this.convertHex(directoryBlock.data, 'hex'), availableKeys[0]);
+                        sessionStorage.setItem(directoryBlock.key, block);
+
+                        // Convert Data to Hex before Allocating
+                        data = this.convertHex(data, 'hex');
 
                         // Populate Files
                         for (let i = 0; i < availableKeys.length; i++) {
                             // Get Data Segment + Updated Data Reference;
-                            let dataSegment = this.getDataBlock(data);
+                            let dataSegment = this.getDataSegment(data);
                             data = dataSegment.data;
 
                             // Check for pointer
@@ -182,7 +192,7 @@
                             }
 
                             // Update Item in Session Storage
-                            sessionStorage.setItem(availableKeys[i], block.join(''));
+                            sessionStorage.setItem(availableKeys[i], block);
                         }
 
                         return "File write to " + name + " done.";
@@ -206,29 +216,25 @@
                     let block = this.find(name, this.directory, true);
 
                     // Validate Directory Pointer to Data
-                    if (block.pointer.indexOf('-') !== -1) {
+                    if (block.pointer.indexOf('F') !== -1) {
                         return "No data to read. File is empty.";
                     } else {
-                        var collecting = true;
-                        var data = "";
+                        let collecting = true;
+                        let data = "";
 
                         while (collecting) {
                             // Check for next Pointer to Data
-                            if (block.pointer.indexOf('-') == -1) {
+                            if (block.pointer.indexOf('F') == -1) {
                                 // Convert Pointer + Create Block
                                 let pointerKey = this.convertKey(block.pointer);
                                 block = this.convertBlock(pointerKey);
 
-                                // Add Data Block
+                                // Decode Data to Char Codes + Concat for output
                                 data = data + block.data;
                             } else {
                                 collecting = false;
                             }
                         }
-
-                        // Remove Empty Space Markers
-                        let markerStart = data.indexOf("--");
-                        data = data.substring(0, markerStart);
 
                         // Return File Data
                         return data; 
@@ -265,7 +271,7 @@
 
                             // Only Check Filled Blocks
                             if (block.filled) {
-                                if (block.data == name) {
+                                if (block.data.substr(0, name.length) == name) {
                                     found = true;
                                     break out;  // Break out to prevent block overwrite
                                 }
@@ -283,9 +289,9 @@
             }
 
             /**
-             * buildBlock(data, pointer?)
-             * - Used to construct our header array
-             *   to concatenated with our data block.
+             * buildBlock(data, type, pointer?)
+             * - Used to construct our data block 
+             *   for both directory and file entries. 
              */
             public buildBlock(data, pointer?) {
                 let block;
@@ -297,11 +303,19 @@
                     block = ['1', pointer.t, pointer.s, pointer.b];
 
                 } else {
-                    block = ['1', '-', '-', '-'];
+                    block = ['1', 'F', 'F', 'F'];   // Null Pointer
                 }
 
                 // Add Data to Block
                 block.push(data);
+
+                // Convert to String Before Proceeding
+                block = block.join('');
+
+                // Pad Data Block if needed
+                for (let i = block.length; i < _Disk.getDataSize(); i+=2) {
+                    block += '00';
+                }
                 
                 return block;
             }
@@ -313,7 +327,7 @@
              *   object containing segment + updated
              *   data.
              */
-            public getDataBlock(data) {
+            public getDataSegment(data) {
                 // Check if Data Type
                 if (typeof(data) == 'string') {
                     // Convert to Array of two char strings
@@ -324,11 +338,13 @@
                 let segment = [];
 
                 for (let i = 0; i < _Disk.getDataSize(); i++) {
-                    // Check for leftover padding
-                    if (i > data.length) {
-                        segment.push('--');
-                    } else {
-                        segment.push(data[i]);
+                    segment.push(data[i]);
+                }
+
+                // Check if segment needs padding
+                if (segment.length < _Disk.getDataSize()) {
+                    for (let j = segment.length; j < _Disk.getDataSize(); j+=2) {
+                        segment.push('00');
                     }
                 }
 
@@ -414,6 +430,10 @@
 
                 // Get Item in Session Storage
                 let block = sessionStorage.getItem(key);
+
+                // Convert Data Block to Char Data
+                block = this.convertHex(block, 'char');
+                
                 var filled = false;
 
                 if (block[0] == "1") {
@@ -427,6 +447,37 @@
                             'data': block.substring(_Disk.getHeaderSize())}
 
                 return object;
+            }
+
+            /**
+             * convertHex(data, type)
+             * - Converts a given string between
+             *   Hex and Char.
+             */
+            public convertHex(data, type) {
+                let newData = '';
+
+                if (type == 'hex') {
+                    // Convert Data into String
+                    if (typeof(data) == 'object') {
+                        data = data.join('');
+                    }
+
+                    for (let c in data) {
+                        let hex = data[c].charCodeAt().toString(16);
+                        newData += hex;
+                    }
+                } else if (type == 'char') {
+                    // Add Header before Converting
+                    newData += data.substr(0, _Disk.getHeaderSize());
+
+                    // Iterate over entire string until end is reached
+                    for (let i = _Disk.getHeaderSize(); (i < data.length && data.substr(i, 2) !== '00'); i += 2) {
+                        newData += String.fromCharCode(parseInt(data.substr(i, 2), 16));
+                    }
+                }
+
+                return newData;
             }
 
             /**

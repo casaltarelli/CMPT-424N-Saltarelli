@@ -33,7 +33,7 @@
 
             public loadBlock(key) {
                 // Create Block Data + Reserved Header
-                let header = ['0', '-', '-', '-'];      // [0: Empty  1: Filled] [- - - Null Pointer]
+                let header = ['0', 'F', 'F', 'F'];      // [0: Empty  1: Filled] [F F F Null Pointer]
 
                 let data = [];
                 

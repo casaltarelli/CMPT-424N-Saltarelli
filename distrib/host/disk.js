@@ -37,7 +37,7 @@ var TSOS;
         };
         Disk.prototype.loadBlock = function (key) {
             // Create Block Data + Reserved Header
-            var header = ['0', '-', '-', '-']; // [0: Empty  1: Filled] [- - - Null Pointer]
+            var header = ['0', 'F', 'F', 'F']; // [0: Empty  1: Filled] [F F F Null Pointer]
             var data = [];
             // Init based on format option
             if (this.full) {
