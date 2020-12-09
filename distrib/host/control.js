@@ -231,9 +231,8 @@ var TSOS;
         };
         Control.updateHardDriveDisplay = function () {
             // Get Elements
-            var wrapper = document.getElementById("table-wrapper");
             var table = document.getElementById("tableHD");
-            var thead = document.getElementById("theadHD");
+            //let thead = (<HTMLTableElement >document.getElementById("theadHD"));
             var newTBody = document.createElement("tbody");
             // Validate Hard Drive has been formatted before updating
             if (!_krnDiskDriver.formatted) {
@@ -261,9 +260,6 @@ var TSOS;
                         }
                     }
                 }
-                // Add Border Styling
-                //wrapper.style.borderTop = "4px solid #494949";
-                thead.style.borderBottom = "4px solid #494949";
                 // Update Tbody
                 table.replaceChild(newTBody, table.childNodes[0]);
             }

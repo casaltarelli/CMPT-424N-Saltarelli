@@ -269,10 +269,10 @@ module TSOS {
 
         public static updateHardDriveDisplay() {
             // Get Elements
-            let wrapper = (<HTMLTableElement >document.getElementById("table-wrapper"));
             let table = (<HTMLTableElement >document.getElementById("tableHD"));
-            let thead = (<HTMLTableElement >document.getElementById("theadHD"));
+            //let thead = (<HTMLTableElement >document.getElementById("theadHD"));
             let newTBody = document.createElement("tbody");
+
             // Validate Hard Drive has been formatted before updating
             if (!_krnDiskDriver.formatted) {
                 return; // Don't Add anything until formatted
@@ -302,10 +302,6 @@ module TSOS {
                         }
                     }
                 }
-
-                // Add Border Styling
-                //wrapper.style.borderTop = "4px solid #494949";
-                thead.style.borderBottom = "4px solid #494949";
 
                 // Update Tbody
                 table.replaceChild(newTBody, table.childNodes[0]);

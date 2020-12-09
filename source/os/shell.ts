@@ -199,6 +199,12 @@ module TSOS {
                                     " - <filename> reads a file with a provided name.");
             this.commandList[this.commandList.length] = sc;
 
+            // delete
+            sc = new ShellCommand(this.shellDelete,
+                                    "delete",
+                                    " - <filename> deletes a file with a provided name.");
+            this.commandList[this.commandList.length] = sc;
+
             // Display the initial  prompt.
             this.putName();
             this.putPrompt();
@@ -921,6 +927,20 @@ module TSOS {
                 _KernelInterruptQueue.enqueue(new TSOS.Interrupt(FILE_SYSTEM_IRQ, params));
             } else {
                 _StdOut.putText("Usage: read <filename> please provide a file name.");
+            }
+        }
+
+        public shellDelete(args: string[]) {
+            let params;
+            
+            // Validate filename
+            if (args.length > 0) {
+                params = {'action': 'delete',
+                    'name': args[0]};
+
+                _KernelInterruptQueue.enqueue(new TSOS.Interrupt(FILE_SYSTEM_IRQ, params)); 
+            } else {
+                _StdOut.putText("Usage: delete <filename> please provide a file name.");
             }
         }
     }

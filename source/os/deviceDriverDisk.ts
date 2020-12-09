@@ -75,6 +75,11 @@
                                 status = this.read(params.name);
                                 _StdOut.putText(status);
                                 break;
+
+                            case 'delete':
+                                status = this.delete(params.name);
+                                _StdOut.putText(status);
+                                break;
     
                             default:
                                 _Kernel.krnTrapError("File System exception: Invalid action " + params.action + ".");
@@ -100,7 +105,7 @@
                     // Output Success
                     return "Hard drive fully formatted.";
                 } else {
-                    return "Hard drive has already been fully formatted";
+                    return "Hard drive has already been fully formatted.";
                 }
             }
 
@@ -133,7 +138,7 @@
                             data = data.match(/.{2}/g);
 
                             // Create Block for Directory Entry
-                            let block = this.buildBlock(data);
+                            let block = this.buildBlock(data, '1');
 
                             // Set Item in Session Storage
                             sessionStorage.setItem(key, block);
@@ -143,7 +148,7 @@
                             return "File " + name + " could not be created. No available space.";
                         }
                     } else {
-                        return "File " + name + " already exists.";
+                        return "File System exception: " + name + " already exists.";
                     }
                 }
             }
@@ -176,33 +181,22 @@
                         let directoryBlock = this.find(name, this.directory, true);
 
                         // Updated Directory Block w/ Pointer
-                        let block = this.buildBlock(this.convertHex(directoryBlock.data, 'hex').match(/.{2}/g), availableKeys[0]);
+                        let block = this.buildBlock(this.convertHex(directoryBlock.data, 'hex').match(/.{2}/g), '1', availableKeys[0]);
                         sessionStorage.setItem(directoryBlock.key, block);
-
-                        let count = 0;
 
                         // Populate Files
                         for (let i = 0; i < availableKeys.length; i++) {
-                            console.log("ITERATION: " + count);
-                            console.log("CURRENT DATA (BEFORE SEGMENT): " + data);
-
                             // Get Data Segment + Updated Data Reference to Substring 
                             let dataSegment = this.getDataSegment(data);
                             data = dataSegment.data;
 
-                            console.log("SEGMENT DATA: " + dataSegment.segment);
-                            console.log("CURRENT DATA (AFTER SEGMENT): " + data);
-                            
-
                             // Check for pointer is needed
                             let block;
                             if (availableKeys[i+1]) {
-                                block = this.buildBlock(dataSegment.segment, availableKeys[i+1]);  
+                                block = this.buildBlock(dataSegment.segment, '1', availableKeys[i+1]);  
                             } else {
-                                block = this.buildBlock(dataSegment.segment);
+                                block = this.buildBlock(dataSegment.segment, '1');
                             }
-
-                            count++;
 
                             // Update Item in Session Storage
                             sessionStorage.setItem(availableKeys[i], block);
@@ -213,7 +207,7 @@
                         return "Cannot write data to " + name + ". No available space.";
                     }
                 } else {
-                    return "File " + name + " does not exist.";
+                    return "File System exception: " + name + " does not exist.";
                 }
             }
 
@@ -254,7 +248,7 @@
                         return data; 
                     }
                 } else {
-                    return "File " + name + " does not exist ";
+                    return "File System exception: " + name + " does not exist.";
                 }
             }
 
@@ -263,7 +257,53 @@
              * - Deletes a file with a
              *   given name in our File System.
              */
-            public delete(name) {}
+            public delete(name) {
+                // Validate that file exists
+                if (this.find(name, this.directory)) {
+                    // Get Block Object
+                    let block = this.find(name, this.directory, true);
+                    let emptyBlock;
+
+                    // Validate Directory Pointer
+                    if (block.pointer.indexOf('F') !== -1) {
+                        // Convert Data back into Hex
+
+
+                        // Update Directory Block w/ Empty Byte in Session Storage 
+                        emptyBlock = this.buildBlock(this.convertHex(block.data, 'hex').match(/.{2}/g), '0');
+                        sessionStorage.setItem(block.key, emptyBlock);
+
+                    } else {
+                        let searching = true;
+
+                        while (searching) {
+                            // Check for next Pointer
+                            if (block.pointer.indexOf('F') == -1) {
+                                // Record Next Block
+                                let next = this.convertBlock(this.convertKey(block.pointer));
+
+                                // Create New Empty Header + Update Session Storage for Current
+                                emptyBlock = this.buildBlock(this.convertHex(block.data, 'hex').match(/.{2}/g), '0', next.key);
+                                sessionStorage.setItem(block.key, emptyBlock);
+
+                                // Update Block Reference to next 
+                                block = next;
+
+                            } else {
+                                // Create New Empty Header + Update Session Storage for Current
+                                emptyBlock = this.buildBlock(this.convertHex(block.data, 'hex').match(/.{2}/g), '0');
+                                sessionStorage.setItem(block.key, emptyBlock);
+
+                                searching = false;
+                            } 
+                        }
+                    }
+
+                    return "File " + name + " successfully deleted.";
+                } else {
+                    return "File System exception: " + name + " does not exist.";
+                }
+            }
 
             /**
              * find(name, source, flag?)
@@ -307,7 +347,7 @@
              * - Used to construct our data block 
              *   for both directory and file entries. 
              */
-            public buildBlock(data, pointer?) {
+            public buildBlock(data, filled, pointer?) {
                 let block;
                 let header;
 
@@ -315,10 +355,10 @@
                 if (pointer) {
                     // Convert to Object
                     pointer = this.convertKey(pointer);
-                    header = ['1', pointer.t, pointer.s, pointer.b];
+                    header = [filled, pointer.t, pointer.s, pointer.b];
 
                 } else {
-                    header = ['1', 'F', 'F', 'F'];   // Null Pointer
+                    header = [filled, 'F', 'F', 'F'];   // Null Pointer
                 }
 
                 // Pad Data Block if needed
