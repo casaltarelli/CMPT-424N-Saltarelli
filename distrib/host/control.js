@@ -231,11 +231,14 @@ var TSOS;
         };
         Control.updateHardDriveDisplay = function () {
             // Get Elements
+            var div = document.getElementById("table-container");
             var table = document.getElementById("tableHD");
-            //let thead = (<HTMLTableElement >document.getElementById("theadHD"));
+            var wrapper = document.getElementById("table-wrapper");
             var newTBody = document.createElement("tbody");
             // Validate Hard Drive has been formatted before updating
             if (!_krnDiskDriver.formatted) {
+                table.style.borderTop = "3px solid #494949";
+                table.style.borderBottom = "3px solid #494949";
                 return; // Don't Add anything until formatted
             }
             else {
@@ -244,22 +247,28 @@ var TSOS;
                 for (var t = 0; t <= _Disk.getTrackSize(); t++) {
                     for (var s = 0; s <= _Disk.getSectorSize(); s++) {
                         for (var b = 0; b <= _Disk.getBlockSize(); b++) {
-                            // Create Array of 
                             // Create New Row
                             row = newTBody.insertRow(-1);
-                            row.style.backgroundColor = "#CCCDCF";
                             // Get Block from SessionStorage + Populate Pointer Holder
                             var block = sessionStorage.getItem(t + ':' + s + ':' + b);
                             var pointer = block.substring(1, 4);
-                            // Update Row with Block Data
-                            row.insertCell(-1).innerHTML = t + ':' + s + ':' + b;
-                            row.insertCell(-1).innerHTML = block[0];
-                            row.insertCell(-1).innerHTML = pointer[0] + ':' + pointer[1] + ':' + pointer[2];
-                            // Wrap Data in Div to allow horizontal scrolling 
-                            row.insertCell(-1).innerHTML = '<div class="horizontal-scroll">' + block.substring(4) + '</div>';
+                            // Create Array of Necessary Data for current row
+                            var info = [t + ':' + s + ':' + b,
+                                block[0],
+                                pointer[0] + ':' + pointer[1] + ':' + pointer[2],
+                                '<div class="horizontal-scroll">' + block.substring(4) + '</div>'];
+                            // Populate Cell
+                            for (var i = 0; i < info.length; i++) {
+                                var cell = row.insertCell(-1);
+                                cell.innerHTML = info[i];
+                                cell.id = "border-cell";
+                            }
                         }
                     }
                 }
+                // Update Bordering
+                div.style.border = "2px solid #494949";
+                table.style.border = "none !important";
                 // Update Tbody
                 table.replaceChild(newTBody, table.childNodes[0]);
             }

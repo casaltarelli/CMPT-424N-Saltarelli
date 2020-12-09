@@ -225,7 +225,7 @@ module TSOS {
                     for (let j = 0; j < 8; j++) {
                         cell = row.insertCell(-1);
                         cell.innerHTML = memory[physicalAddress].toLocaleUpperCase();
-                        cell.id = "border-cell"
+                        cell.id = "border-cell";
                         currentInstruction = TSOS.Utils.padHexValue(_CPU.IR.toString(16).toLocaleUpperCase());
 
                         // Add Hover being read in the Display
@@ -269,12 +269,15 @@ module TSOS {
 
         public static updateHardDriveDisplay() {
             // Get Elements
+            let container = (<HTMLTableElement >document.getElementById("table-container"));
             let table = (<HTMLTableElement >document.getElementById("tableHD"));
-            //let thead = (<HTMLTableElement >document.getElementById("theadHD"));
             let newTBody = document.createElement("tbody");
 
             // Validate Hard Drive has been formatted before updating
             if (!_krnDiskDriver.formatted) {
+                table.style.borderTop = "3px solid #494949";
+                table.style.borderBottom = "3px solid #494949";
+
                 return; // Don't Add anything until formatted
             } else {
                 let row;
@@ -283,25 +286,33 @@ module TSOS {
                 for (let t = 0; t <= _Disk.getTrackSize(); t++) {
                     for (let s = 0; s <= _Disk.getSectorSize(); s++) {
                         for (let b = 0; b <= _Disk.getBlockSize(); b++) {
-                            // Create Array of 
                             // Create New Row
                             row = newTBody.insertRow(-1);
-                            row.style.backgroundColor = "#CCCDCF";
 
                             // Get Block from SessionStorage + Populate Pointer Holder
                             let block = sessionStorage.getItem(t + ':' + s + ':' + b);
                             let pointer = block.substring(1, 4);
 
-                            // Update Row with Block Data
-                            row.insertCell(-1).innerHTML = t + ':' + s + ':' + b;
-                            row.insertCell(-1).innerHTML = block[0];
-                            row.insertCell(-1).innerHTML = pointer[0] + ':' + pointer[1] + ':' + pointer[2];
+                            // Create Array of Necessary Data for current row
+                            let info = [t + ':' + s + ':' + b, 
+                                block[0], 
+                                pointer[0] + ':' + pointer[1] + ':' + pointer[2], 
+                                '<div class="horizontal-scroll">' + block.substring(4) + '</div>'];
 
-                            // Wrap Data in Div to allow horizontal scrolling 
-                            row.insertCell(-1).innerHTML = '<div class="horizontal-scroll">' + block.substring(4) + '</div>';
+                            // Populate Cell
+                            for (let i = 0; i < info.length; i++) {
+                                let cell = row.insertCell(-1);
+                                cell.innerHTML = info[i];
+                                cell.id = "border-cell";
+                            }
                         }
                     }
                 }
+
+                // Update Bordering
+                container.style.border = "2px solid #494949";
+                table.style.border = "none !important";
+
 
                 // Update Tbody
                 table.replaceChild(newTBody, table.childNodes[0]);
