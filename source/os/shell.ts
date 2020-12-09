@@ -928,17 +928,26 @@ module TSOS {
 
             // Validate filename + data
             if (args.length >= 2) {
-                // Combine all elements after filename
-                let data = [];
-                for (let i = 1; i < args.length; i++) {
-                    data.push(args[i]);
+                // Check for Quotation Markers
+                if (args[1].indexOf('"') == 0 && args[args.length -1].indexOf('"') == args[args.length -1].length - 1) {
+                    // Remove Markers
+                    args[1] = args[1].substring(1);
+                    args[args.length -1] = args[args.length -1].substring(0, args[args.length - 1].length -1);
+
+                    // Combine Data into single array
+                    let data = [];
+                    for (let i = 1; i < args.length; i++) {
+                        data.push(args[i]);
+                    }
+
+                    params = {'action': 'write',
+                        'name': args[0],
+                        'data': data.join(' ')};
+
+                    _KernelInterruptQueue.enqueue(new TSOS.Interrupt(FILE_SYSTEM_IRQ, params));
+                } else {
+                    _StdOut.putText('Please encase data in quotation marks [e.g "data"].');
                 }
-
-                params = {'action': 'write',
-                    'name': args[0],
-                    'data': data.join(' ')};
-
-                _KernelInterruptQueue.enqueue(new TSOS.Interrupt(FILE_SYSTEM_IRQ, params));
             } else {
                 _StdOut.putText('Usage: write <filename> "data" please provide both a file name and data to write');
             }

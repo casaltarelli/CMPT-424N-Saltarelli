@@ -122,12 +122,13 @@
              * create(name, flag?)
              * - Creates a file with a given
              *   name within our File System.
-             *   Flag is used for Copy Functionality
+             *   Flag is used for Copy Functionality as well.
              */
             public create(name, flag?) {
                 // Check Flag - Update Name for Copy Action
                 let original = name;
                 if (flag) {
+                    // Add Copy demoniator to Filename
                     name = name + 'copy';
 
                     // Check if a Copy already exists
@@ -180,11 +181,9 @@
                             if (flag) {
                                 data = this.read(original);
                                 data = this.write(name, data);
+                            } 
 
-                                return "File " + name + " created.";
-                            } else {
-                                return "File " + name + " created.";
-                            }
+                            return "File " + name + " created.";
                         } else {
                             return "File " + name + " could not be created. No available space.";
                         }
@@ -221,9 +220,22 @@
                         // Get Directory Block Reference
                         let directoryBlock = this.find(name, this.directory, true);
 
-                        // Updated Directory Block w/ Pointer
-                        let block = this.buildBlock(this.convertHex(directoryBlock.data, 'hex').match(/.{2}/g), '1', availableKeys[0]);
-                        sessionStorage.setItem(directoryBlock.key, block);
+                        // Check if File already contains data
+                        if (directoryBlock.pointer.indexOf('F') == -1) {
+                            // Delete Data before proceeding
+                            let status = this.delete(name); 
+
+                            setTimeout(function(){
+                                console.log(directoryBlock);
+                                // Updated Directory Block w/ Pointer
+                                let block = _krnDiskDriver.buildBlock(_krnDiskDriver.convertHex(directoryBlock.data, 'hex').match(/.{2}/g), '1', availableKeys[0]);
+                                sessionStorage.setItem(directoryBlock.key, block);
+                            }, 10); 
+                        } else {
+                            // Updated Directory Block w/ Pointer
+                            let block = this.buildBlock(this.convertHex(directoryBlock.data, 'hex').match(/.{2}/g), '1', availableKeys[0]);
+                            sessionStorage.setItem(directoryBlock.key, block);
+                        }
 
                         // Populate Files
                         for (let i = 0; i < availableKeys.length; i++) {
@@ -299,17 +311,16 @@
              *   given name in our File System.
              */
             public delete(name) {
+                console.log("DELETE CALLED FROM WRITE");
                 // Validate that file exists
                 if (this.find(name, this.directory)) {
                     // Get Block Object
                     let block = this.find(name, this.directory, true);
                     let emptyBlock;
 
-                    // Validate Directory Pointer
-                    if (block.pointer.indexOf('F') !== -1) {
-                        // Convert Data back into Hex
-
-
+                    // Validate Directory Pointer - if none create empty directory entry 
+                    if (block.pointer.indexOf('F') != -1) { // Null Pointer
+                        console.log("Null pointer recognized");
                         // Update Directory Block w/ Empty Byte in Session Storage 
                         emptyBlock = this.buildBlock(this.convertHex(block.data, 'hex').match(/.{2}/g), '0');
                         sessionStorage.setItem(block.key, emptyBlock);
@@ -327,6 +338,8 @@
                                 emptyBlock = this.buildBlock(this.convertHex(block.data, 'hex').match(/.{2}/g), '0', next.key);
                                 sessionStorage.setItem(block.key, emptyBlock);
 
+                                let test = this.convertBlock(block.key);
+
                                 // Update Block Reference to next 
                                 block = next;
 
@@ -334,6 +347,8 @@
                                 // Create New Empty Header + Update Session Storage for Current
                                 emptyBlock = this.buildBlock(this.convertHex(block.data, 'hex').match(/.{2}/g), '0');
                                 sessionStorage.setItem(block.key, emptyBlock);
+
+                                let test = this.convertBlock(block.key);
 
                                 searching = false;
                             } 
