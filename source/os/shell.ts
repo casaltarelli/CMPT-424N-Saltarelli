@@ -505,29 +505,32 @@ module TSOS {
             // Validate Input via RegEx + Output to Canvas
             let regex = /^[A-Fa-f0-9]+$/;
 
-            // Verify Valid Priority was given
+            // Check for priority otherwise assign default
+            let priority;
             if (parseInt(args[0]) > 0) {
-                if (regex.test(userInput)) {
-                    let input = userInput.match(/.{2}/g);
-                    let pcb = _MemoryManager.load(input);
-    
-                    // Test Load Success
-                    if (pcb) {
-                        // Add Priority to pcb
-                        pcb.priority = parseInt(args[0]);
-
-                        let segment;
-                        segment = pcb.segment;
-                        _StdOut.putText("Program with PID " + pcb.pid + " loaded into memory segment " + segment.index + ".");
-                    } else {
-                        _StdOut.putText("Memory is full. Please clear before loading new process.");
-                    }
-    
-                } else {
-                    _StdOut.putText("Hex Code could not be validated. Please try again.");
-                }
+                priority = parseInt(args[0]);
             } else {
-                _StdOut.putText("Please provide a priority for the requested process.");
+                priority = 10; // Default Priority
+            }
+
+            if (regex.test(userInput)) {
+                let input = userInput.match(/.{2}/g);
+                let pcb = _MemoryManager.load(input);
+
+                // Test Load Success
+                if (pcb) {
+                    // Add Priority to pcb
+                    pcb.priority = priority;
+
+                    let segment;
+                    segment = pcb.segment;
+                    _StdOut.putText("Program with PID " + pcb.pid + " loaded into memory segment " + segment.index + ".");
+                } else {
+                    _StdOut.putText("Memory is full. Please clear before loading new process.");
+                }
+
+            } else {
+                _StdOut.putText("Hex Code could not be validated. Please try again.");
             }
         }
 

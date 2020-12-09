@@ -383,29 +383,31 @@ var TSOS;
             userInput = userInput.replace(/\s/g, "");
             // Validate Input via RegEx + Output to Canvas
             var regex = /^[A-Fa-f0-9]+$/;
-            // Verify Valid Priority was given
+            // Check for priority otherwise assign default
+            var priority;
             if (parseInt(args[0]) > 0) {
-                if (regex.test(userInput)) {
-                    var input = userInput.match(/.{2}/g);
-                    var pcb = _MemoryManager.load(input);
-                    // Test Load Success
-                    if (pcb) {
-                        // Add Priority to pcb
-                        pcb.priority = parseInt(args[0]);
-                        var segment = void 0;
-                        segment = pcb.segment;
-                        _StdOut.putText("Program with PID " + pcb.pid + " loaded into memory segment " + segment.index + ".");
-                    }
-                    else {
-                        _StdOut.putText("Memory is full. Please clear before loading new process.");
-                    }
+                priority = parseInt(args[0]);
+            }
+            else {
+                priority = 10; // Default Priority
+            }
+            if (regex.test(userInput)) {
+                var input = userInput.match(/.{2}/g);
+                var pcb = _MemoryManager.load(input);
+                // Test Load Success
+                if (pcb) {
+                    // Add Priority to pcb
+                    pcb.priority = priority;
+                    var segment = void 0;
+                    segment = pcb.segment;
+                    _StdOut.putText("Program with PID " + pcb.pid + " loaded into memory segment " + segment.index + ".");
                 }
                 else {
-                    _StdOut.putText("Hex Code could not be validated. Please try again.");
+                    _StdOut.putText("Memory is full. Please clear before loading new process.");
                 }
             }
             else {
-                _StdOut.putText("Please provide a priority for the requested process.");
+                _StdOut.putText("Hex Code could not be validated. Please try again.");
             }
         };
         Shell.prototype.shellRun = function (args) {

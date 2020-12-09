@@ -44,6 +44,8 @@
                     pcb.state = "ready";
                 } else {
                     pcb.state = "running";
+                    // TODO: Roll Out/Roll In Routine will happen here
+
                     _Schedular.scheduleProcess();
                     _CPU.updateState(pcb);
                 }
