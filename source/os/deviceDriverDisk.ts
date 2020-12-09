@@ -117,19 +117,23 @@
                 } else {
                     // Validate New File doesn't already exist within our directory
                     if (!this.find(name, this.directory)) {
-                        // Get Available Directory Keys
+                        // Get Available Directory Key
                         let availableKeys = this.getKeys(this.directory, 1);
 
                         if (availableKeys.length > 0) {
-                            // Get Current Key
+                            // Get Key + Create Data Holder
                             let key = availableKeys[0];
+                            let data;
 
                             // Get Timestamp for Entry
                             let timestamp = new Date().toISOString().slice(0,10).replace(/-/g,"");
 
+                            // Prep Data for Block Creation
+                            data = this.convertHex(name + timestamp, 'hex');
+                            data = data.match(/.{2}/g);
+
                             // Create Block for Directory Entry
-                            let block = this.buildBlock(this.convertHex(name + timestamp, 'hex'));
-                            console.log("New BLOCK from buildBlock(): " + block);
+                            let block = this.buildBlock(data);
 
                             // Set Item in Session Storage
                             sessionStorage.setItem(key, block);
@@ -152,17 +156,18 @@
             public write(name, data) {
                 // Validate File Exists
                 if (this.find(name, this.directory)) {
-                    // Encode Data to Hex for accurate size
-                    let dataSize = this.convertHex(data, 'hex').length;
+                    // Encode Data to Hex for input + Accurate Size
+                    data = this.convertHex(data, 'hex');
+                    data = data.match(/.{2}/g);
 
                     // Get Needed Block Size
-                    let size = Math.floor(dataSize / _Disk.getDataSize());
+                    let size = Math.floor(data.length / _Disk.getDataSize());
 
-                    if (dataSize % _Disk.getDataSize() != 0) {
+                    if (data.length % _Disk.getDataSize() != 0) {
                         size++; // Additonal Block for leftovers
                     }
 
-                    // Find all needed keys
+                    // Find all needed keys within our File Range
                     let availableKeys = this.getKeys(this.file, size);
 
                     // Verify all needed keys found
@@ -171,25 +176,33 @@
                         let directoryBlock = this.find(name, this.directory, true);
 
                         // Updated Directory Block w/ Pointer
-                        let block = this.buildBlock(this.convertHex(directoryBlock.data, 'hex'), availableKeys[0]);
+                        let block = this.buildBlock(this.convertHex(directoryBlock.data, 'hex').match(/.{2}/g), availableKeys[0]);
                         sessionStorage.setItem(directoryBlock.key, block);
 
-                        // Convert Data to Hex before Allocating
-                        data = this.convertHex(data, 'hex');
+                        let count = 0;
 
                         // Populate Files
                         for (let i = 0; i < availableKeys.length; i++) {
-                            // Get Data Segment + Updated Data Reference;
+                            console.log("ITERATION: " + count);
+                            console.log("CURRENT DATA (BEFORE SEGMENT): " + data);
+
+                            // Get Data Segment + Updated Data Reference to Substring 
                             let dataSegment = this.getDataSegment(data);
                             data = dataSegment.data;
 
-                            // Check for pointer
+                            console.log("SEGMENT DATA: " + dataSegment.segment);
+                            console.log("CURRENT DATA (AFTER SEGMENT): " + data);
+                            
+
+                            // Check for pointer is needed
                             let block;
                             if (availableKeys[i+1]) {
                                 block = this.buildBlock(dataSegment.segment, availableKeys[i+1]);  
                             } else {
                                 block = this.buildBlock(dataSegment.segment);
                             }
+
+                            count++;
 
                             // Update Item in Session Storage
                             sessionStorage.setItem(availableKeys[i], block);
@@ -231,6 +244,7 @@
 
                                 // Decode Data to Char Codes + Concat for output
                                 data = data + block.data;
+
                             } else {
                                 collecting = false;
                             }
@@ -295,63 +309,57 @@
              */
             public buildBlock(data, pointer?) {
                 let block;
+                let header;
 
                 // Create Reserved Header
                 if (pointer) {
                     // Convert to Object
                     pointer = this.convertKey(pointer);
-                    block = ['1', pointer.t, pointer.s, pointer.b];
+                    header = ['1', pointer.t, pointer.s, pointer.b];
 
                 } else {
-                    block = ['1', 'F', 'F', 'F'];   // Null Pointer
+                    header = ['1', 'F', 'F', 'F'];   // Null Pointer
                 }
-
-                // Add Data to Block
-                block.push(data);
-
-                // Convert to String Before Proceeding
-                block = block.join('');
 
                 // Pad Data Block if needed
-                for (let i = block.length; i < _Disk.getDataSize(); i+=2) {
-                    block += '00';
+                let l = data.length;
+                for (let i = l; i < _Disk.getDataSize(); i++) {
+                    data.push('00');
                 }
-                
-                return block;
+
+                // Combine Header + Data
+                block = header.concat(data);
+
+                // Convert to String for I/O + Return
+                return block.join('');
             }
 
             /**
-             * getDataBlock(data)
-             * - Creates a string segment from 
-             *   the given data string. Returns 
-             *   object containing segment + updated
-             *   data.
+             * getDataSegment(data)
+             * - Creates a data segment to 
+             *   fill our current Data Block.
              */
             public getDataSegment(data) {
-                // Check if Data Type
-                if (typeof(data) == 'string') {
-                    // Convert to Array of two char strings
-                    data = data.match(/.{2}/g);
-                }
-
                 // Populate Data Segment
                 let segment = [];
 
                 for (let i = 0; i < _Disk.getDataSize(); i++) {
-                    segment.push(data[i]);
-                }
-
-                // Check if segment needs padding
-                if (segment.length < _Disk.getDataSize()) {
-                    for (let j = segment.length; j < _Disk.getDataSize(); j+=2) {
-                        segment.push('00');
+                    if (data[i]) {
+                        let byte = TSOS.Utils.padHexValue(data[i]);
+                        segment.push(byte);  // Push Populated Byte
                     }
                 }
 
-                // Convert Data back to String
-                data = data.join('');
+                // Update Original Data String - Removing Segment Taken
+                let temp = [];
+                for (let i = _Disk.getDataSize(); i < data.length; i++) {
+                    temp.push(data[i]);
+                }
 
-                return {'segment': segment.join(''), 'data': data.substring(_Disk.getDataSize())};
+                // Update Reference
+                data = temp;
+
+                return {'segment': segment, 'data': data};
             }
 
             /**
@@ -458,20 +466,25 @@
                 let newData = '';
 
                 if (type == 'hex') {
-                    // Convert Data into String
-                    if (typeof(data) == 'object') {
-                        data = data.join('');
-                    }
+                    // Validate Data given isn't already in hex -- continue if already
+                    let regex = /^[A-Fa-f0-9]+$/;
 
-                    for (let c in data) {
-                        let hex = data[c].charCodeAt().toString(16);
-                        newData += hex;
+                    if (!regex.test(data)) {
+                        // Convert Data into String
+                        if (typeof(data) == 'object') {
+                            data = data.join('');
+                        }
+
+                        for (let c in data) {
+                            let hex = data[c].charCodeAt().toString(16);
+                            newData += hex;
+                        }
                     }
                 } else if (type == 'char') {
                     // Add Header before Converting
                     newData += data.substr(0, _Disk.getHeaderSize());
 
-                    // Iterate over entire string until end is reached
+                    // Iterate over entire string until end or filler is reached
                     for (let i = _Disk.getHeaderSize(); (i < data.length && data.substr(i, 2) !== '00'); i += 2) {
                         newData += String.fromCharCode(parseInt(data.substr(i, 2), 16));
                     }

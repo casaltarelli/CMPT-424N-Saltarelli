@@ -40,7 +40,7 @@
                 // Init based on format option
                 if (this.full) {
                     for (let i = 0; i < this.dataSize; i++) {
-                        data.push("00");
+                        data.push('00');    // Empty Byte
                     }
     
                     // Combine header + data
@@ -73,7 +73,5 @@
             public getBlockSize() {
                 return this.blockSize;
             }
-
-
         }
     }
