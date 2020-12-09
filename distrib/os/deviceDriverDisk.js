@@ -97,6 +97,10 @@ var TSOS;
                         case 'list':
                             this.list(params.flag);
                             break;
+                        case 'copy':
+                            status = this.create(params.name, params.flag);
+                            _StdOut.putText(status);
+                            break;
                         default:
                             _Kernel.krnTrapError("File System exception: Invalid action " + params.action + ".");
                     }
@@ -131,18 +135,20 @@ var TSOS;
          *   Flag is used for Copy Functionality
          */
         DeviceDriverDisk.prototype.create = function (name, flag) {
-            // TODO: Test and Refactor Copy Functionality... Get some rest you deserve it.
             // Check Flag - Update Name for Copy Action
             var original = name;
             if (flag) {
-                // Check if Copy already exists + save original name
                 name = name + 'copy';
+                // Check if a Copy already exists
                 while (this.find(name, this.directory)) {
                     // If found add numerator to end of name, but first check if there is already a numerator
-                    if (/^-?[\d.]+(?:e-?\d+)?$/.test(name[name.length - 1])) {
-                        var num = parseInt(name[name.length - 1]) + 1;
+                    if (/^-?[\d.]+(?:e-?\d+)?$/.test(name.slice(-1))) {
+                        var num = parseInt(name.slice(-1)) + 1;
                         // Update name
                         name = name.substring(0, name.length - 1) + num;
+                    }
+                    else {
+                        name = name + 1;
                     }
                 }
             }
@@ -163,10 +169,7 @@ var TSOS;
                         var timestamp = void 0;
                         timestamp = new Date();
                         var date = timestamp.toISOString().slice(0, 10).replace(/-/g, "");
-                        //let time = timestamp.slice(11, 19).replace(/:/g,""); 
-                        console.log("Date: " + date);
                         var time = timestamp.getHours() + "" + timestamp.getMinutes() + "" + timestamp.getSeconds();
-                        console.log("Time: " + time);
                         timestamp = '.' + date + time; // . Used a marker for end of file name
                         // Prep Data for Block Creation
                         data = this.convertHex(name + timestamp, 'hex');
@@ -175,12 +178,15 @@ var TSOS;
                         var block = this.buildBlock(data, '1');
                         // Set Item in Session Storage
                         sessionStorage.setItem(key, block);
-                        // Populate Data from original to copy
+                        // If Copy action populate created directory
                         if (flag) {
                             data = this.read(original);
                             data = this.write(name, data);
+                            return "File " + name + " created.";
                         }
-                        return "File " + name + " created.";
+                        else {
+                            return "File " + name + " created.";
+                        }
                     }
                     else {
                         return "File " + name + " could not be created. No available space.";
@@ -363,7 +369,7 @@ var TSOS;
                 var date = output[i][1].substring(0, 2) + "-" + output[i][1].substring(4, 6) + "-" + output[i][1].substring(6, 8);
                 var time = output[i][2].substring(0, 2) + ":" + output[i][2].substring(2, 4) + ":" + output[i][2].substring(4, 6);
                 // Output to Console
-                _StdOut.putText("     " + output[i][0] + " Created:  " + date + "  " + time);
+                _StdOut.putText("   " + output[i][0] + " Created:  " + date + "  " + time);
                 _StdOut.advanceLine();
             }
         };

@@ -84,6 +84,11 @@
                             case 'list':
                                 this.list(params.flag);
                                 break;
+
+                            case 'copy':
+                                status = this.create(params.name, params.flag);
+                                _StdOut.putText(status);
+                                break;
     
                             default:
                                 _Kernel.krnTrapError("File System exception: Invalid action " + params.action + ".");
@@ -120,22 +125,21 @@
              *   Flag is used for Copy Functionality
              */
             public create(name, flag?) {
-                // TODO: Test and Refactor Copy Functionality... Get some rest you deserve it.
-
-
-
                 // Check Flag - Update Name for Copy Action
                 let original = name;
                 if (flag) {
-                    // Check if Copy already exists + save original name
                     name = name + 'copy';
+
+                    // Check if a Copy already exists
                     while (this.find(name, this.directory)) {
                         // If found add numerator to end of name, but first check if there is already a numerator
-                        if (/^-?[\d.]+(?:e-?\d+)?$/.test(name[name.length - 1])) {
-                            let num = parseInt(name[name.length - 1]) + 1; 
+                        if (/^-?[\d.]+(?:e-?\d+)?$/.test(name.slice(-1))) {
+                            let num = parseInt(name.slice(-1)) + 1; 
                             
                             // Update name
                             name = name.substring(0, name.length - 1) + num;
+                        } else {
+                            name = name + 1;
                         }
                     }
                 }
@@ -158,11 +162,7 @@
                             let timestamp;
                             timestamp = new Date();
                             let date = timestamp.toISOString().slice(0,10).replace(/-/g,"");
-                            //let time = timestamp.slice(11, 19).replace(/:/g,""); 
-                        
-                            console.log("Date: " + date);
                             let time = timestamp.getHours() + "" +  timestamp.getMinutes() + "" +  timestamp.getSeconds();
-                            console.log("Time: " + time);
 
                             timestamp = '.' + date + time;  // . Used a marker for end of file name
 
@@ -176,13 +176,15 @@
                             // Set Item in Session Storage
                             sessionStorage.setItem(key, block);
 
-                            // Populate Data from original to copy
+                            // If Copy action populate created directory
                             if (flag) {
                                 data = this.read(original);
                                 data = this.write(name, data);
-                            }
 
-                            return "File " + name + " created.";
+                                return "File " + name + " created.";
+                            } else {
+                                return "File " + name + " created.";
+                            }
                         } else {
                             return "File " + name + " could not be created. No available space.";
                         }

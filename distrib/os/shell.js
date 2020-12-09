@@ -115,6 +115,9 @@ var TSOS;
             // list
             sc = new TSOS.ShellCommand(this.shellList, "ls", " - list will list all files currently stored on our Hard Drive.");
             this.commandList[this.commandList.length] = sc;
+            // copy
+            sc = new TSOS.ShellCommand(this.shellCopy, "copy", " - <filename> creates a duplicate of the given file name.");
+            this.commandList[this.commandList.length] = sc;
             // Display the initial  prompt.
             this.putName();
             this.putPrompt();
@@ -757,8 +760,7 @@ var TSOS;
                 // Validate File Name
                 if (args[0].indexOf('.') < 1) {
                     params = { 'action': 'create',
-                        'name': args[0],
-                        'flag': undefined };
+                        'name': args[0] };
                     _KernelInterruptQueue.enqueue(new TSOS.Interrupt(FILE_SYSTEM_IRQ, params));
                 }
                 else {
@@ -767,6 +769,19 @@ var TSOS;
             }
             else {
                 _StdOut.putText("Usage: create <filename> please provide a file name.");
+            }
+        };
+        Shell.prototype.shellCopy = function (args) {
+            var params;
+            // Check filename given
+            if (args.length > 0) {
+                params = { 'action': 'copy',
+                    'name': args[0],
+                    'flag': true };
+                _KernelInterruptQueue.enqueue(new TSOS.Interrupt(FILE_SYSTEM_IRQ, params));
+            }
+            else {
+                _StdOut.putText("Usage: copy <filename> please provide a file name.");
             }
         };
         Shell.prototype.shellWrite = function (args) {
