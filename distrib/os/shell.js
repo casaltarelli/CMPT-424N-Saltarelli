@@ -464,8 +464,6 @@ var TSOS;
                         _Schedular.addReadyQueue(process);
                     }
                 }
-                // Check current schedule for Priority
-                console.log("Current Alg: " + _Schedular.currentAlgorithm);
                 if (_Schedular.currentAlgorithm == "p") {
                     // Filter accordingly
                     _ReadyQueue.sort(function (a, b) { return (a.priority > b.priority) ? 1 : -1; });

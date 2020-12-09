@@ -594,9 +594,6 @@ module TSOS {
                     }
                 }
 
-                // Check current schedule for Priority
-                console.log("Current Alg: " + _Schedular.currentAlgorithm);
-
                 if (_Schedular.currentAlgorithm == "p") {
                     // Filter accordingly
                     _ReadyQueue.sort((a, b) => (a.priority > b.priority) ? 1 : -1);

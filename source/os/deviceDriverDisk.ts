@@ -120,6 +120,26 @@
              *   Flag is used for Copy Functionality
              */
             public create(name, flag?) {
+                // TODO: Test and Refactor Copy Functionality... Get some rest you deserve it.
+
+
+
+                // Check Flag - Update Name for Copy Action
+                let original = name;
+                if (flag) {
+                    // Check if Copy already exists + save original name
+                    name = name + 'copy';
+                    while (this.find(name, this.directory)) {
+                        // If found add numerator to end of name, but first check if there is already a numerator
+                        if (/^-?[\d.]+(?:e-?\d+)?$/.test(name[name.length - 1])) {
+                            let num = parseInt(name[name.length - 1]) + 1; 
+                            
+                            // Update name
+                            name = name.substring(0, name.length - 1) + num;
+                        }
+                    }
+                }
+
                 // Validate Length of File Name
                 if (name.length > _Disk.getDataSize() - 15) {    // Subtract for Date String YYYYMMDD HHMMSS
                     return 'File name ' + name + ' is too big.';
@@ -135,9 +155,15 @@
                             let data;
 
                             // Get Timestamp for Entry
-                            let timestamp = new Date().toISOString()
-                            let date = timestamp.slice(0,10).replace(/-/g,"");
-                            let time = timestamp.slice(11, 19).replace(/:/g,""); 
+                            let timestamp;
+                            timestamp = new Date();
+                            let date = timestamp.toISOString().slice(0,10).replace(/-/g,"");
+                            //let time = timestamp.slice(11, 19).replace(/:/g,""); 
+                        
+                            console.log("Date: " + date);
+                            let time = timestamp.getHours() + "" +  timestamp.getMinutes() + "" +  timestamp.getSeconds();
+                            console.log("Time: " + time);
+
                             timestamp = '.' + date + time;  // . Used a marker for end of file name
 
                             // Prep Data for Block Creation
@@ -149,6 +175,12 @@
 
                             // Set Item in Session Storage
                             sessionStorage.setItem(key, block);
+
+                            // Populate Data from original to copy
+                            if (flag) {
+                                data = this.read(original);
+                                data = this.write(name, data);
+                            }
 
                             return "File " + name + " created.";
                         } else {
@@ -345,19 +377,16 @@
                 }
 
                 // Output File Information
-                _StdOut.advanceLine();
                 _StdOut.putText("Directory: ");
                 _StdOut.advanceLine();
 
                 for (let i = 0; i < output.length; i++) {
-                    _StdOut.advanceLine();
-
                     // Format Date + Time
-                    let date = output[i][1].substring(0, 4) + "-" + output[i][1].substring(4, 6) + "-" + output[i][1].substring(6, 8);
-                    let time = output[i][1].substring(0, 2) + ":" + output[i][1].substring(2, 4) + ":" + output[i][1].substring(4, 6);
+                    let date = output[i][1].substring(0, 2) + "-" + output[i][1].substring(4, 6) + "-" + output[i][1].substring(6, 8);
+                    let time = output[i][2].substring(0, 2) + ":" + output[i][2].substring(2, 4) + ":" + output[i][2].substring(4, 6);
 
                     // Output to Console
-                    _StdOut.putText("N: " + output[i][0] + " D: " + date + " T: " + time);
+                    _StdOut.putText("   " + output[i][0] + " Created:  " + date + "  " + time);
                     _StdOut.advanceLine();
                 }
             }
@@ -372,9 +401,6 @@
             public listHelper(block) {
                 let step = 0;
                 let info = ['', '', ''];
-
-                console.log("NEW ITERATION ######################");
-                console.log("Data: " + block.data);
                 
                 for (let i = 0; i < block.data.length; i++) {
                     switch(step) {
@@ -382,14 +408,12 @@
                             if (i > 0 && block.data[i] == '.') {
                                 step = 1;
                             } else {
-                                console.log("Step 0: Current Char: " + block.data[i]);
                                 info[step] += block.data[i];
                             }
                             break;
 
                         case 1: // Date 
                             if (info[step].length < 8) {
-                                console.log("Step 1: Current Char: " + block.data[i]);
                                 info[step] += block.data[i];
                             } else {
                                 step = 2;
@@ -398,7 +422,6 @@
 
                         case 2:
                             if (info[step].length < 6) {
-                                console.log("Step 2: Current Char: " + block.data[i]);
                                 info[step] += block.data[i];
                             } 
                             break;

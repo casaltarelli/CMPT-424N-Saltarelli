@@ -131,6 +131,21 @@ var TSOS;
          *   Flag is used for Copy Functionality
          */
         DeviceDriverDisk.prototype.create = function (name, flag) {
+            // TODO: Test and Refactor Copy Functionality... Get some rest you deserve it.
+            // Check Flag - Update Name for Copy Action
+            var original = name;
+            if (flag) {
+                // Check if Copy already exists + save original name
+                name = name + 'copy';
+                while (this.find(name, this.directory)) {
+                    // If found add numerator to end of name, but first check if there is already a numerator
+                    if (/^-?[\d.]+(?:e-?\d+)?$/.test(name[name.length - 1])) {
+                        var num = parseInt(name[name.length - 1]) + 1;
+                        // Update name
+                        name = name.substring(0, name.length - 1) + num;
+                    }
+                }
+            }
             // Validate Length of File Name
             if (name.length > _Disk.getDataSize() - 15) { // Subtract for Date String YYYYMMDD HHMMSS
                 return 'File name ' + name + ' is too big.';
@@ -145,9 +160,13 @@ var TSOS;
                         var key = availableKeys[0];
                         var data = void 0;
                         // Get Timestamp for Entry
-                        var timestamp = new Date().toISOString();
-                        var date = timestamp.slice(0, 10).replace(/-/g, "");
-                        var time = timestamp.slice(11, 19).replace(/:/g, "");
+                        var timestamp = void 0;
+                        timestamp = new Date();
+                        var date = timestamp.toISOString().slice(0, 10).replace(/-/g, "");
+                        //let time = timestamp.slice(11, 19).replace(/:/g,""); 
+                        console.log("Date: " + date);
+                        var time = timestamp.getHours() + "" + timestamp.getMinutes() + "" + timestamp.getSeconds();
+                        console.log("Time: " + time);
                         timestamp = '.' + date + time; // . Used a marker for end of file name
                         // Prep Data for Block Creation
                         data = this.convertHex(name + timestamp, 'hex');
@@ -156,6 +175,11 @@ var TSOS;
                         var block = this.buildBlock(data, '1');
                         // Set Item in Session Storage
                         sessionStorage.setItem(key, block);
+                        // Populate Data from original to copy
+                        if (flag) {
+                            data = this.read(original);
+                            data = this.write(name, data);
+                        }
                         return "File " + name + " created.";
                     }
                     else {
@@ -332,16 +356,14 @@ var TSOS;
                 }
             }
             // Output File Information
-            _StdOut.advanceLine();
             _StdOut.putText("Directory: ");
             _StdOut.advanceLine();
             for (var i = 0; i < output.length; i++) {
-                _StdOut.advanceLine();
                 // Format Date + Time
-                var date = output[i][1].substring(0, 4) + "-" + output[i][1].substring(4, 6) + "-" + output[i][1].substring(6, 8);
-                var time = output[i][1].substring(0, 2) + ":" + output[i][1].substring(2, 4) + ":" + output[i][1].substring(4, 6);
+                var date = output[i][1].substring(0, 2) + "-" + output[i][1].substring(4, 6) + "-" + output[i][1].substring(6, 8);
+                var time = output[i][2].substring(0, 2) + ":" + output[i][2].substring(2, 4) + ":" + output[i][2].substring(4, 6);
                 // Output to Console
-                _StdOut.putText("N: " + output[i][0] + " D: " + date + " T: " + time);
+                _StdOut.putText("     " + output[i][0] + " Created:  " + date + "  " + time);
                 _StdOut.advanceLine();
             }
         };
@@ -354,8 +376,6 @@ var TSOS;
         DeviceDriverDisk.prototype.listHelper = function (block) {
             var step = 0;
             var info = ['', '', ''];
-            console.log("NEW ITERATION ######################");
-            console.log("Data: " + block.data);
             for (var i = 0; i < block.data.length; i++) {
                 switch (step) {
                     case 0: // File Name
@@ -363,13 +383,11 @@ var TSOS;
                             step = 1;
                         }
                         else {
-                            console.log("Step 0: Current Char: " + block.data[i]);
                             info[step] += block.data[i];
                         }
                         break;
                     case 1: // Date 
                         if (info[step].length < 8) {
-                            console.log("Step 1: Current Char: " + block.data[i]);
                             info[step] += block.data[i];
                         }
                         else {
@@ -378,7 +396,6 @@ var TSOS;
                         break;
                     case 2:
                         if (info[step].length < 6) {
-                            console.log("Step 2: Current Char: " + block.data[i]);
                             info[step] += block.data[i];
                         }
                         break;
