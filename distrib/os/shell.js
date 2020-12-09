@@ -112,6 +112,9 @@ var TSOS;
             // delete
             sc = new TSOS.ShellCommand(this.shellDelete, "delete", " - <filename> deletes a file with a provided name.");
             this.commandList[this.commandList.length] = sc;
+            // list
+            sc = new TSOS.ShellCommand(this.shellList, "ls", " - list will list all files currently stored on our Hard Drive.");
+            this.commandList[this.commandList.length] = sc;
             // Display the initial  prompt.
             this.putName();
             this.putPrompt();
@@ -751,12 +754,18 @@ var TSOS;
         };
         Shell.prototype.shellCreate = function (args) {
             var params;
-            // Validate filename given
+            // Check filename given
             if (args.length > 0) {
-                params = { 'action': 'create',
-                    'name': args[0],
-                    'flag': undefined };
-                _KernelInterruptQueue.enqueue(new TSOS.Interrupt(FILE_SYSTEM_IRQ, params));
+                // Validate File Name
+                if (args[0].indexOf('.') < 1) {
+                    params = { 'action': 'create',
+                        'name': args[0],
+                        'flag': undefined };
+                    _KernelInterruptQueue.enqueue(new TSOS.Interrupt(FILE_SYSTEM_IRQ, params));
+                }
+                else {
+                    _StdOut.putText("File name: " + name + " prohibited, cannot contain period in filename. Only at start.");
+                }
             }
             else {
                 _StdOut.putText("Usage: create <filename> please provide a file name.");
@@ -802,6 +811,33 @@ var TSOS;
             }
             else {
                 _StdOut.putText("Usage: delete <filename> please provide a file name.");
+            }
+        };
+        Shell.prototype.shellList = function (args) {
+            var params;
+            // Check for Hidden File Flag
+            if (args.length > 0) {
+                args[0] = args[0].toLowerCase();
+                // Check if correct flag given
+                if (args[0].charAt(0) == "-") {
+                    if (args[0].substring(1) == "l") {
+                        params = { 'action': 'list',
+                            'flag': true };
+                        _KernelInterruptQueue.enqueue(new TSOS.Interrupt(FILE_SYSTEM_IRQ, params));
+                    }
+                    else {
+                        _StdOut.putText("Please provide a valid flag [-l].");
+                    }
+                }
+                else {
+                    _StdOut.putText("Please provide a valid flag [-l].");
+                }
+            }
+            else {
+                // No Args given list as normal
+                params = { 'action': 'list',
+                    'flag': false };
+                _KernelInterruptQueue.enqueue(new TSOS.Interrupt(FILE_SYSTEM_IRQ, params));
             }
         };
         return Shell;

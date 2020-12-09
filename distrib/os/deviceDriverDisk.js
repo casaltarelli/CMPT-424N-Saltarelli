@@ -94,6 +94,9 @@ var TSOS;
                             status = this["delete"](params.name);
                             _StdOut.putText(status);
                             break;
+                        case 'list':
+                            this.list(params.flag);
+                            break;
                         default:
                             _Kernel.krnTrapError("File System exception: Invalid action " + params.action + ".");
                     }
@@ -129,7 +132,7 @@ var TSOS;
          */
         DeviceDriverDisk.prototype.create = function (name, flag) {
             // Validate Length of File Name
-            if (name.length > _Disk.getDataSize() - 8) { // Subtract 8 for Date String
+            if (name.length > _Disk.getDataSize() - 15) { // Subtract for Date String YYYYMMDD HHMMSS
                 return 'File name ' + name + ' is too big.';
             }
             else {
@@ -142,7 +145,10 @@ var TSOS;
                         var key = availableKeys[0];
                         var data = void 0;
                         // Get Timestamp for Entry
-                        var timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+                        var timestamp = new Date().toISOString();
+                        var date = timestamp.slice(0, 10).replace(/-/g, "");
+                        var time = timestamp.slice(11, 19).replace(/:/g, "");
+                        timestamp = '.' + date + time; // . Used a marker for end of file name
                         // Prep Data for Block Creation
                         data = this.convertHex(name + timestamp, 'hex');
                         data = data.match(/.{2}/g);
@@ -294,6 +300,93 @@ var TSOS;
             else {
                 return "File System exception: " + name + " does not exist.";
             }
+        };
+        /**
+         * list(flag)
+         * - Lists all files currently
+         *   being held on our disk.
+         */
+        DeviceDriverDisk.prototype.list = function (flag) {
+            var output = [];
+            var block;
+            var start = this.directory.start;
+            var end = this.directory.end;
+            // Collect File Info for all Files within our Directory
+            for (var t = start.t; t <= end.t; t++) {
+                for (var s = start.s; s <= end.s; s++) {
+                    for (var b = start.b; b <= end.b; b++) {
+                        block = this.convertBlock({ t: t, s: s, b: b });
+                        // Only Check Filled Blocks
+                        if (block.filled) {
+                            if (flag) { // Output All Files
+                                output.push(this.listHelper(block));
+                            }
+                            else {
+                                // Check for hidden file indicator
+                                if (block.data.indexOf('.') != 0) {
+                                    output.push(this.listHelper(block));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            // Output File Information
+            _StdOut.advanceLine();
+            _StdOut.putText("Directory: ");
+            _StdOut.advanceLine();
+            for (var i = 0; i < output.length; i++) {
+                _StdOut.advanceLine();
+                // Format Date + Time
+                var date = output[i][1].substring(0, 4) + "-" + output[i][1].substring(4, 6) + "-" + output[i][1].substring(6, 8);
+                var time = output[i][1].substring(0, 2) + ":" + output[i][1].substring(2, 4) + ":" + output[i][1].substring(4, 6);
+                // Output to Console
+                _StdOut.putText("N: " + output[i][0] + " D: " + date + " T: " + time);
+                _StdOut.advanceLine();
+            }
+        };
+        /**
+         * listHelper(block)
+         * - Breaks down data from our
+         *   Block to collect info for
+         *   that respective block.
+         */
+        DeviceDriverDisk.prototype.listHelper = function (block) {
+            var step = 0;
+            var info = ['', '', ''];
+            console.log("NEW ITERATION ######################");
+            console.log("Data: " + block.data);
+            for (var i = 0; i < block.data.length; i++) {
+                switch (step) {
+                    case 0: // File Name
+                        if (i > 0 && block.data[i] == '.') {
+                            step = 1;
+                        }
+                        else {
+                            console.log("Step 0: Current Char: " + block.data[i]);
+                            info[step] += block.data[i];
+                        }
+                        break;
+                    case 1: // Date 
+                        if (info[step].length < 8) {
+                            console.log("Step 1: Current Char: " + block.data[i]);
+                            info[step] += block.data[i];
+                        }
+                        else {
+                            step = 2;
+                        }
+                        break;
+                    case 2:
+                        if (info[step].length < 6) {
+                            console.log("Step 2: Current Char: " + block.data[i]);
+                            info[step] += block.data[i];
+                        }
+                        break;
+                    default:
+                        return "File System exception: invalid directory entry.";
+                }
+            }
+            return info;
         };
         /**
          * find(name, source, flag?)
