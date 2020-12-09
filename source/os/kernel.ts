@@ -88,6 +88,7 @@ module TSOS {
             _CPU.saveState();
             Control.updateMemoryDisplay();
             Control.updateProcessDisplay();
+            Control.updateHardDriveDisplay();
 
             // Check for an interrupt, if there are any. Page 560
             if (_KernelInterruptQueue.getSize() > 0) {

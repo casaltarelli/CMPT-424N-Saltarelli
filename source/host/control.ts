@@ -263,9 +263,52 @@ module TSOS {
 
                     // Update TBody
                     segments[i].replaceChild(newTBody, segments[i].childNodes[0]);
-
-                    //TODO: Possibly Implement Updating Showing Segment Depending on Current Running Process
                 }
+            }
+        }
+
+        public static updateHardDriveDisplay() {
+            // Get Elements
+            let wrapper = (<HTMLTableElement >document.getElementById("table-wrapper"));
+            let table = (<HTMLTableElement >document.getElementById("tableHD"));
+            let thead = (<HTMLTableElement >document.getElementById("theadHD"));
+            let newTBody = document.createElement("tbody");
+            // Validate Hard Drive has been formatted before updating
+            if (!_krnDiskDriver.formatted) {
+                return; // Don't Add anything until formatted
+            } else {
+                let row;
+            
+                // Iterate over disk to populate new tbody
+                for (let t = 0; t <= _Disk.getTrackSize(); t++) {
+                    for (let s = 0; s <= _Disk.getSectorSize(); s++) {
+                        for (let b = 0; b <= _Disk.getBlockSize(); b++) {
+                            // Create Array of 
+                            // Create New Row
+                            row = newTBody.insertRow(-1);
+                            row.style.backgroundColor = "#CCCDCF";
+
+                            // Get Block from SessionStorage + Populate Pointer Holder
+                            let block = sessionStorage.getItem(t + ':' + s + ':' + b);
+                            let pointer = block.substring(1, 4);
+
+                            // Update Row with Block Data
+                            row.insertCell(-1).innerHTML = t + ':' + s + ':' + b;
+                            row.insertCell(-1).innerHTML = block[0];
+                            row.insertCell(-1).innerHTML = pointer[0] + ':' + pointer[1] + ':' + pointer[2];
+
+                            // Wrap Data in Div to allow horizontal scrolling 
+                            row.insertCell(-1).innerHTML = '<div class="horizontal-scroll">' + block.substring(4) + '</div>';
+                        }
+                    }
+                }
+
+                // Add Border Styling
+                //wrapper.style.borderTop = "4px solid #494949";
+                thead.style.borderBottom = "4px solid #494949";
+
+                // Update Tbody
+                table.replaceChild(newTBody, table.childNodes[0]);
             }
         }
 
@@ -292,7 +335,7 @@ module TSOS {
             document.getElementById("tbOne").style.display = "block";
 
             // .. set focus on the OS console display ...
-            document.getElementById("display").focus();
+            //document.getElementById("display").focus();
 
             // ... Create and initialize the CPU (because it's part of the hardware)  ...
             _CPU = new Cpu();  // Note: We could simulate multi-core systems by instantiating more than one instance of the CPU here.

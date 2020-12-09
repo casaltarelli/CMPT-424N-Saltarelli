@@ -74,6 +74,7 @@ var TSOS;
             _CPU.saveState();
             TSOS.Control.updateMemoryDisplay();
             TSOS.Control.updateProcessDisplay();
+            TSOS.Control.updateHardDriveDisplay();
             // Check for an interrupt, if there are any. Page 560
             if (_KernelInterruptQueue.getSize() > 0) {
                 // Process the first interrupt on the interrupt queue.
