@@ -144,12 +144,15 @@ var TSOS;
             // Update Schedular based on current algorithm
             switch (this.currentAlgorithm) {
                 case ("rr"):
+                    _Kernel.krnTrace("Scheduling with round robin.");
                     this.roundRobin();
                     break;
                 case ("fcfs"):
+                    _Kernel.krnTrace("Scheduling with first come, first serve.");
                     this.roundRobin();
                     break;
                 case ("p"):
+                    _Kernel.krnTrace("Scheduling with priority.");
                     this.priority();
                     break;
             }

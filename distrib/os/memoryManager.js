@@ -98,7 +98,6 @@ var TSOS;
             // Create File Info for PCB Swap file
             var name = '.' + pcb.pid + 'swap'; // All Swap Files are hidden
             var result = _krnDiskDriver.create(name);
-            console.log("FILE CREATED: " + result.success);
             // Check File Creation Results
             if (result.success) {
                 // Collect Process Data
@@ -123,7 +122,6 @@ var TSOS;
                     // Update our PCB 
                     pcb.location = "drive";
                     pcb.segment = {};
-                    console.log("SUCCESSFULLY MOVED TO DISK FILE: " + name);
                 }
                 else {
                     _krnDiskDriver["delete"](name); // Remove Directory Entry
@@ -142,7 +140,6 @@ var TSOS;
             if (segment) {
                 // Get Data from Swap File
                 var file = _krnDiskDriver.read('.' + pcb.pid + 'swap');
-                console.log("RETURNED FROM READ: " + file.msg);
                 var data = file.msg.match(/.{2}/g);
                 if (file.success) {
                     // Clear Memory Segment

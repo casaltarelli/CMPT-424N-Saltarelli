@@ -7,7 +7,6 @@
     module TSOS {
         export class DeviceDriverDisk extends DeviceDriver {
             constructor(public formatted = false, 
-                        public hidden = ".", 
                         public masterBootrecord = '0:0:0',
                         public directory = {'start': {'t': 0, 's': 0, 'b': 1}, 'end': {'t': 0, 's': 7, 'b': 6}},
                         public file = {'start': {'t': 1, 's': 0, 'b': 0}, 'end': {'t': 3, 's': 7, 'b': 6}}) {
@@ -27,9 +26,6 @@
                 // Only Load Dsk Definition if User's browser supports it.
                 if (this.krnDskBrowserSupport) {
                     this.status = "loaded";
-
-                    // Clear Session Storage -- TESTING PURPOSES ONLY
-                    sessionStorage.clear();
                 }
             }
 
@@ -100,7 +96,7 @@
             }
 
             /**
-             * format(flag?)
+             * format(flag)
              * - Initializes our Disk 
              *   definition, type is a boolean
              *   flag used to determine half or full.
@@ -298,7 +294,6 @@
                             }
                         }
 
-                        // Return File Data
                         return {'success': true, 'msg': data}; 
                     }
                 } else {
@@ -337,8 +332,6 @@
                                 emptyBlock = this.buildBlock(this.convertHex(block.data, 'hex').match(/.{2}/g), '0', next.key);
                                 sessionStorage.setItem(block.key, emptyBlock);
 
-                                let test = this.convertBlock(block.key);
-
                                 // Update Block Reference to next 
                                 block = next;
 
@@ -346,8 +339,6 @@
                                 // Create New Empty Header + Update Session Storage for Current
                                 emptyBlock = this.buildBlock(this.convertHex(block.data, 'hex').match(/.{2}/g), '0');
                                 sessionStorage.setItem(block.key, emptyBlock);
-
-                                let test = this.convertBlock(block.key);
 
                                 searching = false;
                             } 

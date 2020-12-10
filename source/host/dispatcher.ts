@@ -60,33 +60,33 @@
                         if (segment == undefined) {
                             // Initiate Roll Out/ Roll In Routine - Part I
                             _Kernel.krnTrace("Rolling out process.");
-
-                            console.log("######################################");
-                            console.log("NEW ITERATION")
-
-
+                            
                             // Get All Process in Main Memory not running or terminated stored 
                             let victims = _ResidentList.filter((pcb) => { return pcb.location == "memory" && (pcb.state == "ready" || pcb.state == "resident")});
 
-                            // Choose Process based on Scheduling Algorithm
-                            if (_Schedular.currentAlgorithm != "p") {
-                                // Take Last Process
-                                console.log("Chosen Victim: " + victims[victims.length - 1].pid);
-                                console.log("Chosen Victim Location: " + victims[victims.length - 1].location);
-                                _MemoryManager.rollOut(victims[victims.length - 1]);   
+                            // Validate Available Victim
+                            if (victims.length > 0) {
+                                // Choose Process based on Scheduling Algorithm
+                                if (_Schedular.currentAlgorithm != "p") {
+                                    // Take Last Process
+                                    _MemoryManager.rollOut(victims[victims.length - 1]);   
 
+                                } else {
+                                    // Filter for highest priority
+                                    victims.sort((a, b) => (a.priority > b.priority) ? -1 : 1);
+                                    _MemoryManager.rollOut(victims[0])
+                                }
                             } else {
-                                // Filter for highest priority
-                                victims.sort((a, b) => (a.priority > b.priority) ? -1 : 1);
-                                _MemoryManager.rollOut(victims[0])
+                                // Manually Make Segment available for lone Disk Process
+                                victims = _ResidentList.filter((pcb) => { return pcb.location == "memory" && pcb.state == "terminated"});
+                                _MemoryManager.memoryRegisters[victims[0].segment.index].isFilled = false;
+                                _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, victims[0]));
                             }
 
                             // Output to Kernel - Part II
                             _Kernel.krnTrace("Rolling in process.");
-                            console.log("Location or ReadyQueue[0]: " + _ReadyQueue[0].location);
-                            console.log("PID of RQ[0]: " + _ReadyQueue[0].pid)
                             _MemoryManager.rollIn(_ReadyQueue[0]);
-                        }
+                        }   
                     }
 
                     _Schedular.scheduleProcess();

@@ -20,10 +20,9 @@ var TSOS;
 (function (TSOS) {
     var DeviceDriverDisk = /** @class */ (function (_super) {
         __extends(DeviceDriverDisk, _super);
-        function DeviceDriverDisk(formatted, hidden, masterBootrecord, directory, file) {
+        function DeviceDriverDisk(formatted, masterBootrecord, directory, file) {
             // Override the base method pointers.
             if (formatted === void 0) { formatted = false; }
-            if (hidden === void 0) { hidden = "."; }
             if (masterBootrecord === void 0) { masterBootrecord = '0:0:0'; }
             if (directory === void 0) { directory = { 'start': { 't': 0, 's': 0, 'b': 1 }, 'end': { 't': 0, 's': 7, 'b': 6 } }; }
             if (file === void 0) { file = { 'start': { 't': 1, 's': 0, 'b': 0 }, 'end': { 't': 3, 's': 7, 'b': 6 } }; }
@@ -34,7 +33,6 @@ var TSOS;
             // So instead...
             _super.call(this) || this;
             _this.formatted = formatted;
-            _this.hidden = hidden;
             _this.masterBootrecord = masterBootrecord;
             _this.directory = directory;
             _this.file = file;
@@ -47,8 +45,6 @@ var TSOS;
             // Only Load Dsk Definition if User's browser supports it.
             if (this.krnDskBrowserSupport) {
                 this.status = "loaded";
-                // Clear Session Storage -- TESTING PURPOSES ONLY
-                sessionStorage.clear();
             }
         };
         /**
@@ -111,7 +107,7 @@ var TSOS;
             }
         };
         /**
-         * format(flag?)
+         * format(flag)
          * - Initializes our Disk
          *   definition, type is a boolean
          *   flag used to determine half or full.
@@ -289,7 +285,6 @@ var TSOS;
                             collecting = false;
                         }
                     }
-                    // Return File Data
                     return { 'success': true, 'msg': data };
                 }
             }
@@ -324,7 +319,6 @@ var TSOS;
                             // Create New Empty Header + Update Session Storage for Current
                             emptyBlock = this.buildBlock(this.convertHex(block.data, 'hex').match(/.{2}/g), '0', next.key);
                             sessionStorage.setItem(block.key, emptyBlock);
-                            var test = this.convertBlock(block.key);
                             // Update Block Reference to next 
                             block = next;
                         }
@@ -332,7 +326,6 @@ var TSOS;
                             // Create New Empty Header + Update Session Storage for Current
                             emptyBlock = this.buildBlock(this.convertHex(block.data, 'hex').match(/.{2}/g), '0');
                             sessionStorage.setItem(block.key, emptyBlock);
-                            var test = this.convertBlock(block.key);
                             searching = false;
                         }
                     }
