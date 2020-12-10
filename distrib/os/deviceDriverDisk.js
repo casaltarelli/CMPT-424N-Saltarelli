@@ -80,33 +80,33 @@ var TSOS;
                     switch (params.action) {
                         case 'create':
                             status = this.create(params.name, params.flag);
-                            _StdOut.putText(status);
+                            _StdOut.putText(status.msg);
                             break;
                         case 'write':
                             status = this.write(params.name, params.data);
-                            _StdOut.putText(status);
+                            _StdOut.putText(status.msg);
                             break;
                         case 'read':
                             status = this.read(params.name);
-                            _StdOut.putText(status);
+                            _StdOut.putText(status.msg);
                             break;
                         case 'delete':
                             status = this["delete"](params.name);
-                            _StdOut.putText(status);
+                            _StdOut.putText(status.msg);
                             break;
                         case 'list':
                             this.list(params.flag);
                             break;
                         case 'copy':
                             status = this.create(params.name, params.flag);
-                            _StdOut.putText(status);
+                            _StdOut.putText(status.msg);
                             break;
                         default:
                             _Kernel.krnTrapError("File System exception: Invalid action " + params.action + ".");
                     }
                 }
                 else {
-                    _StdOut.putText("File System exception. Must format Hard Drive first.");
+                    _StdOut.putText("File System exception: Must format Hard Drive first.");
                 }
             }
         };
@@ -122,10 +122,10 @@ var TSOS;
                 _Disk.init(flag);
                 this.formatted = true;
                 // Output Success
-                return "Hard drive fully formatted.";
+                return { 'success': true, 'msg': "Hard drive fully formatted." };
             }
             else {
-                return "Hard drive has already been fully formatted.";
+                return { 'success': false, 'msg': "Hard drive has already been fully formatted." };
             }
         };
         /**
@@ -155,7 +155,7 @@ var TSOS;
             }
             // Validate Length of File Name
             if (name.length > _Disk.getDataSize() - 15) { // Subtract for Date String YYYYMMDD HHMMSS
-                return 'File name ' + name + ' is too big.';
+                return { 'success': false, 'msg': 'File name ' + name + ' is too big.' };
             }
             else {
                 // Validate New File doesn't already exist within our directory
@@ -184,14 +184,14 @@ var TSOS;
                             data = this.read(original);
                             data = this.write(name, data);
                         }
-                        return "File " + name + " created.";
+                        return { 'success': true, 'msg': "File " + name + " created." };
                     }
                     else {
-                        return "File " + name + " could not be created. No available space.";
+                        return { 'success': false, 'msg': "File " + name + " could not be created. No available space." };
                     }
                 }
                 else {
-                    return "File System exception: " + name + " already exists.";
+                    return { 'success': false, 'msg': "File System exception: " + name + " already exists." };
                 }
             }
         };
@@ -220,9 +220,8 @@ var TSOS;
                     // Check if File already contains data
                     if (directoryBlock_1.pointer.indexOf('F') == -1) {
                         // Delete Data before proceeding
-                        var status_1 = this["delete"](name);
+                        this["delete"](name);
                         setTimeout(function () {
-                            console.log(directoryBlock_1);
                             // Updated Directory Block w/ Pointer
                             var block = _krnDiskDriver.buildBlock(_krnDiskDriver.convertHex(directoryBlock_1.data, 'hex').match(/.{2}/g), '1', availableKeys_1[0]);
                             sessionStorage.setItem(directoryBlock_1.key, block);
@@ -249,14 +248,14 @@ var TSOS;
                         // Update Item in Session Storage
                         sessionStorage.setItem(availableKeys_1[i], block);
                     }
-                    return "File write to " + name + " done.";
+                    return { 'success': true, 'msg': "File write to " + name + " done." };
                 }
                 else {
-                    return "Cannot write data to " + name + ". No available space.";
+                    return { 'success': false, 'msg': "Cannot write data to " + name + ". No available space." };
                 }
             }
             else {
-                return "File System exception: " + name + " does not exist.";
+                return { 'success': false, 'msg': "File System exception: " + name + " does not exist." };
             }
         };
         /**
@@ -271,7 +270,7 @@ var TSOS;
                 var block = this.find(name, this.directory, true);
                 // Validate Directory Pointer to Data
                 if (block.pointer.indexOf('F') !== -1) {
-                    return "No data to read. File is empty.";
+                    return { 'success': false, 'msg': "No data to read. File is empty." };
                 }
                 else {
                     var collecting = true;
@@ -290,11 +289,11 @@ var TSOS;
                         }
                     }
                     // Return File Data
-                    return data;
+                    return { 'success': true, 'msg': data };
                 }
             }
             else {
-                return "File System exception: " + name + " does not exist.";
+                return { 'success': false, 'msg': "File System exception: " + name + " does not exist." };
             }
         };
         /**
@@ -303,15 +302,13 @@ var TSOS;
          *   given name in our File System.
          */
         DeviceDriverDisk.prototype["delete"] = function (name) {
-            console.log("DELETE CALLED FROM WRITE");
             // Validate that file exists
             if (this.find(name, this.directory)) {
                 // Get Block Object
                 var block = this.find(name, this.directory, true);
                 var emptyBlock = void 0;
-                // Validate Directory Pointer - if none create empty directory entry 
+                // Validate Directory Pointer
                 if (block.pointer.indexOf('F') != -1) { // Null Pointer
-                    console.log("Null pointer recognized");
                     // Update Directory Block w/ Empty Byte in Session Storage 
                     emptyBlock = this.buildBlock(this.convertHex(block.data, 'hex').match(/.{2}/g), '0');
                     sessionStorage.setItem(block.key, emptyBlock);
@@ -339,10 +336,10 @@ var TSOS;
                         }
                     }
                 }
-                return "File " + name + " successfully deleted.";
+                return { 'success': true, 'msg': "File " + name + " successfully deleted." };
             }
             else {
-                return "File System exception: " + name + " does not exist.";
+                return { 'seccess': true, 'msg': "File System exception: " + name + " does not exist." };
             }
         };
         /**
@@ -522,7 +519,7 @@ var TSOS;
             var availableKeys = [];
             out: for (var t = start.t; t <= end.t; t++) {
                 for (var s = start.s; s <= end.s; s++) {
-                    for (var b = start.b; b <= end.b; b++) {
+                    for (var b = (t == 0 && s == 0) ? start.b : 0; b <= end.b; b++) {
                         var block = this.convertBlock({ 't': t, 's': s, 'b': b });
                         // Check if filled
                         if (!block.filled) {

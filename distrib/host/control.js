@@ -79,6 +79,7 @@ var TSOS;
                     row = newTBody.insertRow();
                     row.insertCell(-1).innerHTML = process.pid;
                     row.insertCell(-1).innerHTML = process.priority;
+                    row.insertCell(-1).innerHTML = process.location.toLocaleUpperCase();
                     row.insertCell(-1).innerHTML = process.state.toLocaleUpperCase();
                     row.insertCell(-1).innerHTML = process.PC;
                     row.insertCell(-1).innerHTML = process.Acc.toString(16).toLocaleUpperCase();

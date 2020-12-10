@@ -36,32 +36,59 @@ var TSOS;
                     break out; // Once found exit
                 }
             }
-            // Return null if no segments are empty
-            if (segment == undefined) {
-                return null;
-            }
             // Create PCB for new program
             var pcb = new TSOS.processControlBlock();
-            // Clear Memory Segment of Old Programs
-            _MemoryAccessor.clear(this.memoryRegisters[segment]);
-            // Load Program into Memory
-            var status;
-            for (var i = 0; i < program.length; i++) {
-                status = _MemoryAccessor.write(this.memoryRegisters[segment], i, program[i]);
-                // Check if Write to Memory Succeeded
-                if (!status) {
-                    console.log("Failed to write process into memory segment");
-                    return; // Terminate Load if Failed
+            if (segment == undefined) {
+                // Load Program into Disk
+                if (_krnDiskDriver.formatted) {
+                    // Create File Segment
+                    var status_1 = _krnDiskDriver.create("." + pcb.pid + "swap");
+                    if (status_1.success) {
+                        // Write Data to new file
+                        var status_2 = _krnDiskDriver.write('.' + pcb.pid + 'swap', program);
+                        if (!status_2.success) {
+                            _krnDiskDriver["delete"]('.' + pcb.pid + 'swap');
+                            return null;
+                        }
+                        // Update PCB Location + State
+                        pcb.location = "hdd";
+                        pcb.state = "resident";
+                        // Add PCB to Resident List
+                        _ResidentList.push(pcb);
+                        // Return our updated PCB
+                        return pcb;
+                    }
+                    else {
+                        return null;
+                    }
+                }
+                else {
+                    return null;
                 }
             }
-            // Update Segment Status + PCB Reference
-            this.memoryRegisters[segment].isFilled = true;
-            pcb.segment = this.memoryRegisters[segment];
-            pcb.state = "resident";
-            // Add PCB to Resident List
-            _ResidentList.push(pcb);
-            // Return our updated PCB
-            return pcb;
+            else {
+                // Clear Memory Segment of Old Programs
+                _MemoryAccessor.clear(this.memoryRegisters[segment]);
+                // Load Program into Memory
+                var status_3;
+                for (var i = 0; i < program.length; i++) {
+                    status_3 = _MemoryAccessor.write(this.memoryRegisters[segment], i, program[i]);
+                    // Check if Write to Memory Succeeded
+                    if (!status_3) {
+                        console.log("Failed to write process into memory segment");
+                        return; // Terminate Load if Failed
+                    }
+                }
+                // Update Segment Status + PCB Reference
+                this.memoryRegisters[segment].isFilled = true;
+                pcb.segment = this.memoryRegisters[segment];
+                pcb.location = "memory";
+                pcb.state = "resident";
+                // Add PCB to Resident List
+                _ResidentList.push(pcb);
+                // Return our updated PCB
+                return pcb;
+            }
         };
         return MemoryManager;
     }());

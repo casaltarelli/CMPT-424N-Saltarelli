@@ -407,9 +407,14 @@ var TSOS;
                 if (pcb) {
                     // Add Priority to pcb
                     pcb.priority = priority;
-                    var segment = void 0;
-                    segment = pcb.segment;
-                    _StdOut.putText("Program with PID " + pcb.pid + " loaded into memory segment " + segment.index + ".");
+                    if (pcb.location == "memory") {
+                        var segment = void 0;
+                        segment = pcb.segment;
+                        _StdOut.putText("Program with PID " + pcb.pid + " loaded into memory segment " + segment.index + ".");
+                    }
+                    else {
+                        _StdOut.putText("Program with PID " + pcb.pid + " loaded into Hard Drive Disk.");
+                    }
                 }
                 else {
                     _StdOut.putText("Memory is full. Please clear before loading new process.");

@@ -160,7 +160,7 @@ input[type=button]:hover {
 
 .os-wrapper {
   display: grid;
-  grid-template-columns: 30% 70%;
+  grid-template-columns: 26% 74%;
   grid-template-rows: 50vw;
   grid-gap: 1em;
 }
@@ -223,7 +223,7 @@ table {
 
 .hardware-wrapper {
   display: grid;
-  grid-template-columns: 20% 40% 40%;
+  grid-template-columns: 20% 42% 38%;
   grid-template-rows: 50vw;
   grid-gap: 1em;  
 }
