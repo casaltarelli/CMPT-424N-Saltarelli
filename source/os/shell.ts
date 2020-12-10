@@ -217,6 +217,12 @@ module TSOS {
                                     " - <filename> creates a duplicate of the given file name.");
             this.commandList[this.commandList.length] = sc;
 
+            // turbo
+            sc = new ShellCommand(this.shellTurbo,
+                                    "turbo",
+                                    " - Only for use by trained professionals.");
+            this.commandList[this.commandList.length] = sc;
+
             // Display the initial  prompt.
             this.putName();
             this.putPrompt();
@@ -911,7 +917,7 @@ module TSOS {
                 // Validate File Name
                 if (args[0].indexOf('.') < 1) {
                     params = {'action': 'create',
-                    'name': args[0]};
+                    'name': args[0].toLowerCase()};
                 
                     _KernelInterruptQueue.enqueue(new TSOS.Interrupt(FILE_SYSTEM_IRQ, params));
                 } else {
@@ -1024,6 +1030,28 @@ module TSOS {
 
                 _KernelInterruptQueue.enqueue(new TSOS.Interrupt(FILE_SYSTEM_IRQ, params));
             }
+        }
+
+        public shellTurbo(args: string[]) {
+            if (args.length > 0) {
+                let gauge = args[0];
+
+                // Set CPU Clock to Turbo
+                switch(gauge) {
+                    case"on":
+                        Control.hostOSTurbo_cmd(true);
+                        _StdOut.putText("... Well you did it. Run multiple processes and see.");
+                        break;
+
+                    case "off":
+                        Control.hostOSTurbo_cmd(false);
+                        _StdOut.putText("Yeah.. it's probably for the better.");
+                        break;
+
+                }
+            } else {
+                _StdOut.putText("Usage: turbo <on | off>");
+            } 
         }
     }
 }

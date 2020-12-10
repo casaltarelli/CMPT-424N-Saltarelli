@@ -122,7 +122,7 @@
                     }
 
                     // Write Data to Swap File
-                    result = _krnDiskDriver.write(name, data, true);
+                    result = _krnDiskDriver.write(name, data);
 
                     if (result.success) {
                         // Find + Update Memory Segment

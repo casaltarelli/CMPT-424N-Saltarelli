@@ -371,6 +371,16 @@ var TSOS;
                 }
             }
         };
+        Control.hostOSTurbo_cmd = function (gauge) {
+            // Clear Current Interval
+            window.clearInterval(_hardwareClockID);
+            if (gauge) {
+                _hardwareClockID = window.setInterval(TSOS.Devices.hostClockPulse, 30);
+            }
+            else {
+                _hardwareClockID = window.setInterval(TSOS.Devices.hostClockPulse, CPU_CLOCK_INTERVAL);
+            }
+        };
         return Control;
     }());
     TSOS.Control = Control;

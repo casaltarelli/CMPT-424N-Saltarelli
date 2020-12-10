@@ -196,7 +196,16 @@ var TSOS;
          * - Writes to a file with a
          *   given name in our File System.
          */
-        DeviceDriverDisk.prototype.write = function (name, data, swap) {
+        DeviceDriverDisk.prototype.write = function (name, data) {
+            // Prevent User Write to Process Swap File
+            var swapFiles = _ResidentList.filter(function (process) { return process.location == "drive"; });
+            for (var _i = 0, swapFiles_1 = swapFiles; _i < swapFiles_1.length; _i++) {
+                var process = swapFiles_1[_i];
+                var tempName = '.' + process.pid + 'swap';
+                if (name == tempName) {
+                    return { 'success': false, 'msg': "File System exception: cannot write to swap files." };
+                }
+            }
             // Validate File Exists
             if (this.find(name, this.directory)) {
                 // Encode Data to Hex for input + Accurate Size [Don't Change if Data is Swap File]

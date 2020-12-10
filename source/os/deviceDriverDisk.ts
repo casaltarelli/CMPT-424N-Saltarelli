@@ -194,7 +194,16 @@
              * - Writes to a file with a
              *   given name in our File System.
              */
-            public write(name, data, swap?) {
+            public write(name, data) {
+                // Prevent User Write to Process Swap File
+                let swapFiles = _ResidentList.filter((process) => process.location == "drive");
+                for (let process of swapFiles) {
+                    let tempName = '.' + process.pid + 'swap';
+                    if (name == tempName) {
+                        return {'success': false, 'msg': "File System exception: cannot write to swap files."};
+                    }
+                }
+
                 // Validate File Exists
                 if (this.find(name, this.directory)) {
                     // Encode Data to Hex for input + Accurate Size [Don't Change if Data is Swap File]

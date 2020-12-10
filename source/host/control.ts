@@ -436,5 +436,18 @@ module TSOS {
                 }
             }
         }
+
+        public static hostOSTurbo_cmd(gauge) {
+            // Clear Current Interval
+            window.clearInterval(_hardwareClockID);
+
+            if (gauge) {
+                _hardwareClockID = window.setInterval(Devices.hostClockPulse, 30);
+            } else {
+                _hardwareClockID = window.setInterval(Devices.hostClockPulse, CPU_CLOCK_INTERVAL);
+            }
+            
+        
+        }
     }
 }
