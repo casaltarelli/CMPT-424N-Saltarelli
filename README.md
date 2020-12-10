@@ -38,7 +38,7 @@ A Few Notes
 ===========
 
 **Prof. Labouseur**
-Please grade our Final Project the master branch of this project.
+Please grade my Final Project on the master branch of this project.
 
 **TypeScript Resources**
 [Right this way!](http://www.typescriptlang.org/)
