@@ -165,7 +165,7 @@ var TSOS;
                         if (segments[i].style.display == "none") {
                             ;
                             // Imitate HostBtn_Click to display proper Segment
-                            //this.hostBtnMemory_click(segmentBtns[i]);
+                            this.hostBtnMemory_click(segmentBtns[i]);
                         }
                     }
                 }
@@ -291,7 +291,7 @@ var TSOS;
             // .. Display Segment One of Main Memory ...
             document.getElementById("tbOne").style.display = "block";
             // .. set focus on the OS console display ...
-            //document.getElementById("display").focus();
+            document.getElementById("display").focus();
             // ... Create and initialize the CPU (because it's part of the hardware)  ...
             _CPU = new TSOS.Cpu(); // Note: We could simulate multi-core systems by instantiating more than one instance of the CPU here.
             _CPU.init(); //       There's more to do, like dealing with scheduling and such, but this would be a start. Pretty cool.

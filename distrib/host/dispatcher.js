@@ -73,7 +73,7 @@ var TSOS;
                         else {
                             // Manually Make Segment available for lone Disk Process
                             victims = _ResidentList.filter(function (pcb) { return pcb.location == "memory" && pcb.state == "terminated"; });
-                            _MemoryManager.memoryRegisters[victims[0].segment.index].isFilled = false;
+                            _MemoryManager.rollOut(victims[0]);
                             _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROCESS_IRQ, victims[0]));
                         }
                         // Output to Kernel - Part II

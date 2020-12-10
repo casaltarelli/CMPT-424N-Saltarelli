@@ -188,7 +188,7 @@ module TSOS {
                     if (_CPU.PCB.segment.index == i) {
                         if (segments[i].style.display == "none") {;
                             // Imitate HostBtn_Click to display proper Segment
-                            //this.hostBtnMemory_click(segmentBtns[i]);
+                            this.hostBtnMemory_click(segmentBtns[i]);
                         }
                     }
                 }
@@ -343,7 +343,7 @@ module TSOS {
             document.getElementById("tbOne").style.display = "block";
 
             // .. set focus on the OS console display ...
-            //document.getElementById("display").focus();
+            document.getElementById("display").focus();
 
             // ... Create and initialize the CPU (because it's part of the hardware)  ...
             _CPU = new Cpu();  // Note: We could simulate multi-core systems by instantiating more than one instance of the CPU here.
