@@ -96,8 +96,7 @@ module TSOS {
 
                 // Assign Highest Priority Process
                 this.currentProcess = _ReadyQueue[0];
-            }
-             
+            } 
         }
 
         /**

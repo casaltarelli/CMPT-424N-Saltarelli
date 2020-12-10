@@ -56,7 +56,7 @@
 
                 if (params.action == 'format') {
                     status = this.format(params.flag); 
-                    _StdOut.putText(status);
+                    _StdOut.putText(status.msg);
                     
                 } else {
                     if (this.formatted) {
@@ -198,13 +198,13 @@
              * - Writes to a file with a
              *   given name in our File System.
              */
-            public write(name, data) {
+            public write(name, data, swap?) {
                 // Validate File Exists
                 if (this.find(name, this.directory)) {
-                    // Encode Data to Hex for input + Accurate Size
+                    // Encode Data to Hex for input + Accurate Size [Don't Change if Data is Swap File]
                     data = this.convertHex(data, 'hex');
                     data = data.match(/.{2}/g);
-
+                    
                     // Get Needed Block Size
                     let size = Math.floor(data.length / _Disk.getDataSize());
 
@@ -279,8 +279,10 @@
                         return {'success': false, 'msg': "No data to read. File is empty."};
                     } else {
                         let collecting = true;
-                        let data = "";
 
+                        // Format Data according to type of read
+                        let data = "";
+                        
                         while (collecting) {
                             // Check for next Pointer to Data
                             if (block.pointer.indexOf('F') == -1) {
@@ -290,7 +292,7 @@
 
                                 // Decode Data to Char Codes + Concat for output
                                 data = data + block.data;
-
+                                
                             } else {
                                 collecting = false;
                             }
@@ -613,7 +615,7 @@
              * - Creates a Block Object based
              *   on a key used within SessionStorage
              */
-            public convertBlock(key) {
+            public convertBlock(key, swap?) {
                 if (typeof(key) == 'object') {
                     key = this.convertKey(key);
                 }
@@ -621,8 +623,9 @@
                 // Get Item in Session Storage
                 let block = sessionStorage.getItem(key);
 
-                // Convert Data Block to Char Data
+                // Convert Data Block to Char Data if not Swap File
                 block = this.convertHex(block, 'char');
+                
                 
                 var filled = false;
 
@@ -651,17 +654,17 @@
                     // Validate Data given isn't already in hex -- continue if already
                     let regex = /^[A-Fa-f0-9]+$/;
 
-                    if (!regex.test(data)) {
-                        // Convert Data into String
-                        if (typeof(data) == 'object') {
-                            data = data.join('');
-                        }
-
-                        for (let c in data) {
-                            let hex = data[c].charCodeAt().toString(16);
-                            newData += hex;
-                        }
+                    //if (!regex.test(data)) {
+                    // Convert Data into String
+                    if (typeof(data) == 'object') {
+                        data = data.join('');
                     }
+
+                    for (let c in data) {
+                        let hex = data[c].charCodeAt().toString(16);
+                        newData += hex;
+                    }
+                    
                 } else if (type == 'char') {
                     // Add Header before Converting
                     newData += data.substr(0, _Disk.getHeaderSize());

@@ -395,7 +395,15 @@ var TSOS;
             // Check for priority otherwise assign default
             var priority;
             if (parseInt(args[0]) > 0) {
+                // If float round down... Prevents float case
+                var num = Math.floor(Number(args[0]));
                 priority = parseInt(args[0]);
+                // Verify value given is a number otherwise set to default
+                if (!isNaN(num)) {
+                    if (num > 0) {
+                        priority = num;
+                    }
+                }
             }
             else {
                 priority = 10; // Default Priority
@@ -609,7 +617,6 @@ var TSOS;
                 }
                 else {
                     // Clear Current Memory Segment
-                    //_MemoryAccessor.clear(segment);
                     _StdOut.putText("Segment " + segment.index + " is already empty.");
                     _StdOut.advanceLine();
                 }

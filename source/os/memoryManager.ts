@@ -38,11 +38,14 @@
                 }
 
                 // Create PCB for new program
-                let pcb = new processControlBlock();
+                let pcb;
 
                 if (segment == undefined) {
                     // Load Program into Disk
                     if (_krnDiskDriver.formatted) {
+                        // Define our PCB
+                        pcb = new processControlBlock();
+
                         // Create File Segment
                         let status = _krnDiskDriver.create("." + pcb.pid + "swap");
 
@@ -56,7 +59,7 @@
                             }
 
                             // Update PCB Location + State
-                            pcb.location = "hdd";
+                            pcb.location = "drive";
                             pcb.state = "resident";
 
                             // Add PCB to Resident List
@@ -71,6 +74,9 @@
                         return null;
                     }
                 } else {
+                    // Define our PCB
+                    pcb = new processControlBlock();
+
                     // Clear Memory Segment of Old Programs
                     _MemoryAccessor.clear(this.memoryRegisters[segment]);
 
@@ -98,6 +104,98 @@
                     // Return our updated PCB
                     return pcb;
                 }   
+            }
+
+            public rollOut(pcb) {
+                // Create File Info for PCB Swap file
+                let name = '.' + pcb.pid + 'swap';  // All Swap Files are hidden
+                let result = _krnDiskDriver.create(name);
+
+                console.log("FILE CREATED: " + result.success);
+
+                // Check File Creation Results
+                if (result.success) {
+                    // Collect Process Data
+                    let data = [];
+                    for (let i = 0; i < _MemoryAccessor.getSegmentSize(); i++) {
+                        // Check Hex if needs padding
+                        let hex = TSOS.Utils.padHexValue(_MemoryAccessor.read(pcb.segment, i));
+                        data.push(hex);
+                    }
+
+                    // Write Data to Swap File
+                    result = _krnDiskDriver.write(name, data, true);
+
+                    if (result.success) {
+                        // Find + Update Memory Segment
+                        let segment;
+
+                        out:
+                        for (let i = 0; i < _MemoryManager.memoryRegisters.length; i++) {
+                            if(_MemoryManager.memoryRegisters[i].index == pcb.segment.index) {
+                                segment = i;
+                                break out;  // Once found exit
+                            }
+                        }
+
+                        _MemoryManager.memoryRegisters[segment].isFilled = false; 
+
+                        // Update our PCB 
+                        pcb.location = "drive";
+                        pcb.segment = {};
+
+                        console.log("SUCCESSFULLY MOVED TO DISK FILE: " + name);
+
+                    } else {
+                        _krnDiskDriver.delete(name);    // Remove Directory Entry
+                    }
+                } 
+            }
+
+            public rollIn(pcb) {
+                // Find Available Memory Segment
+                let segment;
+
+                out:
+                for (let i = 0; i < this.memoryRegisters.length; i++) {
+                    if (this.memoryRegisters[i].isFilled == false) {
+                        segment = i;
+                        break out;  // Once found exit
+                    }
+                }
+
+                if (segment) {
+                    // Get Data from Swap File
+                    let file = _krnDiskDriver.read('.' + pcb.pid + 'swap');
+                    console.log("RETURNED FROM READ: " + file.msg);
+                    let data = file.msg.match(/.{2}/g);
+
+                    if (file.success) {
+                        // Clear Memory Segment
+                        _MemoryAccessor.clear(this.memoryRegisters[segment]);
+
+                        // Load Data into Memory Segment
+                        for (let i = 0; i < data.length; i++) {
+                            let status = _MemoryAccessor.write(this.memoryRegisters[segment], i, data[i]);
+    
+                            // Check if Write to Memory Succeeded
+                            if (!status) {
+                                console.log("Failed to write process into memory segment");
+                                return; // Terminate Load if Failed
+                            }
+                        }
+
+                        // Update Segment Filled Flag
+                        this.memoryRegisters[segment].isFilled = true;
+
+                        // Update our PCB
+                        pcb.location = "memory";
+                        pcb.segment = this.memoryRegisters[segment];
+
+                        // Delete Old Swap File
+                        _krnDiskDriver.delete('.' + pcb.pid + 'swap');
+                    } 
+                } 
             }
         }
     }

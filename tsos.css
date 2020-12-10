@@ -223,7 +223,7 @@ table {
 
 .hardware-wrapper {
   display: grid;
-  grid-template-columns: 20% 42% 38%;
+  grid-template-columns: 20% 35% 38%;
   grid-template-rows: 50vw;
   grid-gap: 1em;  
 }

@@ -165,7 +165,7 @@ var TSOS;
                         if (segments[i].style.display == "none") {
                             ;
                             // Imitate HostBtn_Click to display proper Segment
-                            this.hostBtnMemory_click(segmentBtns[i]);
+                            //this.hostBtnMemory_click(segmentBtns[i]);
                         }
                     }
                 }

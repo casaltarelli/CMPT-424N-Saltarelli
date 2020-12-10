@@ -73,7 +73,7 @@ var TSOS;
             var status;
             if (params.action == 'format') {
                 status = this.format(params.flag);
-                _StdOut.putText(status);
+                _StdOut.putText(status.msg);
             }
             else {
                 if (this.formatted) {
@@ -200,10 +200,10 @@ var TSOS;
          * - Writes to a file with a
          *   given name in our File System.
          */
-        DeviceDriverDisk.prototype.write = function (name, data) {
+        DeviceDriverDisk.prototype.write = function (name, data, swap) {
             // Validate File Exists
             if (this.find(name, this.directory)) {
-                // Encode Data to Hex for input + Accurate Size
+                // Encode Data to Hex for input + Accurate Size [Don't Change if Data is Swap File]
                 data = this.convertHex(data, 'hex');
                 data = data.match(/.{2}/g);
                 // Get Needed Block Size
@@ -274,6 +274,7 @@ var TSOS;
                 }
                 else {
                     var collecting = true;
+                    // Format Data according to type of read
                     var data = "";
                     while (collecting) {
                         // Check for next Pointer to Data
@@ -519,7 +520,7 @@ var TSOS;
             var availableKeys = [];
             out: for (var t = start.t; t <= end.t; t++) {
                 for (var s = start.s; s <= end.s; s++) {
-                    for (var b = (t == 0 && s == 0) ? start.b : 0; b <= end.b; b++) {
+                    for (var b = ((t == 0 && s == 0) ? start.b : 0); b <= end.b; b++) { // Check for 0:1:0 Cases
                         var block = this.convertBlock({ 't': t, 's': s, 'b': b });
                         // Check if filled
                         if (!block.filled) {
@@ -568,13 +569,13 @@ var TSOS;
          * - Creates a Block Object based
          *   on a key used within SessionStorage
          */
-        DeviceDriverDisk.prototype.convertBlock = function (key) {
+        DeviceDriverDisk.prototype.convertBlock = function (key, swap) {
             if (typeof (key) == 'object') {
                 key = this.convertKey(key);
             }
             // Get Item in Session Storage
             var block = sessionStorage.getItem(key);
-            // Convert Data Block to Char Data
+            // Convert Data Block to Char Data if not Swap File
             block = this.convertHex(block, 'char');
             var filled = false;
             if (block[0] == "1") {
@@ -597,15 +598,14 @@ var TSOS;
             if (type == 'hex') {
                 // Validate Data given isn't already in hex -- continue if already
                 var regex = /^[A-Fa-f0-9]+$/;
-                if (!regex.test(data)) {
-                    // Convert Data into String
-                    if (typeof (data) == 'object') {
-                        data = data.join('');
-                    }
-                    for (var c in data) {
-                        var hex = data[c].charCodeAt().toString(16);
-                        newData += hex;
-                    }
+                //if (!regex.test(data)) {
+                // Convert Data into String
+                if (typeof (data) == 'object') {
+                    data = data.join('');
+                }
+                for (var c in data) {
+                    var hex = data[c].charCodeAt().toString(16);
+                    newData += hex;
                 }
             }
             else if (type == 'char') {
